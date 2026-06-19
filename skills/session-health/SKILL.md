@@ -405,6 +405,81 @@ def post_session_update(arch, audit, session_num, devvit_version, what_shipped):
 
     return arch
 
+
+def check_bridge(token):
+    """
+    Check if bridge3.js is running in the Codespace.
+    Strategy: read outbox.json — if 'running': true and the ts is recent, bridge is alive.
+    If no recent activity, send a ping command and wait for response.
+    """
+    import time
+
+    BRIDGE_OWNER = 'Cal-Starfur'
+    BRIDGE_REPO  = 'codespace-bridge'
+
+    def bridge_get(path):
+        url = f'https://api.github.com/repos/{BRIDGE_OWNER}/{BRIDGE_REPO}/contents/{path}'
+        req = urllib.request.Request(url, headers=gh_headers(token))
+        with urllib.request.urlopen(req) as r:
+            data = json.loads(r.read())
+            content = base64.b64decode(data['content'].replace('\n','')).decode()
+            return json.loads(content), data['sha']
+
+    def bridge_put(path, content, sha, message):
+        url = f'https://api.github.com/repos/{BRIDGE_OWNER}/{BRIDGE_REPO}/contents/{path}'
+        data = {
+            'message': message,
+            'content': base64.b64encode(json.dumps(content, indent=2).encode()).decode(),
+            'sha': sha,
+        }
+        req = urllib.request.Request(url, data=json.dumps(data).encode(), headers=gh_headers(token), method='PUT')
+        with urllib.request.urlopen(req) as r:
+            return json.loads(r.read())
+
+    try:
+        outbox, outbox_sha = bridge_get('relay/outbox.json')
+        inbox, inbox_sha   = bridge_get('relay/inbox.json')
+    except Exception as e:
+        return False, f'Cannot read bridge relay: {e}'
+
+    # If outbox shows running:true and it matches the last inbox id → bridge is alive
+    inbox_id  = inbox.get('id', '')
+    outbox_id = outbox.get('id', '')
+
+    if outbox.get('running') and inbox_id == outbox_id:
+        # Same command being processed — bridge is alive but busy
+        return True, 'Bridge alive (processing command)'
+
+    if outbox.get('ready') or (outbox.get('output') and inbox_id == outbox_id):
+        return True, 'Bridge alive (last command complete)'
+
+    # Send a ping and wait up to 15s for response
+    import time
+    ping_id = f'health-ping-{int(time.time())}'
+    ping_cmd = {'cmd': 'echo bridge-ok', 'id': ping_id, 'cwd': '/workspaces/Wigglers_Room', 'ts': datetime.now().isoformat()}
+
+    try:
+        bridge_put('relay/inbox.json', ping_cmd, inbox_sha, f'Health check ping {ping_id}')
+    except Exception as e:
+        return False, f'Could not write ping to inbox: {e}'
+
+    # Poll outbox for up to 15s
+    deadline = time.time() + 15
+    while time.time() < deadline:
+        time.sleep(3)
+        try:
+            outbox2, _ = bridge_get('relay/outbox.json')
+            if outbox2.get('id') == ping_id and (outbox2.get('ready') or outbox2.get('output')):
+                output = outbox2.get('output', '').strip()
+                if 'bridge-ok' in output:
+                    return True, f'Bridge alive — ping responded in {int(15-(deadline-time.time()))}s'
+                return True, f'Bridge responded: {output[:60]}'
+        except:
+            pass
+
+    return False, 'Bridge did not respond to ping within 15s — may be down'
+
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
@@ -472,6 +547,19 @@ def main():
     all_issues += pc_issues
 
     # Report
+    # Bridge check
+    print('\nChecking bridge3.js...')
+    try:
+        bridge_ok, bridge_msg = check_bridge(token)
+        if bridge_ok:
+            print(f'  ✓ {bridge_msg}')
+        else:
+            print(f'  ✗ Bridge offline: {bridge_msg}')
+            print(f'  → Start it: export BRIDGE_TOKEN=<pat> && node ~/bridge3.js')
+            all_issues.append(f'Bridge offline: {bridge_msg}')
+    except Exception as e:
+        print(f'  ? Bridge check failed: {e}')
+
     if not all_issues:
         print('\n✅ ALL CLEAR — GAME_ARCHITECTURE.md is current')
         print(f'   main.tsx: {actual_main} lines | game.js: {actual_game} lines')
