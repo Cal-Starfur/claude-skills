@@ -1,10 +1,3 @@
-<!-- 
-  PROJECT CALENDAR — Cal-Starfur dev schedule
-  ============================================
-  To use: replace PASTE_YOUR_GITHUB_TOKEN_HERE below with your GitHub PAT token.
-  Token needs: repo (read) scope minimum.
-  Never commit the file with a real token in it.
--->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,700 +5,652 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cal's Dev Calendar</title>
 <style>
-  :root {
-    --bg: #0f0f11;
-    --surface: #1a1a1f;
-    --surface2: #222228;
-    --border: #2e2e38;
-    --text: #e8e6f0;
-    --muted: #6b6880;
-    --game: #4ade80;
-    --game-bg: #052010;
-    --game-border: #1a4d2a;
-    --skill: #818cf8;
-    --skill-bg: #0d0d2a;
-    --skill-border: #1e1e4a;
-    --fix: #fb923c;
-    --fix-bg: #1a0d00;
-    --fix-border: #3d2000;
-    --p1: #f87171;
-    --p2: #fbbf24;
-    --p3: #6b6880;
-    --done: #22c55e;
-    --font: 'SF Mono', 'Fira Code', monospace;
-    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    min-height: 100vh;
-    padding: 24px 16px 48px;
-  }
-
-  header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 28px;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .header-left h1 {
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: -0.5px;
-    color: var(--text);
-  }
-
-  .header-left p {
-    font-size: 13px;
-    color: var(--muted);
-    margin-top: 4px;
-  }
-
-  .sync-btn {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 13px;
-    cursor: pointer;
-    font-family: var(--sans);
-    transition: border-color 0.15s;
-    white-space: nowrap;
-  }
-  .sync-btn:hover { border-color: var(--skill); }
-  .sync-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  .status-bar {
-    font-size: 12px;
-    color: var(--muted);
-    font-family: var(--font);
-    margin-bottom: 20px;
-    min-height: 18px;
-  }
-  .status-bar.loading { color: var(--skill); }
-  .status-bar.error { color: var(--p1); }
-  .status-bar.ok { color: var(--done); }
-
-  .legend {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--muted);
-  }
-  .legend-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  .weeks { display: flex; flex-direction: column; gap: 32px; }
-
-  .week-label {
-    font-size: 11px;
-    font-family: var(--font);
-    color: var(--muted);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-
-  .days-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 12px;
-  }
-
-  .day-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-    min-height: 100px;
-  }
-
-  .day-card.today {
-    border-color: var(--skill);
-    box-shadow: 0 0 0 1px var(--skill) inset;
-  }
-
-  .day-card.rest {
-    opacity: 0.5;
-  }
-
-  .day-header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    margin-bottom: 12px;
-  }
-
-  .day-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .day-date {
-    font-size: 11px;
-    font-family: var(--font);
-    color: var(--muted);
-  }
-
-  .today-badge {
-    font-size: 10px;
-    background: var(--skill);
-    color: #fff;
-    padding: 2px 7px;
-    border-radius: 20px;
-    font-weight: 600;
-    margin-left: 8px;
-  }
-
-  .rest-label {
-    font-size: 12px;
-    color: var(--muted);
-    font-style: italic;
-  }
-
-  .tasks { display: flex; flex-direction: column; gap: 8px; }
-
-  .task {
-    border-radius: 8px;
-    padding: 10px 12px;
-    cursor: pointer;
-    transition: opacity 0.15s;
-    position: relative;
-  }
-
-  .task.game   { background: var(--game-bg);  border: 1px solid var(--game-border); }
-  .task.skill  { background: var(--skill-bg); border: 1px solid var(--skill-border); }
-  .task.fix    { background: var(--fix-bg);   border: 1px solid var(--fix-border); }
-  .task.done   { opacity: 0.45; }
-  .task.done .task-title { text-decoration: line-through; }
-
-  .task-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 4px;
-  }
-
-  .task-title {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text);
-    flex: 1;
-    line-height: 1.3;
-  }
-
-  .task-badges {
-    display: flex;
-    gap: 4px;
-    flex-shrink: 0;
-    align-items: center;
-  }
-
-  .badge {
-    font-size: 10px;
-    font-family: var(--font);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  .badge.game  { background: #052010; color: var(--game);  border: 1px solid var(--game-border); }
-  .badge.skill { background: #0d0d2a; color: var(--skill); border: 1px solid var(--skill-border); }
-  .badge.fix   { background: #1a0d00; color: var(--fix);   border: 1px solid var(--fix-border); }
-  .badge.p1    { background: #2a0505; color: var(--p1);    border: 1px solid #4d0f0f; }
-  .badge.p2    { background: #1a1000; color: var(--p2);    border: 1px solid #3d2800; }
-  .badge.p3    { background: #1a1a1f; color: var(--muted); border: 1px solid var(--border); }
-  .badge.effort-S { background: #051a05; color: #4ade80; border: 1px solid #1a4d1a; }
-  .badge.effort-M { background: #1a1000; color: #fbbf24; border: 1px solid #3d2800; }
-  .badge.effort-L { background: #2a0505; color: #f87171; border: 1px solid #4d0f0f; }
-
-  .task-desc {
-    font-size: 11px;
-    color: var(--muted);
-    line-height: 1.5;
-  }
-
-  .task-repo {
-    font-size: 10px;
-    font-family: var(--font);
-    color: var(--muted);
-    margin-top: 5px;
-    opacity: 0.7;
-  }
-
-  .check-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    border: 1.5px solid var(--border);
-    background: transparent;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px;
-    transition: all 0.15s;
-    color: transparent;
-    flex-shrink: 0;
-  }
-  .check-btn:hover { border-color: var(--done); color: var(--done); }
-  .task.done .check-btn { border-color: var(--done); background: var(--done); color: #fff; }
-
-  .empty-day {
-    font-size: 12px;
-    color: var(--muted);
-    font-style: italic;
-  }
-
-  .stats-row {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-  }
-
-  .stat {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 20px;
-    min-width: 100px;
-    text-align: center;
-  }
-
-  .stat-num {
-    font-size: 24px;
-    font-weight: 700;
-    font-family: var(--font);
-    color: var(--text);
-    display: block;
-  }
-
-  .stat-label {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 2px;
-    display: block;
-  }
-
-  .repo-pills {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-  }
-
-  .repo-pill {
-    font-size: 11px;
-    font-family: var(--font);
-    padding: 4px 10px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    background: var(--surface);
-  }
-
-  .repo-pill.active { border-color: var(--skill); color: var(--skill); }
-
-  @media (max-width: 600px) {
-    .days-grid { grid-template-columns: 1fr; }
-    .stats-row { gap: 10px; }
-    .stat { min-width: 80px; padding: 10px 14px; }
-  }
+:root{--bg:#0f0f11;--surface:#1a1a1f;--surface2:#222228;--border:#2e2e38;--text:#e8e6f0;--muted:#6b6880;--game:#4ade80;--game-bg:#052010;--game-border:#1a4d2a;--skill:#818cf8;--skill-bg:#0d0d2a;--skill-border:#1e1e4a;--fix:#fb923c;--fix-bg:#1a0d00;--fix-border:#3d2000;--p1:#f87171;--p2:#fbbf24;--p3:#6b6880;--done:#22c55e;--font:'SF Mono','Fira Code',monospace;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding:24px 16px 48px}
+header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
+.header-left h1{font-size:22px;font-weight:600;letter-spacing:-0.5px}
+.header-left p{font-size:13px;color:var(--muted);margin-top:4px}
+.sync-info{font-size:11px;font-family:var(--font);color:var(--muted);margin-bottom:20px}
+.stats-row{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 20px;text-align:center}
+.stat-num{font-size:24px;font-weight:700;font-family:var(--font);display:block}
+.stat-label{font-size:11px;color:var(--muted);margin-top:2px;display:block}
+.legend{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.weeks{display:flex;flex-direction:column;gap:32px}
+.week-section{}
+.week-label{font-size:11px;font-family:var(--font);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+.days-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.day-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;min-height:100px}
+.day-card.today{border-color:var(--skill);box-shadow:0 0 0 1px var(--skill) inset}
+.day-card.rest{opacity:.5}
+.day-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.day-name{font-size:13px;font-weight:600}
+.day-date{font-size:11px;font-family:var(--font);color:var(--muted)}
+.today-badge{font-size:10px;background:var(--skill);color:#fff;padding:2px 7px;border-radius:20px;font-weight:600;margin-left:8px}
+.rest-label{font-size:12px;color:var(--muted);font-style:italic}
+.tasks{display:flex;flex-direction:column;gap:8px}
+.task{border-radius:8px;padding:10px 12px;position:relative;transition:opacity .15s}
+.task.game{background:var(--game-bg);border:1px solid var(--game-border)}
+.task.skill{background:var(--skill-bg);border:1px solid var(--skill-border)}
+.task.fix{background:var(--fix-bg);border:1px solid var(--fix-border)}
+.task.done{opacity:.4}
+.task.done .task-title{text-decoration:line-through}
+.task-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.task-title{font-size:13px;font-weight:500;flex:1;line-height:1.3;padding-right:24px}
+.task-badges{display:flex;gap:4px;flex-shrink:0;align-items:center}
+.badge{font-size:10px;font-family:var(--font);padding:2px 6px;border-radius:4px;font-weight:600;white-space:nowrap}
+.badge.game{background:#052010;color:var(--game);border:1px solid var(--game-border)}
+.badge.skill{background:#0d0d2a;color:var(--skill);border:1px solid var(--skill-border)}
+.badge.fix{background:#1a0d00;color:var(--fix);border:1px solid var(--fix-border)}
+.badge.P1{background:#2a0505;color:var(--p1);border:1px solid #4d0f0f}
+.badge.P2{background:#1a1000;color:var(--p2);border:1px solid #3d2800}
+.badge.P3{background:#1a1a1f;color:var(--muted);border:1px solid var(--border)}
+.badge.effort-S{background:#051a05;color:#4ade80;border:1px solid #1a4d1a}
+.badge.effort-M{background:#1a1000;color:#fbbf24;border:1px solid #3d2800}
+.badge.effort-L{background:#2a0505;color:#f87171;border:1px solid #4d0f0f}
+.task-desc{font-size:11px;color:var(--muted);line-height:1.5}
+.task-repo{font-size:10px;font-family:var(--font);color:var(--muted);margin-top:5px;opacity:.7}
+.check-btn{position:absolute;top:10px;right:10px;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;transition:all .15s}
+.check-btn:hover{border-color:var(--done);color:var(--done)}
+.task.done .check-btn{border-color:var(--done);background:var(--done);color:#fff}
+.empty-day{font-size:12px;color:var(--muted);font-style:italic}
+@media(max-width:600px){.days-grid{grid-template-columns:1fr}.stats-row{gap:10px}.stat{min-width:80px;padding:10px 14px}}
 </style>
 </head>
 <body>
-
 <header>
   <div class="header-left">
     <h1>🪱 Dev Calendar</h1>
-    <p>Pulled live from GitHub · max 2 tasks/day · don't get overwhelmed</p>
+    <p>Max 2 tasks/day · pulled from GitHub · don't get overwhelmed</p>
   </div>
-  <button class="sync-btn" id="syncBtn" onclick="loadAll()">↻ Sync repos</button>
 </header>
-
-<div class="status-bar" id="status">Loading from GitHub...</div>
-
-<div class="stats-row" id="statsRow" style="display:none">
-  <div class="stat">
-    <span class="stat-num" id="statTotal">0</span>
-    <span class="stat-label">total tasks</span>
-  </div>
-  <div class="stat">
-    <span class="stat-num" id="statDone" style="color:var(--done)">0</span>
-    <span class="stat-label">done</span>
-  </div>
-  <div class="stat">
-    <span class="stat-num" id="statP1" style="color:var(--p1)">0</span>
-    <span class="stat-label">P1 open</span>
-  </div>
-  <div class="stat">
-    <span class="stat-num" id="statSkill" style="color:var(--skill)">0</span>
-    <span class="stat-label">skills left</span>
-  </div>
+<div class="sync-info">Last built: 2026-06-19 · 31 tasks total · Ask Claude to sync when repos update</div>
+<div class="stats-row">
+  <div class="stat"><span class="stat-num">31</span><span class="stat-label">total tasks</span></div>
+  <div class="stat"><span class="stat-num" style="color:var(--done)">0</span><span class="stat-label">done</span></div>
+  <div class="stat"><span class="stat-num" style="color:var(--p1)">11</span><span class="stat-label">P1 open</span></div>
+  <div class="stat"><span class="stat-num" style="color:var(--skill)">13</span><span class="stat-label">skills left</span></div>
 </div>
-
 <div class="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:var(--game)"></div> Game task</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--skill)"></div> Skill build</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--fix)"></div> Skill fix</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--p1)"></div> P1 urgent</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--p2)"></div> P2 soon</div>
-  <div class="legend-item">S = small (1 session) · M = medium · L = large</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--game)"></div>Game task</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--skill)"></div>Skill build</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--fix)"></div>Skill fix</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--p1)"></div>P1 urgent</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--p2)"></div>P2 soon</div>
+  <div class="legend-item">S=small · M=medium · L=large effort</div>
 </div>
-
-<div class="repo-pills" id="repoPills"></div>
-
-<div class="weeks" id="calendarRoot"></div>
-
+<div class="weeks"><div class="week-section">
+    <div class="week-label">This week · Jun 19 – Jun 25</div>
+    <div class="days-grid"><div class="day-card today">
+        <div class="day-header">
+          <span class="day-name">Friday<span class="today-badge">today</span></span>
+          <span class="day-date">Jun 19</span>
+        </div>
+        <div class="tasks"><div class="task skill" id="t-skill-session-summary">
+      <div class="task-top">
+        <div class="task-title">Build: session-summary skill</div>
+        <div class="task-badges">
+          <span class="badge skill">SKILL</span>
+          <span class="badge P1">P1</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Phase 1 skill from buildout plan.</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skill-session-summary',event)" title="Mark done">✓</button>
+    </div></div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Saturday</span>
+          <span class="day-date">Jun 20</span>
+        </div>
+        <div class="tasks"><div class="task skill" id="t-skill-preflight-checklist">
+      <div class="task-top">
+        <div class="task-title">Build: preflight-checklist skill</div>
+        <div class="task-badges">
+          <span class="badge skill">SKILL</span>
+          <span class="badge P1">P1</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Phase 1 skill from buildout plan.</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skill-preflight-checklist',event)" title="Mark done">✓</button>
+    </div></div>
+      </div><div class="day-card rest">
+        <div class="day-header">
+          <span class="day-name">Sunday</span>
+          <span class="day-date">Jun 21</span>
+        </div>
+        <div class="rest-label">Rest day 🌱</div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Monday</span>
+          <span class="day-date">Jun 22</span>
+        </div>
+        <div class="tasks"><div class="task skill" id="t-skill-rollback">
+      <div class="task-top">
+        <div class="task-title">Build: rollback skill</div>
+        <div class="task-badges">
+          <span class="badge skill">SKILL</span>
+          <span class="badge P1">P1</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Phase 1 skill from buildout plan.</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skill-rollback',event)" title="Mark done">✓</button>
+    </div><div class="task skill" id="t-skill-feature-spec">
+      <div class="task-top">
+        <div class="task-title">Build: feature-spec skill</div>
+        <div class="task-badges">
+          <span class="badge skill">SKILL</span>
+          <span class="badge P1">P1</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Phase 1 skill from buildout plan.</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skill-feature-spec',event)" title="Mark done">✓</button>
+    </div></div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Tuesday</span>
+          <span class="day-date">Jun 23</span>
+        </div>
+        <div class="tasks"><div class="task skill" id="t-skill-test-scenario">
+      <div class="task-top">
+        <div class="task-title">Build: test-scenario skill</div>
+        <div class="task-badges">
+          <span class="badge skill">SKILL</span>
+          <span class="badge P1">P1</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Phase 1 skill from buildout plan.</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skill-test-scenario',event)" title="Mark done">✓</button>
+    </div><div class="task skill" id="t-skill-tech-debt-tracker">
+      <div class="task-top">
+        <div class="task-title">Build: tech-debt-tracker skill</div>
+        <div class="task-badges">
+          <span class="badge skill">SKILL</span>
+          <span class="badge P1">P1</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Phase 1 skill from buildout plan.</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skill-tech-debt-tracker',event)" title="Mark done">✓</button>
+    </div></div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Wednesday</span>
+          <span class="day-date">Jun 24</span>
+        </div>
+        <div class="tasks"><div class="task game" id="t-perf-1">
+      <div class="task-top">
+        <div class="task-title">PERF-1: Trash chunks: 21k canvas ops/frame — pre-render fix ready</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P1">P1</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Trash chunks: 21k canvas ops/frame — pre-render fix ready</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('perf-1',event)" title="Mark done">✓</button>
+    </div><div class="task game" id="t-perf-2">
+      <div class="task-top">
+        <div class="task-title">PERF-2: pPath nested scans: up to 400k iterations/frame</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P1">P1</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">pPath nested scans: up to 400k iterations/frame</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('perf-2',event)" title="Mark done">✓</button>
+    </div></div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Thursday</span>
+          <span class="day-date">Jun 25</span>
+        </div>
+        <div class="tasks"><div class="task game" id="t-iss-13-bug-a">
+      <div class="task-top">
+        <div class="task-title">ISS-13 Bug A: Tunnel drains may not decrement `pooled` — check S20 fix</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P1">P1</span>
+          <span class="badge effort-S">S</span>
+        </div>
+      </div>
+      <div class="task-desc">Tunnel drains may not decrement `pooled` — check S20 fix</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('iss-13-bug-a',event)" title="Mark done">✓</button>
+    </div><div class="task fix" id="t-fix-png-canvas-art-optimizer">
+      <div class="task-top">
+        <div class="task-title">Fix: png-canvas-art-optimizer</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P1">P1</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Document the actual iteration loop and vision API approach</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('fix-png-canvas-art-optimizer',event)" title="Mark done">✓</button>
+    </div></div>
+      </div></div>
+  </div><div class="week-section">
+    <div class="week-label">Next week · Jun 26 – Jul 2</div>
+    <div class="days-grid"><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Friday</span>
+          <span class="day-date">Jun 26</span>
+        </div>
+        <div class="tasks"><div class="task fix" id="t-fix-wigglers-architecture">
+      <div class="task-top">
+        <div class="task-title">Fix: wigglers-architecture</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P1">P1</span>
+          <span class="badge effort-S">S</span>
+        </div>
+      </div>
+      <div class="task-desc">Auto-enforce github-sync pull at session start; remove hardcoded version</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('fix-wigglers-architecture',event)" title="Mark done">✓</button>
+    </div><div class="task game" id="t-perf-3">
+      <div class="task-top">
+        <div class="task-title">PERF-3: Blade fringe: 1,788 canvas calls/frame — easy offscreen fix</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Blade fringe: 1,788 canvas calls/frame — easy offscreen fix</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('perf-3',event)" title="Mark done">✓</button>
+    </div></div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Saturday</span>
+          <span class="day-date">Jun 27</span>
+        </div>
+        <div class="tasks"><div class="task game" id="t-perf-4">
+      <div class="task-top">
+        <div class="task-title">PERF-4: Debris + scraps: 19,200 canvas ops/frame</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Debris + scraps: 19,200 canvas ops/frame</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('perf-4',event)" title="Mark done">✓</button>
+    </div></div>
+      </div><div class="day-card rest">
+        <div class="day-header">
+          <span class="day-name">Sunday</span>
+          <span class="day-date">Jun 28</span>
+        </div>
+        <div class="rest-label">Rest day 🌱</div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Monday</span>
+          <span class="day-date">Jun 29</span>
+        </div>
+        <div class="tasks"><div class="task game" id="t-iss-3">
+      <div class="task-top">
+        <div class="task-title">ISS-3: 17 `_underscore` function names (S4 rename reverted)</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">17 `_underscore` function names (S4 rename reverted)</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('iss-3',event)" title="Mark done">✓</button>
+    </div><div class="task game" id="t-iss-4">
+      <div class="task-top">
+        <div class="task-title">ISS-4: `draw()` 2,022-line monolith (S5 split reverted)</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">`draw()` 2,022-line monolith (S5 split reverted)</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('iss-4',event)" title="Mark done">✓</button>
+    </div></div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Tuesday</span>
+          <span class="day-date">Jun 30</span>
+        </div>
+        <div class="tasks"><div class="task game" id="t-iss-5">
+      <div class="task-top">
+        <div class="task-title">ISS-5: 5 duplicate Snoo SVG helper pairs</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">5 duplicate Snoo SVG helper pairs</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('iss-5',event)" title="Mark done">✓</button>
+    </div><div class="task game" id="t-iss-6">
+      <div class="task-top">
+        <div class="task-title">ISS-6: 18 raw message strings in game.js (S2 reverted)</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">18 raw message strings in game.js (S2 reverted)</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('iss-6',event)" title="Mark done">✓</button>
+    </div></div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Wednesday</span>
+          <span class="day-date">Jul 1</span>
+        </div>
+        <div class="tasks"><div class="task game" id="t-iss-7">
+      <div class="task-top">
+        <div class="task-title">ISS-7: 4 dead functions in codebase</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">4 dead functions in codebase</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('iss-7',event)" title="Mark done">✓</button>
+    </div><div class="task game" id="t-feat-2">
+      <div class="task-top">
+        <div class="task-title">FEAT-2: Cross-device session continuity (design doc below)</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-L">L</span>
+        </div>
+      </div>
+      <div class="task-desc">Cross-device session continuity (design doc below)</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('feat-2',event)" title="Mark done">✓</button>
+    </div></div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Thursday</span>
+          <span class="day-date">Jul 2</span>
+        </div>
+        <div class="tasks"><div class="task game" id="t-feat-4">
+      <div class="task-top">
+        <div class="task-title">FEAT-4: Long-press drain/tunnel placement + sleep scoping + drain vi</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-L">L</span>
+        </div>
+      </div>
+      <div class="task-desc">Long-press drain/tunnel placement + sleep scoping + drain visual unification (design doc below)</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('feat-4',event)" title="Mark done">✓</button>
+    </div><div class="task fix" id="t-fix-save-skill-workflow">
+      <div class="task-top">
+        <div class="task-title">Fix: save-skill-workflow</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-S">S</span>
+        </div>
+      </div>
+      <div class="task-desc">Fix copy-paste error in example template</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('fix-save-skill-workflow',event)" title="Mark done">✓</button>
+    </div></div>
+      </div></div>
+  </div><div class="week-section">
+    <div class="week-label">Week 3 · Jul 3 – Jul 9</div>
+    <div class="days-grid"><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Friday</span>
+          <span class="day-date">Jul 3</span>
+        </div>
+        <div class="tasks"><div class="task fix" id="t-fix-lead-dev">
+      <div class="task-top">
+        <div class="task-title">Fix: lead-dev</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Make session log examples dynamic</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('fix-lead-dev',event)" title="Mark done">✓</button>
+    </div><div class="task fix" id="t-fix-contractor">
+      <div class="task-top">
+        <div class="task-title">Fix: contractor</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Clarify handoff boundary with lead-dev</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('fix-contractor',event)" title="Mark done">✓</button>
+    </div></div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Saturday</span>
+          <span class="day-date">Jul 4</span>
+        </div>
+        <div class="tasks"><div class="task game" id="t-iss-8">
+      <div class="task-top">
+        <div class="task-title">ISS-8: `DEBUG_PASSWORD` plaintext `'wigglers2025'`</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P3">P3</span>
+          <span class="badge effort-S">S</span>
+        </div>
+      </div>
+      <div class="task-desc">`DEBUG_PASSWORD` plaintext `'wigglers2025'`</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('iss-8',event)" title="Mark done">✓</button>
+    </div></div>
+      </div><div class="day-card rest">
+        <div class="day-header">
+          <span class="day-name">Sunday</span>
+          <span class="day-date">Jul 5</span>
+        </div>
+        <div class="rest-label">Rest day 🌱</div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Monday</span>
+          <span class="day-date">Jul 6</span>
+        </div>
+        <div class="tasks"><div class="task game" id="t-iss-9">
+      <div class="task-top">
+        <div class="task-title">ISS-9: `bornTs` not stamped on cocoon hatch respawn</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P3">P3</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">`bornTs` not stamped on cocoon hatch respawn</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('iss-9',event)" title="Mark done">✓</button>
+    </div><div class="task game" id="t-iss-10">
+      <div class="task-top">
+        <div class="task-title">ISS-10: `weeklyContrib` client-authoritative</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P3">P3</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">`weeklyContrib` client-authoritative</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('iss-10',event)" title="Mark done">✓</button>
+    </div></div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Tuesday</span>
+          <span class="day-date">Jul 7</span>
+        </div>
+        <div class="tasks"><div class="task game" id="t-iss-11">
+      <div class="task-top">
+        <div class="task-title">ISS-11: Weekly drain only fires while a player is open</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P3">P3</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Weekly drain only fires while a player is open</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('iss-11',event)" title="Mark done">✓</button>
+    </div><div class="task game" id="t-feat-1">
+      <div class="task-top">
+        <div class="task-title">FEAT-1: Cross-player tunnel clogging (design doc below)</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P3">P3</span>
+          <span class="badge effort-L">L</span>
+        </div>
+      </div>
+      <div class="task-desc">Cross-player tunnel clogging (design doc below)</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('feat-1',event)" title="Mark done">✓</button>
+    </div></div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Wednesday</span>
+          <span class="day-date">Jul 8</span>
+        </div>
+        <div class="tasks"><div class="task game" id="t-feat-3">
+      <div class="task-top">
+        <div class="task-title">FEAT-3: Passive bridge version capture (design doc below)</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P3">P3</span>
+          <span class="badge effort-L">L</span>
+        </div>
+      </div>
+      <div class="task-desc">Passive bridge version capture (design doc below)</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('feat-3',event)" title="Mark done">✓</button>
+    </div><div class="task fix" id="t-fix-github-sync">
+      <div class="task-top">
+        <div class="task-title">Fix: github-sync</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P3">P3</span>
+          <span class="badge effort-S">S</span>
+        </div>
+      </div>
+      <div class="task-desc">Remove hardcoded V62 from examples</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('fix-github-sync',event)" title="Mark done">✓</button>
+    </div></div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Thursday</span>
+          <span class="day-date">Jul 9</span>
+        </div>
+        <div class="tasks"><div class="task fix" id="t-fix-devvit-pipeline">
+      <div class="task-top">
+        <div class="task-title">Fix: devvit-pipeline</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P3">P3</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Add stale-warning note to devvit upload workaround</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('fix-devvit-pipeline',event)" title="Mark done">✓</button>
+    </div></div>
+      </div></div>
+  </div><div class="week-section">
+    <div class="week-label">Week 4 · Jul 10 – Jul 16</div>
+    <div class="days-grid"><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Friday</span>
+          <span class="day-date">Jul 10</span>
+        </div>
+        <div class="empty-day">All caught up ✓</div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Saturday</span>
+          <span class="day-date">Jul 11</span>
+        </div>
+        <div class="empty-day">All caught up ✓</div>
+      </div><div class="day-card rest">
+        <div class="day-header">
+          <span class="day-name">Sunday</span>
+          <span class="day-date">Jul 12</span>
+        </div>
+        <div class="rest-label">Rest day 🌱</div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Monday</span>
+          <span class="day-date">Jul 13</span>
+        </div>
+        <div class="empty-day">All caught up ✓</div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Tuesday</span>
+          <span class="day-date">Jul 14</span>
+        </div>
+        <div class="empty-day">All caught up ✓</div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Wednesday</span>
+          <span class="day-date">Jul 15</span>
+        </div>
+        <div class="empty-day">All caught up ✓</div>
+      </div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Thursday</span>
+          <span class="day-date">Jul 16</span>
+        </div>
+        <div class="empty-day">All caught up ✓</div>
+      </div></div>
+  </div></div>
 <script>
-const TOKEN = 'PASTE_YOUR_GITHUB_TOKEN_HERE';
-const TODAY = new Date('2026-06-19');
-
-// ── Repo registry — add new repos here ─────────────────────────────────────
-const REPOS = [
-  {
-    owner: 'Cal-Starfur',
-    repo: 'claude-skills',
-    label: 'claude-skills',
-    color: 'var(--skill)',
-    fetch: fetchSkillTasks
-  },
-  {
-    owner: 'Cal-Starfur',
-    repo: 'Wigglers_Room',
-    label: 'Wigglers_Room',
-    color: 'var(--game)',
-    fetch: fetchGameTasks
-  }
-];
-
-// ── Done state (persisted in localStorage) ─────────────────────────────────
-function getDone() {
-  try { return JSON.parse(localStorage.getItem('cal_done') || '{}'); } catch { return {}; }
-}
-function setDone(id, val) {
-  const d = getDone(); d[id] = val;
-  localStorage.setItem('cal_done', JSON.stringify(d));
-}
-
-// ── GitHub fetch helper ─────────────────────────────────────────────────────
-async function ghFetch(path) {
-  const r = await fetch(`https://api.github.com/repos/${path}`, {
-    headers: { Authorization: `token ${TOKEN}`, Accept: 'application/vnd.github.v3+json' }
-  });
-  if (!r.ok) throw new Error(`GitHub ${r.status}: ${path}`);
-  return r.json();
-}
-
-async function ghFile(owner, repo, filePath) {
-  const data = await ghFetch(`${owner}/${repo}/contents/${filePath}`);
-  return atob(data.content.replace(/\n/g, ''));
-}
-
-// ── Skill task extractor ────────────────────────────────────────────────────
-async function fetchSkillTasks() {
-  const tasks = [];
-
-  // Phase 1 skills from buildout plan
-  tasks.push(
-    { id: 'skill-session-summary', title: 'Build: session-summary skill', type: 'skill', priority: 'P1', effort: 'M', repo: 'claude-skills', desc: 'Plain-English what-changed after every session. No code — just what happened and push Y/N.' },
-    { id: 'skill-preflight', title: 'Build: preflight-checklist skill', type: 'skill', priority: 'P1', effort: 'M', repo: 'claude-skills', desc: 'Gate before any code change. Pull fresh files, confirm scope, READY or BLOCKED.' },
-    { id: 'skill-rollback', title: 'Build: rollback skill', type: 'skill', priority: 'P2', effort: 'M', repo: 'claude-skills', desc: 'Safe revert to last known-good commit. Shows what will be lost, waits for confirm.' }
-  );
-
-  // Phase 2 skills
-  tasks.push(
-    { id: 'skill-feature-spec', title: 'Build: feature-spec skill', type: 'skill', priority: 'P2', effort: 'S', repo: 'claude-skills', desc: 'Turn plain-English idea into a one-page ticket before touching code.' },
-    { id: 'skill-test-scenario', title: 'Build: test-scenario skill', type: 'skill', priority: 'P2', effort: 'S', repo: 'claude-skills', desc: 'Human-readable checklist to verify a feature works. Owner can run it without Claude.' },
-    { id: 'skill-debt-tracker', title: 'Build: tech-debt-tracker skill', type: 'skill', priority: 'P2', effort: 'S', repo: 'claude-skills', desc: 'Log shortcuts taken each session. Surface them at session start so nothing disappears.' }
-  );
-
-  // Skill fixes from baseline audit
-  tasks.push(
-    { id: 'fix-png-canvas', title: 'Fix: png-canvas-art-optimizer', type: 'fix', priority: 'P1', effort: 'S', repo: 'claude-skills', desc: 'Document the actual iteration loop and vision API approach. Score: 60 → target 80+.' },
-    { id: 'fix-save-skill', title: 'Fix: save-skill-workflow copy-paste error', type: 'fix', priority: 'P2', effort: 'S', repo: 'claude-skills', desc: 'Example template has copy-paste error in description field.' },
-    { id: 'fix-lead-dev', title: 'Fix: lead-dev dynamic session log', type: 'fix', priority: 'P2', effort: 'S', repo: 'claude-skills', desc: 'Session log examples hardcoded to wigglers/V62 — should be dynamic.' },
-    { id: 'fix-contractor', title: 'Fix: contractor/lead-dev handoff boundary', type: 'fix', priority: 'P2', effort: 'S', repo: 'claude-skills', desc: 'Trigger overlap between contractor and lead-dev causes double-loading ambiguity.' },
-    { id: 'fix-github-sync', title: 'Fix: github-sync hardcoded V62', type: 'fix', priority: 'P3', effort: 'S', repo: 'claude-skills', desc: 'Remove hardcoded version string from examples.' }
-  );
-
-  // Push missing skills to repo
-  tasks.push(
-    { id: 'push-lead-dev', title: 'Push: lead-dev to claude-skills repo', type: 'fix', priority: 'P2', effort: 'S', repo: 'claude-skills', desc: 'lead-dev, contractor, canvas-art-optimizer, png-canvas-art-optimizer not yet in repo.' }
-  );
-
-  return tasks;
-}
-
-// ── Game task extractor ─────────────────────────────────────────────────────
-async function fetchGameTasks() {
-  const tasks = [];
-
-  // P1 game tasks
-  tasks.push(
-    { id: 'perf-1', title: 'PERF-1: Trash chunks pre-render', type: 'game', priority: 'P1', effort: 'M', repo: 'Wigglers_Room', desc: '21k canvas ops/frame. Pre-render each chunk to OffscreenCanvas. Expected 50–100× speedup.' },
-    { id: 'perf-2', title: 'PERF-2: pPath Y-bucket index', type: 'game', priority: 'P1', effort: 'M', repo: 'Wigglers_Room', desc: 'Up to 400k iterations/frame. Y-bucket index reduces scans from 2000 pts to ~10-30 pts.' },
-    { id: 'iss-13a', title: 'ISS-13A: Verify pooled decrement fix', type: 'game', priority: 'P1', effort: 'S', repo: 'Wigglers_Room', desc: 'Confirm _teaHit block now decrements pooled for tunnel drops (S20 fix). Check ~line 4554.' }
-  );
-
-  // P2 game tasks
-  tasks.push(
-    { id: 'perf-3', title: 'PERF-3: Blade fringe pre-render', type: 'game', priority: 'P2', effort: 'S', repo: 'Wigglers_Room', desc: '1,788 canvas calls/frame for grass blades. Pre-render once in setup(), replace with drawImage.' },
-    { id: 'perf-4', title: 'PERF-4: Debris + scraps offscreen', type: 'game', priority: 'P2', effort: 'M', repo: 'Wigglers_Room', desc: '19,200 canvas ops/frame. Lower cap 300→80, pre-render combos, skip rotate for settled scraps.' },
-    { id: 'feat-2', title: 'FEAT-2: Cross-device session continuity', type: 'game', priority: 'P2', effort: 'L', repo: 'Wigglers_Room', desc: 'Same Reddit login on 2 devices = same worm. Device heartbeat + conflict overlay.' },
-    { id: 'feat-4', title: 'FEAT-4: Long-press drain/tunnel placement', type: 'game', priority: 'P2', effort: 'L', repo: 'Wigglers_Room', desc: 'Replace fixed drain flow with intentional long-press gesture. Fix up-drain direction bug first.' }
-  );
-
-  // P3 / future
-  tasks.push(
-    { id: 'iss-8', title: 'ISS-8: DEBUG_PASSWORD plaintext', type: 'game', priority: 'P3', effort: 'S', repo: 'Wigglers_Room', desc: "DEBUG_PASSWORD hardcoded as 'wigglers2025' in plaintext. Security cleanup." },
-    { id: 'feat-1', title: 'FEAT-1: Cross-player tunnel clogging', type: 'game', priority: 'P3', effort: 'L', repo: 'Wigglers_Room', desc: 'Broadcast clog state via Realtime. Full design doc in S20 commit 23da7ac.' },
-    { id: 'feat-3', title: 'FEAT-3: Passive bridge version capture', type: 'game', priority: 'P3', effort: 'S', repo: 'Wigglers_Room', desc: 'bridge3.js watches devvit upload output, captures version, syncs devvit.yaml automatically.' }
-  );
-
-  return tasks;
-}
-
-// ── Schedule builder (max 2 tasks/day, priority order) ─────────────────────
-function buildSchedule(allTasks) {
-  const priorityOrder = { P1: 0, P2: 1, P3: 2 };
-  const sorted = [...allTasks].sort((a, b) => {
-    const pd = priorityOrder[a.priority] - priorityOrder[b.priority];
-    if (pd !== 0) return pd;
-    // Within same priority: skills before fixes, game tasks mixed in
-    return 0;
-  });
-
-  // Build 4-week calendar from today
-  const schedule = [];
-  const DAYS_AHEAD = 28;
-  let taskIdx = 0;
-
-  for (let i = 0; i < DAYS_AHEAD; i++) {
-    const d = new Date(TODAY);
-    d.setDate(TODAY.getDate() + i);
-    const dayOfWeek = d.getDay(); // 0=Sun, 6=Sat
-    const isToday = i === 0;
-
-    // Rest days: Sunday always, Saturday light
-    const isRestDay = dayOfWeek === 0;
-    const isLightDay = dayOfWeek === 6;
-
-    // Today was already a heavy session — rest
-    const maxTasks = isRestDay ? 0 : isToday ? 1 : isLightDay ? 1 : 2;
-
-    const dayTasks = [];
-    let count = 0;
-    while (count < maxTasks && taskIdx < sorted.length) {
-      // Skip L tasks on light days
-      if (isLightDay && sorted[taskIdx].effort === 'L') { taskIdx++; continue; }
-      dayTasks.push(sorted[taskIdx]);
-      taskIdx++;
-      count++;
-    }
-
-    schedule.push({ date: new Date(d), tasks: dayTasks, isToday, isRestDay });
-  }
-
-  return schedule;
-}
-
-// ── Render ──────────────────────────────────────────────────────────────────
-function fmtDate(d) {
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-function fmtDay(d) {
-  return d.toLocaleDateString('en-US', { weekday: 'long' });
-}
-
-function renderCalendar(schedule, done) {
-  const root = document.getElementById('calendarRoot');
-  root.innerHTML = '';
-
-  // Group into weeks
-  const weeks = [];
-  for (let i = 0; i < schedule.length; i += 7) {
-    weeks.push(schedule.slice(i, i + 7));
-  }
-
-  weeks.forEach((week, wi) => {
-    const section = document.createElement('div');
-    const weekLabel = document.createElement('div');
-    weekLabel.className = 'week-label';
-    const startDate = week[0].date;
-    const endDate = week[week.length - 1].date;
-    const labels = ['This week', 'Next week', 'Week 3', 'Week 4'];
-    weekLabel.textContent = `${labels[wi] || `Week ${wi+1}`} · ${fmtDate(startDate)} – ${fmtDate(endDate)}`;
-    section.appendChild(weekLabel);
-
-    const grid = document.createElement('div');
-    grid.className = 'days-grid';
-
-    week.forEach(day => {
-      const card = document.createElement('div');
-      card.className = 'day-card' + (day.isToday ? ' today' : '') + (day.isRestDay ? ' rest' : '');
-
-      const header = document.createElement('div');
-      header.className = 'day-header';
-
-      const nameSpan = document.createElement('span');
-      nameSpan.className = 'day-name';
-      nameSpan.innerHTML = fmtDay(day.date) + (day.isToday ? '<span class="today-badge">today</span>' : '');
-
-      const dateSpan = document.createElement('span');
-      dateSpan.className = 'day-date';
-      dateSpan.textContent = fmtDate(day.date);
-
-      header.appendChild(nameSpan);
-      header.appendChild(dateSpan);
-      card.appendChild(header);
-
-      if (day.isRestDay) {
-        const r = document.createElement('div');
-        r.className = 'rest-label';
-        r.textContent = 'Rest day 🌱';
-        card.appendChild(r);
-      } else if (day.tasks.length === 0) {
-        const e = document.createElement('div');
-        e.className = 'empty-day';
-        e.textContent = 'All caught up ✓';
-        card.appendChild(e);
-      } else {
-        const taskList = document.createElement('div');
-        taskList.className = 'tasks';
-
-        day.tasks.forEach(task => {
-          const isDone = !!done[task.id];
-          const t = document.createElement('div');
-          t.className = `task ${task.type}` + (isDone ? ' done' : '');
-          t.innerHTML = `
-            <div class="task-top">
-              <div class="task-title">${task.title}</div>
-              <div class="task-badges">
-                <span class="badge ${task.type}">${task.type === 'game' ? 'GAME' : task.type === 'skill' ? 'SKILL' : 'FIX'}</span>
-                <span class="badge ${task.priority}">${task.priority}</span>
-                <span class="badge effort-${task.effort}">${task.effort}</span>
-              </div>
-            </div>
-            <div class="task-desc">${task.desc}</div>
-            <div class="task-repo">📁 ${task.repo}</div>
-            <button class="check-btn" onclick="toggleDone('${task.id}', event)" title="Mark done">✓</button>
-          `;
-          taskList.appendChild(t);
-        });
-
-        card.appendChild(taskList);
-      }
-
-      grid.appendChild(card);
-    });
-
-    section.appendChild(grid);
-    root.appendChild(section);
-  });
-}
-
-function updateStats(allTasks, done) {
-  const total = allTasks.length;
-  const doneCount = allTasks.filter(t => done[t.id]).length;
-  const p1Open = allTasks.filter(t => t.priority === 'P1' && !done[t.id]).length;
-  const skillLeft = allTasks.filter(t => (t.type === 'skill' || t.type === 'fix') && !done[t.id]).length;
-
-  document.getElementById('statTotal').textContent = total;
-  document.getElementById('statDone').textContent = doneCount;
-  document.getElementById('statP1').textContent = p1Open;
-  document.getElementById('statSkill').textContent = skillLeft;
-  document.getElementById('statsRow').style.display = 'flex';
-}
-
-function updateRepoPills(repos) {
-  const pills = document.getElementById('repoPills');
-  pills.innerHTML = repos.map(r =>
-    `<div class="repo-pill active" style="border-color:${r.color};color:${r.color}">⬡ ${r.label}</div>`
-  ).join('');
-}
-
-function toggleDone(id, e) {
+const DONE_KEY='cal_done_v2';
+function getDone(){try{return JSON.parse(localStorage.getItem(DONE_KEY)||'{}')}catch{return {}}}
+function toggleDone(id,e){
   e.stopPropagation();
-  const d = getDone();
-  d[id] = !d[id];
-  localStorage.setItem('cal_done', JSON.stringify(d));
-  // Re-render without refetch
-  const el = e.target.closest('.task');
-  if (el) {
-    el.classList.toggle('done', !!d[id]);
-  }
-  // Update stats
-  const allTasks = window._allTasks || [];
-  updateStats(allTasks, d);
+  const d=getDone();d[id]=!d[id];
+  localStorage.setItem(DONE_KEY,JSON.stringify(d));
+  const el=document.getElementById('t-'+id);
+  if(el)el.classList.toggle('done',!!d[id]);
 }
-
-// ── Main load ───────────────────────────────────────────────────────────────
-async function loadAll() {
-  const btn = document.getElementById('syncBtn');
-  const status = document.getElementById('status');
-  btn.disabled = true;
-  status.className = 'status-bar loading';
-  status.textContent = '⟳ Syncing repos...';
-
-  try {
-    const allTasks = [];
-    const loadedRepos = [];
-
-    for (const repo of REPOS) {
-      status.textContent = `⟳ Pulling ${repo.label}...`;
-      try {
-        const tasks = await repo.fetch();
-        allTasks.push(...tasks);
-        loadedRepos.push(repo);
-      } catch (err) {
-        console.warn(`Failed to load ${repo.label}:`, err);
-        // Continue with other repos
-      }
-    }
-
-    window._allTasks = allTasks;
-    const done = getDone();
-    const schedule = buildSchedule(allTasks);
-
-    updateRepoPills(loadedRepos);
-    renderCalendar(schedule, done);
-    updateStats(allTasks, done);
-
-    status.className = 'status-bar ok';
-    status.textContent = `✓ Synced ${loadedRepos.length} repos · ${allTasks.length} tasks · ${new Date().toLocaleTimeString()}`;
-  } catch (err) {
-    status.className = 'status-bar error';
-    status.textContent = `✗ Sync failed: ${err.message}`;
-    console.error(err);
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-loadAll();
+(function applyDone(){
+  const d=getDone();
+  Object.entries(d).forEach(([id,v])=>{
+    if(v){const el=document.getElementById('t-'+id);if(el)el.classList.add('done');}
+  });
+})();
 </script>
 </body>
 </html>
