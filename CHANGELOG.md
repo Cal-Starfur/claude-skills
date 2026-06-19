@@ -52,3 +52,13 @@ save-skill-workflow, canvas-art-optimizer, png-canvas-art-optimizer, skill-creat
 - Score: 94/100 — highest score in the ecosystem
 - Grade: Strong (enters at top of leaderboard)
 - Minor gap: example version strings flagged as stale — cosmetic only
+
+## 2026-06-19 - session-health live audit (v2)
+
+- Ran 6 live test cases against real GitHub repos and bridge relay
+- Found 5 bugs missed by static test: stdout vs output field, markdown in P1,
+  duplicate P1 line, wrong version source, bridge3.js crashing on 409
+- Fixed bridge3.js: retry loop on 409, catch-all keeps process alive
+- Redesigned version tracking: relay/version.json, bridge offline = warning not fail
+- Added critical vs warning classification in output
+- Score: 94 -> 97 | All 6 live tests pass
