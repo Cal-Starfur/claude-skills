@@ -185,6 +185,10 @@ Examples:
 6. Never commit token to the repo under any circumstances
 7. **Always run the lead-dev skill after connecting — never skip it, never wait to be asked**
 8. The approval gate is NON-NEGOTIABLE — no context, urgency, or prior permission from earlier in the session bypasses it
+9. 🚫 **SKILL PUSH RULE: If the file being pushed is a `SKILL.md`, immediately after pushing:**
+   - Write it to `/mnt/user-data/outputs/SKILL.md`
+   - Call `present_files` with that path
+   - Do this without being asked. No exceptions. The user needs the Save Skill button every time.
 
 ---
 
@@ -898,36 +902,6 @@ def cmd_push(args):
     if not errors:
         clear_staged()
         print("\nStaging area cleared. Ready for next commit.")
-
-    # ── Auto-increment devvit.yaml version (Wigglers_Room only) ──────────────
-    # Devvit bumps its internal version counter on every `devvit upload`.
-    # Since you upload after every push we do, we track it here automatically.
-    if not errors and config.get('repo') == 'Wigglers_Room':
-        try:
-            import re
-            devvit_yaml = gh.get_file('devvit.yaml')
-            current = devvit_yaml['content']
-            m = re.search(r'version:\s*(\d+)\.(\d+)\.(\d+)', current)
-            if m:
-                major, minor, patch = int(m.group(1)), int(m.group(2)), int(m.group(3))
-                new_patch = patch + 1
-                new_version = f"{major}.{minor}.{new_patch}"
-                new_content = re.sub(
-                    r'version:\s*\d+\.\d+\.\d+',
-                    f'version: {new_version}',
-                    current
-                )
-                gh.write_file(
-                    path='devvit.yaml',
-                    content=new_content,
-                    commit_message=f'Auto-bump devvit version {major}.{minor}.{patch} → {new_version}',
-                    branch=branch,
-                    sha=devvit_yaml['sha'],
-                )
-                print(f"\n✓ devvit.yaml auto-bumped: {major}.{minor}.{patch} → {new_version}")
-                print(f"  (matches Devvit portal version after your next upload)")
-        except Exception as e:
-            print(f"\n  devvit.yaml bump skipped: {e}")
 
     return results
 
