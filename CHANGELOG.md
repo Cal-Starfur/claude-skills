@@ -16,6 +16,17 @@ Tracks all skill changes across sessions. Newest entries at the top.
 
 ---
 
+## 2026-06-19 — project-calendar baseline audit
+
+- Built project-calendar skill from scratch this session
+- Ran live end-to-end test: pulled 31 tasks from 2 repos, scheduled 4 weeks, pushed to GitHub
+- Baseline audit score: 69/100 🟢 Good
+- 2 critical issues: silent repo failure fallback missing, sync_done.py reference is broken
+- 3 high priority fixes identified before next use
+- Audit saved: audits/2026-06-19-project-calendar-baseline.md
+
+---
+
 ## 2026-06-19 — Baseline Audit
 
 - Created `claude-skills` repo
