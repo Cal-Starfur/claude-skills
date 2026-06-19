@@ -4,6 +4,18 @@ Tracks all skill changes across sessions. Newest entries at the top.
 
 ---
 
+## 2026-06-19 — Gap Analysis + Buildout Plan
+
+- Ran full ecosystem gap analysis against risks of AI-assisted dev for non-fluent owner
+- Identified 3 high-priority gaps: session-summary, preflight-checklist, rollback
+- Identified 3 medium-priority gaps: feature-spec, test-scenario, tech-debt-tracker
+- Documented 3 existing risk zones: silent scope creep, stale context, no human verify
+- Created: audits/2026-06-19-gap-analysis.md
+- Created: planning/skill-buildout-plan.md
+- Build order established: Phase 1 (owner control) → Phase 2 (process quality)
+
+---
+
 ## 2026-06-19 — Baseline Audit
 
 - Created `claude-skills` repo
