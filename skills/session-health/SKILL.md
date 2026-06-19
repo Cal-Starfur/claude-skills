@@ -241,9 +241,9 @@ def check_bridge_and_version(token):
         try:
             outbox2, _ = gh_get_json(token, BRIDGE_REPO, 'relay/outbox.json', BRIDGE_OWNER)
             if outbox2.get('id') == ping_id:
-                if outbox2.get('ready') or outbox2.get('output') is not None:
-                    output = outbox2.get('output', '').strip()
-                    # Parse version from "version: 0.0.179"
+                if outbox2.get('ready') or outbox2.get('stdout') is not None or outbox2.get('output') is not None:
+                    # Bridge v3 stores result in stdout field
+                    output = (outbox2.get('stdout') or outbox2.get('output') or '').strip()
                     m = re.search(r'version:\s*([\d.]+)', output)
                     if m:
                         version = m.group(1)
@@ -252,7 +252,9 @@ def check_bridge_and_version(token):
                     elif output:
                         return 'online', None, f'Bridge alive but version parse failed: {output[:80]}'
                     else:
-                        return 'online', None, 'Bridge alive but empty output from devvit.yaml'
+                        stderr = (outbox2.get('stderr') or '').strip()
+                        detail = f'stderr: {stderr[:60]}' if stderr else f'exitCode: {outbox2.get("exitCode")}'
+                        return 'online', None, f'Bridge alive but empty stdout ({detail})'
         except:
             pass
 
@@ -531,12 +533,24 @@ def main():
     if not all_issues:
         print(f'\n✅ ALL CLEAR')
         print(f'   main.tsx: {actual_main} lines | game.js: {actual_game} lines')
-        print(f'   Devvit: {confirmed_version} (bridge confirmed)')
+        if confirmed_version:
+            print(f'   Devvit: {confirmed_version} (bridge confirmed)')
+        else:
+            print(f'   Devvit: unconfirmed (bridge alive but version read failed — check devvit.yaml path)')
         # Show P1
         pq = re.search(r'START HERE.*?(?=###|$)', arch, re.DOTALL)
         if pq:
-            lines = [l.strip() for l in pq.group(0).strip().split('\n') if l.strip()][:2]
-            print(f'\n📋 P1: {lines[0].replace("### ⚠ P1 — ", "").replace("START HERE: ", "")}')
+            lines = [l.strip() for l in pq.group(0).strip().split('\n') if l.strip()][:3]
+            p1_title = lines[0]
+            for strip in ['### ⚠ P1 — ', '### P1 — ', 'START HERE: ', '**', '⚠ ']:
+                p1_title = p1_title.replace(strip, '')
+            print(f'\n📋 P1: {p1_title.strip()}')
+            for l in lines[1:]:
+                clean = l.replace('**', '').strip()
+                if clean and not clean.startswith('#'):
+                    print(f'   {clean}')
+                    break
+            if False: print('')  # placeholder
             if len(lines) > 1:
                 print(f'   {lines[1]}')
     else:
@@ -572,5 +586,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 ```
 
