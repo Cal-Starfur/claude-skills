@@ -58,8 +58,9 @@ Each skill scored 0–100 across four dimensions:
 | save-skill-workflow | 70 | 72 | 80 | 65 | **72** |
 | canvas-art-optimizer | 75 | 70 | 65 | 60 | **68** |
 | png-canvas-art-optimizer | 65 | 60 | 55 | 58 | **60** |
+| session-health | 95 | 96 | 97 | 90 | **94** |
 
-**Average: 68/100** | Last audited: 2026-06-19
+**Average: 76/100** (incl. session-health) | Last audited: 2026-06-19
 
 ---
 
