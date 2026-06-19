@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cal's Dev Calendar</title>
 <style>
-:root{--bg:#0f0f11;--surface:#1a1a1f;--surface2:#222228;--border:#2e2e38;--text:#e8e6f0;--muted:#6b6880;--game:#4ade80;--game-bg:#052010;--game-border:#1a4d2a;--skill:#818cf8;--skill-bg:#0d0d2a;--skill-border:#1e1e4a;--fix:#fb923c;--fix-bg:#1a0d00;--fix-border:#3d2000;--p1:#f87171;--p2:#fbbf24;--p3:#6b6880;--done:#22c55e;--font:'SF Mono','Fira Code',monospace;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+:root{--bg:#0f0f11;--surface:#1a1a1f;--border:#2e2e38;--text:#e8e6f0;--muted:#6b6880;--game:#4ade80;--game-bg:#052010;--game-border:#1a4d2a;--skill:#818cf8;--skill-bg:#0d0d2a;--skill-border:#1e1e4a;--fix:#fb923c;--fix-bg:#1a0d00;--fix-border:#3d2000;--p1:#f87171;--p2:#fbbf24;--done:#22c55e;--font:'SF Mono','Fira Code',monospace;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding:24px 16px 48px}
 header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
@@ -20,7 +19,6 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
 .legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
 .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .weeks{display:flex;flex-direction:column;gap:32px}
-.week-section{}
 .week-label{font-size:11px;font-family:var(--font);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
 .days-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
 .day-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;min-height:100px}
@@ -30,7 +28,7 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
 .day-name{font-size:13px;font-weight:600}
 .day-date{font-size:11px;font-family:var(--font);color:var(--muted)}
 .today-badge{font-size:10px;background:var(--skill);color:#fff;padding:2px 7px;border-radius:20px;font-weight:600;margin-left:8px}
-.rest-label{font-size:12px;color:var(--muted);font-style:italic}
+.rest-label,.empty-day{font-size:12px;color:var(--muted);font-style:italic}
 .tasks{display:flex;flex-direction:column;gap:8px}
 .task{border-radius:8px;padding:10px 12px;position:relative;transition:opacity .15s}
 .task.game{background:var(--game-bg);border:1px solid var(--game-border)}
@@ -40,7 +38,7 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
 .task.done .task-title{text-decoration:line-through}
 .task-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
 .task-title{font-size:13px;font-weight:500;flex:1;line-height:1.3;padding-right:24px}
-.task-badges{display:flex;gap:4px;flex-shrink:0;align-items:center}
+.task-badges{display:flex;gap:4px;flex-shrink:0}
 .badge{font-size:10px;font-family:var(--font);padding:2px 6px;border-radius:4px;font-weight:600;white-space:nowrap}
 .badge.game{background:#052010;color:var(--game);border:1px solid var(--game-border)}
 .badge.skill{background:#0d0d2a;color:var(--skill);border:1px solid var(--skill-border)}
@@ -53,43 +51,34 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
 .badge.effort-L{background:#2a0505;color:#f87171;border:1px solid #4d0f0f}
 .task-desc{font-size:11px;color:var(--muted);line-height:1.5}
 .task-repo{font-size:10px;font-family:var(--font);color:var(--muted);margin-top:5px;opacity:.7}
-.check-btn{position:absolute;top:10px;right:10px;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;transition:all .15s}
+.check-btn{position:absolute;top:10px;right:10px;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border);background:transparent;cursor:pointer;font-size:10px;color:transparent;transition:all .15s}
 .check-btn:hover{border-color:var(--done);color:var(--done)}
 .task.done .check-btn{border-color:var(--done);background:var(--done);color:#fff}
-.empty-day{font-size:12px;color:var(--muted);font-style:italic}
-@media(max-width:600px){.days-grid{grid-template-columns:1fr}.stats-row{gap:10px}.stat{min-width:80px;padding:10px 14px}}
+@media(max-width:600px){.days-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header>
-  <div class="header-left">
-    <h1>🪱 Dev Calendar</h1>
-    <p>Max 2 tasks/day · pulled from GitHub · don't get overwhelmed</p>
-  </div>
-</header>
-<div class="sync-info">Last built: 2026-06-19 · 31 tasks total · Ask Claude to sync when repos update</div>
+<header><div class="header-left"><h1>🪱 Dev Calendar</h1><p>Max 2 tasks/day · pulled from GitHub · don't get overwhelmed</p></div></header>
+<div class="sync-info">Last built: 2026-06-19 · 43 tasks · Ask Claude to "sync the calendar" to update</div>
 <div class="stats-row">
-  <div class="stat"><span class="stat-num">31</span><span class="stat-label">total tasks</span></div>
+  <div class="stat"><span class="stat-num">43</span><span class="stat-label">total</span></div>
   <div class="stat"><span class="stat-num" style="color:var(--done)">0</span><span class="stat-label">done</span></div>
-  <div class="stat"><span class="stat-num" style="color:var(--p1)">11</span><span class="stat-label">P1 open</span></div>
-  <div class="stat"><span class="stat-num" style="color:var(--skill)">13</span><span class="stat-label">skills left</span></div>
+  <div class="stat"><span class="stat-num" style="color:var(--p1)">0</span><span class="stat-label">P1 open</span></div>
+  <div class="stat"><span class="stat-num" style="color:var(--skill)">0</span><span class="stat-label">skills left</span></div>
 </div>
 <div class="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:var(--game)"></div>Game task</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--skill)"></div>Skill build</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--fix)"></div>Skill fix</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--p1)"></div>P1 urgent</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--p2)"></div>P2 soon</div>
-  <div class="legend-item">S=small · M=medium · L=large effort</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--game)"></div>Game</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--skill)"></div>Skill</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--fix)"></div>Fix</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--p1)"></div>P1</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--p2)"></div>P2</div>
+  <div class="legend-item">S=small · M=medium · L=large</div>
 </div>
-<div class="weeks"><div class="week-section">
-    <div class="week-label">This week · Jun 19 – Jun 25</div>
-    <div class="days-grid"><div class="day-card today">
+<div class="weeks"><div class="week-section"><div class="week-label">This week · Jun 19 – Jun 25</div><div class="days-grid"><div class="day-card today">
         <div class="day-header">
           <span class="day-name">Friday<span class="today-badge">today</span></span>
           <span class="day-date">Jun 19</span>
-        </div>
-        <div class="tasks"><div class="task skill" id="t-skill-session-summary">
+        </div><div class="tasks"><div class="task skill" id="t-skills-skill-session-summary">
       <div class="task-top">
         <div class="task-title">Build: session-summary skill</div>
         <div class="task-badges">
@@ -100,14 +89,12 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Phase 1 skill from buildout plan.</div>
       <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skill-session-summary',event)" title="Mark done">✓</button>
-    </div></div>
-      </div><div class="day-card">
+      <button class="check-btn" onclick="toggleDone('skills-skill-session-summary',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Saturday</span>
           <span class="day-date">Jun 20</span>
-        </div>
-        <div class="tasks"><div class="task skill" id="t-skill-preflight-checklist">
+        </div><div class="tasks"><div class="task skill" id="t-skills-skill-preflight-checklist">
       <div class="task-top">
         <div class="task-title">Build: preflight-checklist skill</div>
         <div class="task-badges">
@@ -118,20 +105,16 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Phase 1 skill from buildout plan.</div>
       <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skill-preflight-checklist',event)" title="Mark done">✓</button>
-    </div></div>
-      </div><div class="day-card rest">
+      <button class="check-btn" onclick="toggleDone('skills-skill-preflight-checklist',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card rest">
         <div class="day-header">
           <span class="day-name">Sunday</span>
           <span class="day-date">Jun 21</span>
-        </div>
-        <div class="rest-label">Rest day 🌱</div>
-      </div><div class="day-card">
+        </div><div class="rest-label">Rest day 🌱</div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Monday</span>
           <span class="day-date">Jun 22</span>
-        </div>
-        <div class="tasks"><div class="task skill" id="t-skill-rollback">
+        </div><div class="tasks"><div class="task skill" id="t-skills-skill-rollback">
       <div class="task-top">
         <div class="task-title">Build: rollback skill</div>
         <div class="task-badges">
@@ -142,56 +125,8 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Phase 1 skill from buildout plan.</div>
       <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skill-rollback',event)" title="Mark done">✓</button>
-    </div><div class="task skill" id="t-skill-feature-spec">
-      <div class="task-top">
-        <div class="task-title">Build: feature-spec skill</div>
-        <div class="task-badges">
-          <span class="badge skill">SKILL</span>
-          <span class="badge P1">P1</span>
-          <span class="badge effort-M">M</span>
-        </div>
-      </div>
-      <div class="task-desc">Phase 1 skill from buildout plan.</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skill-feature-spec',event)" title="Mark done">✓</button>
-    </div></div>
-      </div><div class="day-card">
-        <div class="day-header">
-          <span class="day-name">Tuesday</span>
-          <span class="day-date">Jun 23</span>
-        </div>
-        <div class="tasks"><div class="task skill" id="t-skill-test-scenario">
-      <div class="task-top">
-        <div class="task-title">Build: test-scenario skill</div>
-        <div class="task-badges">
-          <span class="badge skill">SKILL</span>
-          <span class="badge P1">P1</span>
-          <span class="badge effort-M">M</span>
-        </div>
-      </div>
-      <div class="task-desc">Phase 1 skill from buildout plan.</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skill-test-scenario',event)" title="Mark done">✓</button>
-    </div><div class="task skill" id="t-skill-tech-debt-tracker">
-      <div class="task-top">
-        <div class="task-title">Build: tech-debt-tracker skill</div>
-        <div class="task-badges">
-          <span class="badge skill">SKILL</span>
-          <span class="badge P1">P1</span>
-          <span class="badge effort-M">M</span>
-        </div>
-      </div>
-      <div class="task-desc">Phase 1 skill from buildout plan.</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skill-tech-debt-tracker',event)" title="Mark done">✓</button>
-    </div></div>
-      </div><div class="day-card">
-        <div class="day-header">
-          <span class="day-name">Wednesday</span>
-          <span class="day-date">Jun 24</span>
-        </div>
-        <div class="tasks"><div class="task game" id="t-perf-1">
+      <button class="check-btn" onclick="toggleDone('skills-skill-rollback',event)" title="Mark done">✓</button>
+    </div><div class="task game" id="t-wigglers-perf-1">
       <div class="task-top">
         <div class="task-title">PERF-1: Trash chunks: 21k canvas ops/frame — pre-render fix ready</div>
         <div class="task-badges">
@@ -202,8 +137,12 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Trash chunks: 21k canvas ops/frame — pre-render fix ready</div>
       <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('perf-1',event)" title="Mark done">✓</button>
-    </div><div class="task game" id="t-perf-2">
+      <button class="check-btn" onclick="toggleDone('wigglers-perf-1',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Tuesday</span>
+          <span class="day-date">Jun 23</span>
+        </div><div class="tasks"><div class="task game" id="t-wigglers-perf-2">
       <div class="task-top">
         <div class="task-title">PERF-2: pPath nested scans: up to 400k iterations/frame</div>
         <div class="task-badges">
@@ -214,14 +153,8 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">pPath nested scans: up to 400k iterations/frame</div>
       <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('perf-2',event)" title="Mark done">✓</button>
-    </div></div>
-      </div><div class="day-card">
-        <div class="day-header">
-          <span class="day-name">Thursday</span>
-          <span class="day-date">Jun 25</span>
-        </div>
-        <div class="tasks"><div class="task game" id="t-iss-13-bug-a">
+      <button class="check-btn" onclick="toggleDone('wigglers-perf-2',event)" title="Mark done">✓</button>
+    </div><div class="task game" id="t-wigglers-iss-13-bug-a">
       <div class="task-top">
         <div class="task-title">ISS-13 Bug A: Tunnel drains may not decrement `pooled` — check S20 fix</div>
         <div class="task-badges">
@@ -232,8 +165,12 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Tunnel drains may not decrement `pooled` — check S20 fix</div>
       <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('iss-13-bug-a',event)" title="Mark done">✓</button>
-    </div><div class="task fix" id="t-fix-png-canvas-art-optimizer">
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-13-bug-a',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Wednesday</span>
+          <span class="day-date">Jun 24</span>
+        </div><div class="tasks"><div class="task fix" id="t-skills-fix-png-canvas-art-optimizer">
       <div class="task-top">
         <div class="task-title">Fix: png-canvas-art-optimizer</div>
         <div class="task-badges">
@@ -244,17 +181,8 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Document the actual iteration loop and vision API approach</div>
       <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('fix-png-canvas-art-optimizer',event)" title="Mark done">✓</button>
-    </div></div>
-      </div></div>
-  </div><div class="week-section">
-    <div class="week-label">Next week · Jun 26 – Jul 2</div>
-    <div class="days-grid"><div class="day-card">
-        <div class="day-header">
-          <span class="day-name">Friday</span>
-          <span class="day-date">Jun 26</span>
-        </div>
-        <div class="tasks"><div class="task fix" id="t-fix-wigglers-architecture">
+      <button class="check-btn" onclick="toggleDone('skills-fix-png-canvas-art-optimizer',event)" title="Mark done">✓</button>
+    </div><div class="task fix" id="t-skills-fix-wigglers-architecture">
       <div class="task-top">
         <div class="task-title">Fix: wigglers-architecture</div>
         <div class="task-badges">
@@ -265,8 +193,100 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Auto-enforce github-sync pull at session start; remove hardcoded version</div>
       <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('fix-wigglers-architecture',event)" title="Mark done">✓</button>
-    </div><div class="task game" id="t-perf-3">
+      <button class="check-btn" onclick="toggleDone('skills-fix-wigglers-architecture',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Thursday</span>
+          <span class="day-date">Jun 25</span>
+        </div><div class="tasks"><div class="task fix" id="t-skills-fix-remove-"auto-triggers"-claim-f">
+      <div class="task-top">
+        <div class="task-title">Fix: Remove "auto-triggers" claim from description OR enforce it in other skills</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P1">P1</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Trigger honesty — currently a false promise</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-remove-"auto-triggers"-claim-f',event)" title="Mark done">✓</button>
+    </div><div class="task fix" id="t-skills-fix-add-network-error-fallback-in-">
+      <div class="task-top">
+        <div class="task-title">Fix: Add network error fallback in pull_tasks.py with visible warning</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P1">P1</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Prevents silent partial calendar</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-add-network-error-fallback-in-',event)" title="Mark done">✓</button>
+    </div></div></div></div></div><div class="week-section"><div class="week-label">Next week · Jun 26 – Jul 2</div><div class="days-grid"><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Friday</span>
+          <span class="day-date">Jun 26</span>
+        </div><div class="tasks"><div class="task fix" id="t-skills-fix-remove-step-4-sync_done.py-ref">
+      <div class="task-top">
+        <div class="task-title">Fix: Remove Step 4 sync_done.py reference OR write the script</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P1">P1</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Broken workflow step</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-remove-step-4-sync_done.py-ref',event)" title="Mark done">✓</button>
+    </div><div class="task skill" id="t-skills-skill-feature-spec">
+      <div class="task-top">
+        <div class="task-title">Build: feature-spec skill</div>
+        <div class="task-badges">
+          <span class="badge skill">SKILL</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Phase 2 skill from buildout plan.</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skills-skill-feature-spec',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Saturday</span>
+          <span class="day-date">Jun 27</span>
+        </div><div class="tasks"><div class="task skill" id="t-skills-skill-test-scenario">
+      <div class="task-top">
+        <div class="task-title">Build: test-scenario skill</div>
+        <div class="task-badges">
+          <span class="badge skill">SKILL</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Phase 2 skill from buildout plan.</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skills-skill-test-scenario',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card rest">
+        <div class="day-header">
+          <span class="day-name">Sunday</span>
+          <span class="day-date">Jun 28</span>
+        </div><div class="rest-label">Rest day 🌱</div></div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Monday</span>
+          <span class="day-date">Jun 29</span>
+        </div><div class="tasks"><div class="task skill" id="t-skills-skill-tech-debt-tracker">
+      <div class="task-top">
+        <div class="task-title">Build: tech-debt-tracker skill</div>
+        <div class="task-badges">
+          <span class="badge skill">SKILL</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Phase 2 skill from buildout plan.</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skills-skill-tech-debt-tracker',event)" title="Mark done">✓</button>
+    </div><div class="task game" id="t-wigglers-perf-3">
       <div class="task-top">
         <div class="task-title">PERF-3: Blade fringe: 1,788 canvas calls/frame — easy offscreen fix</div>
         <div class="task-badges">
@@ -277,14 +297,12 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Blade fringe: 1,788 canvas calls/frame — easy offscreen fix</div>
       <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('perf-3',event)" title="Mark done">✓</button>
-    </div></div>
-      </div><div class="day-card">
+      <button class="check-btn" onclick="toggleDone('wigglers-perf-3',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card">
         <div class="day-header">
-          <span class="day-name">Saturday</span>
-          <span class="day-date">Jun 27</span>
-        </div>
-        <div class="tasks"><div class="task game" id="t-perf-4">
+          <span class="day-name">Tuesday</span>
+          <span class="day-date">Jun 30</span>
+        </div><div class="tasks"><div class="task game" id="t-wigglers-perf-4">
       <div class="task-top">
         <div class="task-title">PERF-4: Debris + scraps: 19,200 canvas ops/frame</div>
         <div class="task-badges">
@@ -295,20 +313,8 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Debris + scraps: 19,200 canvas ops/frame</div>
       <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('perf-4',event)" title="Mark done">✓</button>
-    </div></div>
-      </div><div class="day-card rest">
-        <div class="day-header">
-          <span class="day-name">Sunday</span>
-          <span class="day-date">Jun 28</span>
-        </div>
-        <div class="rest-label">Rest day 🌱</div>
-      </div><div class="day-card">
-        <div class="day-header">
-          <span class="day-name">Monday</span>
-          <span class="day-date">Jun 29</span>
-        </div>
-        <div class="tasks"><div class="task game" id="t-iss-3">
+      <button class="check-btn" onclick="toggleDone('wigglers-perf-4',event)" title="Mark done">✓</button>
+    </div><div class="task game" id="t-wigglers-iss-3">
       <div class="task-top">
         <div class="task-title">ISS-3: 17 `_underscore` function names (S4 rename reverted)</div>
         <div class="task-badges">
@@ -319,8 +325,12 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">17 `_underscore` function names (S4 rename reverted)</div>
       <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('iss-3',event)" title="Mark done">✓</button>
-    </div><div class="task game" id="t-iss-4">
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-3',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Wednesday</span>
+          <span class="day-date">Jul 1</span>
+        </div><div class="tasks"><div class="task game" id="t-wigglers-iss-4">
       <div class="task-top">
         <div class="task-title">ISS-4: `draw()` 2,022-line monolith (S5 split reverted)</div>
         <div class="task-badges">
@@ -331,14 +341,8 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">`draw()` 2,022-line monolith (S5 split reverted)</div>
       <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('iss-4',event)" title="Mark done">✓</button>
-    </div></div>
-      </div><div class="day-card">
-        <div class="day-header">
-          <span class="day-name">Tuesday</span>
-          <span class="day-date">Jun 30</span>
-        </div>
-        <div class="tasks"><div class="task game" id="t-iss-5">
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-4',event)" title="Mark done">✓</button>
+    </div><div class="task game" id="t-wigglers-iss-5">
       <div class="task-top">
         <div class="task-title">ISS-5: 5 duplicate Snoo SVG helper pairs</div>
         <div class="task-badges">
@@ -349,8 +353,12 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">5 duplicate Snoo SVG helper pairs</div>
       <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('iss-5',event)" title="Mark done">✓</button>
-    </div><div class="task game" id="t-iss-6">
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-5',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Thursday</span>
+          <span class="day-date">Jul 2</span>
+        </div><div class="tasks"><div class="task game" id="t-wigglers-iss-6">
       <div class="task-top">
         <div class="task-title">ISS-6: 18 raw message strings in game.js (S2 reverted)</div>
         <div class="task-badges">
@@ -361,14 +369,8 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">18 raw message strings in game.js (S2 reverted)</div>
       <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('iss-6',event)" title="Mark done">✓</button>
-    </div></div>
-      </div><div class="day-card">
-        <div class="day-header">
-          <span class="day-name">Wednesday</span>
-          <span class="day-date">Jul 1</span>
-        </div>
-        <div class="tasks"><div class="task game" id="t-iss-7">
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-6',event)" title="Mark done">✓</button>
+    </div><div class="task game" id="t-wigglers-iss-7">
       <div class="task-top">
         <div class="task-title">ISS-7: 4 dead functions in codebase</div>
         <div class="task-badges">
@@ -379,8 +381,12 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">4 dead functions in codebase</div>
       <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('iss-7',event)" title="Mark done">✓</button>
-    </div><div class="task game" id="t-feat-2">
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-7',event)" title="Mark done">✓</button>
+    </div></div></div></div></div><div class="week-section"><div class="week-label">Week 3 · Jul 3 – Jul 9</div><div class="days-grid"><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Friday</span>
+          <span class="day-date">Jul 3</span>
+        </div><div class="tasks"><div class="task game" id="t-wigglers-feat-2">
       <div class="task-top">
         <div class="task-title">FEAT-2: Cross-device session continuity (design doc below)</div>
         <div class="task-badges">
@@ -391,26 +397,8 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Cross-device session continuity (design doc below)</div>
       <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('feat-2',event)" title="Mark done">✓</button>
-    </div></div>
-      </div><div class="day-card">
-        <div class="day-header">
-          <span class="day-name">Thursday</span>
-          <span class="day-date">Jul 2</span>
-        </div>
-        <div class="tasks"><div class="task game" id="t-feat-4">
-      <div class="task-top">
-        <div class="task-title">FEAT-4: Long-press drain/tunnel placement + sleep scoping + drain vi</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-L">L</span>
-        </div>
-      </div>
-      <div class="task-desc">Long-press drain/tunnel placement + sleep scoping + drain visual unification (design doc below)</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('feat-4',event)" title="Mark done">✓</button>
-    </div><div class="task fix" id="t-fix-save-skill-workflow">
+      <button class="check-btn" onclick="toggleDone('wigglers-feat-2',event)" title="Mark done">✓</button>
+    </div><div class="task fix" id="t-skills-fix-save-skill-workflow">
       <div class="task-top">
         <div class="task-title">Fix: save-skill-workflow</div>
         <div class="task-badges">
@@ -421,17 +409,12 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Fix copy-paste error in example template</div>
       <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('fix-save-skill-workflow',event)" title="Mark done">✓</button>
-    </div></div>
-      </div></div>
-  </div><div class="week-section">
-    <div class="week-label">Week 3 · Jul 3 – Jul 9</div>
-    <div class="days-grid"><div class="day-card">
+      <button class="check-btn" onclick="toggleDone('skills-fix-save-skill-workflow',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card">
         <div class="day-header">
-          <span class="day-name">Friday</span>
-          <span class="day-date">Jul 3</span>
-        </div>
-        <div class="tasks"><div class="task fix" id="t-fix-lead-dev">
+          <span class="day-name">Saturday</span>
+          <span class="day-date">Jul 4</span>
+        </div><div class="tasks"><div class="task fix" id="t-skills-fix-lead-dev">
       <div class="task-top">
         <div class="task-title">Fix: lead-dev</div>
         <div class="task-badges">
@@ -442,8 +425,28 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Make session log examples dynamic</div>
       <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('fix-lead-dev',event)" title="Mark done">✓</button>
-    </div><div class="task fix" id="t-fix-contractor">
+      <button class="check-btn" onclick="toggleDone('skills-fix-lead-dev',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card rest">
+        <div class="day-header">
+          <span class="day-name">Sunday</span>
+          <span class="day-date">Jul 5</span>
+        </div><div class="rest-label">Rest day 🌱</div></div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Monday</span>
+          <span class="day-date">Jul 6</span>
+        </div><div class="tasks"><div class="task game" id="t-wigglers-feat-4">
+      <div class="task-top">
+        <div class="task-title">FEAT-4: Long-press drain/tunnel placement + sleep scoping + drain vi</div>
+        <div class="task-badges">
+          <span class="badge game">GAME</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-L">L</span>
+        </div>
+      </div>
+      <div class="task-desc">Long-press drain/tunnel placement + sleep scoping + drain visual unification (design doc below)</div>
+      <div class="task-repo">📁 Wigglers_Room</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-feat-4',event)" title="Mark done">✓</button>
+    </div><div class="task fix" id="t-skills-fix-contractor">
       <div class="task-top">
         <div class="task-title">Fix: contractor</div>
         <div class="task-badges">
@@ -454,14 +457,96 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Clarify handoff boundary with lead-dev</div>
       <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('fix-contractor',event)" title="Mark done">✓</button>
-    </div></div>
-      </div><div class="day-card">
+      <button class="check-btn" onclick="toggleDone('skills-fix-contractor',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card">
         <div class="day-header">
-          <span class="day-name">Saturday</span>
-          <span class="day-date">Jul 4</span>
+          <span class="day-name">Tuesday</span>
+          <span class="day-date">Jul 7</span>
+        </div><div class="tasks"><div class="task fix" id="t-skills-fix-namespace-task-ids-by-repo-(e.">
+      <div class="task-top">
+        <div class="task-title">Fix: Namespace task IDs by repo (e.g. `wigglers:perf-1`)</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
         </div>
-        <div class="tasks"><div class="task game" id="t-iss-8">
+      </div>
+      <div class="task-desc">Prevents done-state bleed</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-namespace-task-ids-by-repo-(e.',event)" title="Mark done">✓</button>
+    </div><div class="task fix" id="t-skills-fix-add-approve-before-push-gate-c">
+      <div class="task-top">
+        <div class="task-title">Fix: Add approve-before-push gate consistent with github-sync</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Ecosystem consistency</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-add-approve-before-push-gate-c',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Wednesday</span>
+          <span class="day-date">Jul 8</span>
+        </div><div class="tasks"><div class="task fix" id="t-skills-fix-fix-parse_skills-phase-1-2-pri">
+      <div class="task-top">
+        <div class="task-title">Fix: Fix parse_skills Phase 1/2 priority assignment</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Phase 2 skills showing as P1</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-fix-parse_skills-phase-1-2-pri',event)" title="Mark done">✓</button>
+    </div><div class="task fix" id="t-skills-fix-implement-l-task-spread-rule-i">
+      <div class="task-top">
+        <div class="task-title">Fix: Implement L-task spread rule in build_calendar.py</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Currently documented but ignored</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-implement-l-task-spread-rule-i',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Thursday</span>
+          <span class="day-date">Jul 9</span>
+        </div><div class="tasks"><div class="task fix" id="t-skills-fix-add-changelog-update-step-to-s">
+      <div class="task-top">
+        <div class="task-title">Fix: Add CHANGELOG update step to sync workflow</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Consistency with ecosystem</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-add-changelog-update-step-to-s',event)" title="Mark done">✓</button>
+    </div><div class="task fix" id="t-skills-fix-single-source-of-truth-for-rep">
+      <div class="task-top">
+        <div class="task-title">Fix: Single source of truth for repo registry (Python only, not duplicated in markdown)</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P2">P2</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Prevents drift</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-single-source-of-truth-for-rep',event)" title="Mark done">✓</button>
+    </div></div></div></div></div><div class="week-section"><div class="week-label">Week 4 · Jul 10 – Jul 16</div><div class="days-grid"><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Friday</span>
+          <span class="day-date">Jul 10</span>
+        </div><div class="tasks"><div class="task game" id="t-wigglers-iss-8">
       <div class="task-top">
         <div class="task-title">ISS-8: `DEBUG_PASSWORD` plaintext `'wigglers2025'`</div>
         <div class="task-badges">
@@ -472,20 +557,8 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">`DEBUG_PASSWORD` plaintext `'wigglers2025'`</div>
       <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('iss-8',event)" title="Mark done">✓</button>
-    </div></div>
-      </div><div class="day-card rest">
-        <div class="day-header">
-          <span class="day-name">Sunday</span>
-          <span class="day-date">Jul 5</span>
-        </div>
-        <div class="rest-label">Rest day 🌱</div>
-      </div><div class="day-card">
-        <div class="day-header">
-          <span class="day-name">Monday</span>
-          <span class="day-date">Jul 6</span>
-        </div>
-        <div class="tasks"><div class="task game" id="t-iss-9">
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-8',event)" title="Mark done">✓</button>
+    </div><div class="task game" id="t-wigglers-iss-9">
       <div class="task-top">
         <div class="task-title">ISS-9: `bornTs` not stamped on cocoon hatch respawn</div>
         <div class="task-badges">
@@ -496,8 +569,12 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">`bornTs` not stamped on cocoon hatch respawn</div>
       <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('iss-9',event)" title="Mark done">✓</button>
-    </div><div class="task game" id="t-iss-10">
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-9',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Saturday</span>
+          <span class="day-date">Jul 11</span>
+        </div><div class="tasks"><div class="task game" id="t-wigglers-iss-10">
       <div class="task-top">
         <div class="task-title">ISS-10: `weeklyContrib` client-authoritative</div>
         <div class="task-badges">
@@ -508,14 +585,16 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">`weeklyContrib` client-authoritative</div>
       <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('iss-10',event)" title="Mark done">✓</button>
-    </div></div>
-      </div><div class="day-card">
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-10',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card rest">
         <div class="day-header">
-          <span class="day-name">Tuesday</span>
-          <span class="day-date">Jul 7</span>
-        </div>
-        <div class="tasks"><div class="task game" id="t-iss-11">
+          <span class="day-name">Sunday</span>
+          <span class="day-date">Jul 12</span>
+        </div><div class="rest-label">Rest day 🌱</div></div><div class="day-card">
+        <div class="day-header">
+          <span class="day-name">Monday</span>
+          <span class="day-date">Jul 13</span>
+        </div><div class="tasks"><div class="task game" id="t-wigglers-iss-11">
       <div class="task-top">
         <div class="task-title">ISS-11: Weekly drain only fires while a player is open</div>
         <div class="task-badges">
@@ -526,8 +605,8 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Weekly drain only fires while a player is open</div>
       <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('iss-11',event)" title="Mark done">✓</button>
-    </div><div class="task game" id="t-feat-1">
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-11',event)" title="Mark done">✓</button>
+    </div><div class="task game" id="t-wigglers-feat-1">
       <div class="task-top">
         <div class="task-title">FEAT-1: Cross-player tunnel clogging (design doc below)</div>
         <div class="task-badges">
@@ -538,26 +617,12 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Cross-player tunnel clogging (design doc below)</div>
       <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('feat-1',event)" title="Mark done">✓</button>
-    </div></div>
-      </div><div class="day-card">
+      <button class="check-btn" onclick="toggleDone('wigglers-feat-1',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card">
         <div class="day-header">
-          <span class="day-name">Wednesday</span>
-          <span class="day-date">Jul 8</span>
-        </div>
-        <div class="tasks"><div class="task game" id="t-feat-3">
-      <div class="task-top">
-        <div class="task-title">FEAT-3: Passive bridge version capture (design doc below)</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P3">P3</span>
-          <span class="badge effort-L">L</span>
-        </div>
-      </div>
-      <div class="task-desc">Passive bridge version capture (design doc below)</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('feat-3',event)" title="Mark done">✓</button>
-    </div><div class="task fix" id="t-fix-github-sync">
+          <span class="day-name">Tuesday</span>
+          <span class="day-date">Jul 14</span>
+        </div><div class="tasks"><div class="task fix" id="t-skills-fix-github-sync">
       <div class="task-top">
         <div class="task-title">Fix: github-sync</div>
         <div class="task-badges">
@@ -568,14 +633,8 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Remove hardcoded V62 from examples</div>
       <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('fix-github-sync',event)" title="Mark done">✓</button>
-    </div></div>
-      </div><div class="day-card">
-        <div class="day-header">
-          <span class="day-name">Thursday</span>
-          <span class="day-date">Jul 9</span>
-        </div>
-        <div class="tasks"><div class="task fix" id="t-fix-devvit-pipeline">
+      <button class="check-btn" onclick="toggleDone('skills-fix-github-sync',event)" title="Mark done">✓</button>
+    </div><div class="task fix" id="t-skills-fix-devvit-pipeline">
       <div class="task-top">
         <div class="task-title">Fix: devvit-pipeline</div>
         <div class="task-badges">
@@ -586,71 +645,62 @@ header{display:flex;align-items:flex-start;justify-content:space-between;margin-
       </div>
       <div class="task-desc">Add stale-warning note to devvit upload workaround</div>
       <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('fix-devvit-pipeline',event)" title="Mark done">✓</button>
-    </div></div>
-      </div></div>
-  </div><div class="week-section">
-    <div class="week-label">Week 4 · Jul 10 – Jul 16</div>
-    <div class="days-grid"><div class="day-card">
-        <div class="day-header">
-          <span class="day-name">Friday</span>
-          <span class="day-date">Jul 10</span>
-        </div>
-        <div class="empty-day">All caught up ✓</div>
-      </div><div class="day-card">
-        <div class="day-header">
-          <span class="day-name">Saturday</span>
-          <span class="day-date">Jul 11</span>
-        </div>
-        <div class="empty-day">All caught up ✓</div>
-      </div><div class="day-card rest">
-        <div class="day-header">
-          <span class="day-name">Sunday</span>
-          <span class="day-date">Jul 12</span>
-        </div>
-        <div class="rest-label">Rest day 🌱</div>
-      </div><div class="day-card">
-        <div class="day-header">
-          <span class="day-name">Monday</span>
-          <span class="day-date">Jul 13</span>
-        </div>
-        <div class="empty-day">All caught up ✓</div>
-      </div><div class="day-card">
-        <div class="day-header">
-          <span class="day-name">Tuesday</span>
-          <span class="day-date">Jul 14</span>
-        </div>
-        <div class="empty-day">All caught up ✓</div>
-      </div><div class="day-card">
+      <button class="check-btn" onclick="toggleDone('skills-fix-devvit-pipeline',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Wednesday</span>
           <span class="day-date">Jul 15</span>
+        </div><div class="tasks"><div class="task fix" id="t-skills-fix-add-"what-should-i-work-on-tod">
+      <div class="task-top">
+        <div class="task-title">Fix: Add "what should I work on today" as trigger phrase</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P3">P3</span>
+          <span class="badge effort-M">M</span>
         </div>
-        <div class="empty-day">All caught up ✓</div>
-      </div><div class="day-card">
+      </div>
+      <div class="task-desc">More natural entry point</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-add-"what-should-i-work-on-tod',event)" title="Mark done">✓</button>
+    </div><div class="task fix" id="t-skills-fix-add-manual-task-injection-supp">
+      <div class="task-top">
+        <div class="task-title">Fix: Add manual task injection support</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P3">P3</span>
+          <span class="badge effort-M">M</span>
+        </div>
+      </div>
+      <div class="task-desc">Useful edge case</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-add-manual-task-injection-supp',event)" title="Mark done">✓</button>
+    </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Thursday</span>
           <span class="day-date">Jul 16</span>
+        </div><div class="tasks"><div class="task fix" id="t-skills-fix-add-last-synced-commit-referen">
+      <div class="task-top">
+        <div class="task-title">Fix: Add last-synced commit reference to calendar HTML footer</div>
+        <div class="task-badges">
+          <span class="badge fix">FIX</span>
+          <span class="badge P3">P3</span>
+          <span class="badge effort-M">M</span>
         </div>
-        <div class="empty-day">All caught up ✓</div>
-      </div></div>
-  </div></div>
+      </div>
+      <div class="task-desc">Debuggability</div>
+      <div class="task-repo">📁 claude-skills</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-add-last-synced-commit-referen',event)" title="Mark done">✓</button>
+    </div></div></div></div></div></div>
 <script>
-const DONE_KEY='cal_done_v2';
-function getDone(){try{return JSON.parse(localStorage.getItem(DONE_KEY)||'{}')}catch{return {}}}
+const K='cal_done_v2';
+function getDone(){try{return JSON.parse(localStorage.getItem(K)||'{}')}catch{return {}}}
 function toggleDone(id,e){
   e.stopPropagation();
   const d=getDone();d[id]=!d[id];
-  localStorage.setItem(DONE_KEY,JSON.stringify(d));
+  localStorage.setItem(K,JSON.stringify(d));
   const el=document.getElementById('t-'+id);
   if(el)el.classList.toggle('done',!!d[id]);
 }
-(function applyDone(){
-  const d=getDone();
-  Object.entries(d).forEach(([id,v])=>{
-    if(v){const el=document.getElementById('t-'+id);if(el)el.classList.add('done');}
-  });
-})();
+(function(){const d=getDone();Object.entries(d).forEach(([id,v])=>{if(v){const el=document.getElementById('t-'+id);if(el)el.classList.add('done');}});})();
 </script>
-</body>
-</html>
+</body></html>
