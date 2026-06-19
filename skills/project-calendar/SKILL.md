@@ -1,12 +1,13 @@
 ---
 name: project-calendar
-description: Maintains a live project calendar (tools/project-calendar.html) in the Cal-Starfur/claude-skills repo. Pulls open tasks from ALL registered repos, schedules them at max 1 task per repo per day so every project advances simultaneously. Load this skill whenever the user mentions the calendar, asks what's on the schedule, says "update the calendar", "sync the calendar", "what should I work on today", starts a new project repo, or finishes a session and wants to mark tasks done. Run a sync at the end of any session where new issues were opened or tasks were completed.
+description: Maintains a live project calendar (tools/project-calendar.html) in the Cal-Starfur/claude-skills repo. Pulls open tasks from ALL registered repos, schedules them at max 1 task per repo per day so every project advances simultaneously. Load this skill whenever the user mentions the calendar, asks what's on the schedule, says "update the calendar", "sync the calendar", "what should I work on today", starts a new project repo, or finishes a session and wants to mark tasks done. Run a sync at the end of any session where new issues were opened or tasks were completed. IMPORTANT: Cal sometimes clears multiple days of work in a single high-energy session — always offer a sync after any productive session so the calendar repacks from today. IMPORTANT: Calendar is locked to claude-skills and Wigglers_Room only until Wigglers Room launches — do not register any other repo (including Space-Cats-Game-2026) without checking FOCUS.md first.
 ---
 
 # Project Calendar Skill
 
 Maintains `tools/project-calendar.html` in `Cal-Starfur/claude-skills`.
 **Scheduling philosophy: 1 task per active repo per day. Every front advances. No burnout.**
+**Calendar is always rolling from today — never fixed dates. Sync after every productive session.**
 Never push a token to the repo. Always sanitize before commit.
 
 ---
@@ -34,8 +35,12 @@ Never push a token to the repo. Always sanitize before commit.
 | "update/sync the calendar" | Full sync — pull all repos, rebuild, push |
 | "what should I work on today" | Full sync, highlight today's tasks |
 | End of session where issues opened or closed | Full sync |
-| New repo added | Register it, full sync |
+| End of any session where 2+ tasks were completed | Offer a sync — Cal may have cleared multiple days |
+| New repo added | Check FOCUS.md first, then register and full sync |
 | "add X to the calendar" | Add manual task, rebuild, push |
+
+**After every productive session** — always ask:
+> "Want me to sync the calendar? Looks like you cleared [N] tasks today."
 
 ---
 
@@ -58,6 +63,61 @@ Cal-Starfur/Space-Cats-Game-2026 → parser: parse_game_audit
 
 Note: claude-skills has two lanes — `skills` (build/fix tasks) and `audits` (skill audit tasks).
 These are separate repo entries so both always get a daily slot.
+
+---
+
+## Focus Constraint (Pre-Launch)
+
+**Read FOCUS.md in the repo before registering any new repo.**
+
+Current status: **Pre-launch** — Wigglers Room not yet live.
+
+| Lane | Status |
+|---|---|
+| claude-skills (skills) | ✅ Active |
+| claude-skills (audits) | ✅ Active |
+| Wigglers_Room | ✅ Active |
+| Space-Cats-Game-2026 | 🔒 Locked — post-launch only |
+| Any new repo | 🔒 Locked — post-launch only |
+
+**Hard rule:** Do not add any new repo to the REGISTRY until Wigglers Room is live on Reddit
+with real players. If the user asks to add one, acknowledge their intent but remind them of
+this constraint and confirm they want to override it deliberately.
+
+**Launch gate** — when Wigglers Room goes live:
+1. Update FOCUS.md status to "Post-launch"
+2. Register Space-Cats-Game-2026 in REGISTRY
+3. Full sync
+4. New repos can be added one at a time from that point
+
+---
+
+## Cal's Work Style — The Over-Achiever Pattern
+
+Cal is sometimes a high-energy worker. When fixes are falling into place and momentum
+is good, a single session can clear what the calendar had scheduled across 2–4 days.
+
+**This is expected and good. The calendar adapts to it.**
+
+Rules for handling this:
+
+1. **The calendar is always rolling from today** — it repacks all remaining open tasks
+   starting from the current date every time a sync runs. There are no fixed dates,
+   no "missed" days, no backlog shame. Only tasks done and tasks still to do.
+
+2. **After any session where 2+ tasks were completed**, always prompt:
+   > "You cleared [N] tasks today — want me to sync the calendar so it reflects where you are?"
+
+3. **Never assume the current schedule is still valid** after a productive session.
+   A sync takes 30 seconds and keeps the schedule motivating rather than stale.
+
+4. **Slow days and fast days use the same system:**
+   - Slow day → 1 task per lane, keep the cadence
+   - Fast day → as many as fall into place, then sync
+   - The calendar never penalises momentum or rewards slowing down
+
+5. **If the user says they're on a roll**, do not interrupt to suggest stopping.
+   Help them finish what's in front of them, then sync at the end.
 
 ---
 
@@ -192,6 +252,9 @@ Pushed: CHANGELOG.md ✓
 5. Always update CHANGELOG on every push
 6. Namespace all task IDs by repo — never bare IDs
 7. When a new repo is added, run a full sync same session
+8. **Never add a new repo without checking FOCUS.md first**
+9. **Always offer a sync after any session where 2+ tasks were completed**
+10. **The calendar always repacks from today — never leave stale schedules in place**
 
 ---
 
