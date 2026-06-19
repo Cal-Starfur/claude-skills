@@ -34,3 +34,13 @@ save-skill-workflow, canvas-art-optimizer, png-canvas-art-optimizer, skill-creat
 - Added: PERF-1/PERF-2 (P1 perf issues), FEAT-1/FEAT-2 designs, S20 changes,
   full Devvit platform rules, coordinate system, rain removal, ISS-14 fix
 - Skill: wigglers-architecture rebuilt from Session 20 (was Session 8 snapshot)
+
+## 2026-06-19 - New skill: session-health
+
+- Built session-health skill with embedded 397-line health_check.py script
+- Checks 9 categories of drift: header, line counts, preview card, messages,
+  KV keys, session fields, globals, open issues, priority queue
+- Auto-fixes: session number, Devvit version, line counts (pushes to GitHub)
+- Post-session mode: bumps version/session after code ships
+- Tested live against Wigglers_Room — ALL CLEAR on first run
+- Integrates into session workflow before lead-dev and contractor
