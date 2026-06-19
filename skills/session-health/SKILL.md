@@ -288,8 +288,27 @@ def check_header(arch, audit, confirmed_version=None):
     if confirmed_version:
         arch_v = re.search(r'Devvit\s+([\d.]+)', arch)
         if arch_v and arch_v.group(1) != confirmed_version:
-            issues.append(f'Devvit version stale: arch says {arch_v.group(1)}, confirmed {confirmed_version}')
-            fixes.append(('devvit', arch_v.group(1), confirmed_version))
+            arch_ver = arch_v.group(1)
+            # Parse version tuples for direction comparison
+            def ver_tuple(v):
+                try: return tuple(int(x) for x in v.split('.'))
+                except: return (0,)
+            arch_t    = ver_tuple(arch_ver)
+            relay_t   = ver_tuple(confirmed_version)
+            if relay_t < arch_t:
+                # Relay is BEHIND arch — relay is probably stale, NOT arch.
+                # Warn loudly but DO NOT auto-fix arch down to relay value.
+                issues.append(
+                    f'⚠ RELAY STALE? relay/version.json says {confirmed_version} but arch says {arch_ver}. '
+                    f'Relay version is LOWER — arch probably correct. '
+                    f'Verify on developers.reddit.com before correcting either way. '
+                    f'Auto-fix BLOCKED to prevent downgrading correct docs.'
+                )
+                # No fixes.append — do not auto-correct in this direction
+            else:
+                # Relay is AHEAD of arch — arch is stale, safe to auto-fix up
+                issues.append(f'Devvit version stale: arch says {arch_ver}, confirmed {confirmed_version}')
+                fixes.append(('devvit', arch_ver, confirmed_version))
         elif not arch_v:
             issues.append('Devvit version missing from arch header')
 
@@ -612,6 +631,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 ```
 
