@@ -60,6 +60,11 @@ python3 /tmp/session-health/health_check.py --token <PAT> --fix
 
 **Token:** use the same GitHub PAT as github-sync — never store it
 
+**After every `devvit upload`:** the version is captured from stdout and stored in
+`relay/version.json` in the codespace-bridge repo. The health check reads it from
+there — no manual version tracking needed. Pattern it watches for:
+`Automatically bumped app version to: X.X.X`
+
 ---
 
 ## Step 2 — Read the Docs
@@ -203,65 +208,67 @@ def gh_put(token, repo, path, content, sha, message, owner=None):
 
 def check_bridge_and_version(token):
     """
-    The bridge is the ONLY reliable source of the real Devvit version.
+    Two-part check:
+    1. Liveness — echo ping confirms bridge is running (fast, no side effects)
+    2. Version  — reads relay/version.json written after each devvit upload
 
-    Returns:
-        (status, version_or_none, message)
-        status: 'online' | 'offline' | 'error'
-        version_or_none: e.g. '0.0.180' if confirmed, None if not
-        message: human-readable description
+    Version is stored by calling write_confirmed_version() after a successful upload.
+    The Reddit-assigned version appears in upload stdout as:
+    "Automatically bumped app version to: X.X.X"
+
+    Returns: (status, version_or_none, message)
     """
-    # Read current relay state
     try:
-        outbox, outbox_sha = gh_get_json(token, BRIDGE_REPO, 'relay/outbox.json', BRIDGE_OWNER)
-        inbox,  inbox_sha  = gh_get_json(token, BRIDGE_REPO, 'relay/inbox.json',  BRIDGE_OWNER)
+        outbox, _ = gh_get_json(token, BRIDGE_REPO, 'relay/outbox.json', BRIDGE_OWNER)
+        inbox, inbox_sha = gh_get_json(token, BRIDGE_REPO, 'relay/inbox.json', BRIDGE_OWNER)
     except Exception as e:
         return 'error', None, f'Cannot reach bridge relay: {e}'
 
-    # Send ping to confirm bridge is alive
-    ping_id  = f'health-ping-{int(time.time())}'
-    ping_cmd = {
-        'cmd': 'cat /workspaces/Wigglers_Room/devvit.yaml | grep "^version:"',
-        'id':  ping_id,
-        'cwd': '/workspaces/Wigglers_Room',
-        'ts':  datetime.now().isoformat(),
-    }
-
+    # Step 1 — Liveness ping
+    ping_id = f'health-ping-{int(time.time())}'
     try:
         gh_put(token, BRIDGE_REPO, 'relay/inbox.json',
-               json.dumps(ping_cmd, indent=2).encode(),
-               inbox_sha, f'Health check ping {ping_id}', BRIDGE_OWNER)
+               json.dumps({'cmd': 'echo bridge-ok', 'id': ping_id,
+                           'cwd': '/workspaces/Wigglers_Room',
+                           'ts': datetime.now().isoformat()}, indent=2).encode(),
+               inbox_sha, f'Health ping {ping_id}', BRIDGE_OWNER)
     except Exception as e:
-        return 'error', None, f'Could not write ping to inbox: {e}'
+        return 'error', None, f'Could not write ping: {e}'
 
-    # Poll outbox for up to 20s
+    bridge_alive = False
+    elapsed = 0
     deadline = time.time() + 20
     while time.time() < deadline:
         time.sleep(3)
         try:
-            outbox2, _ = gh_get_json(token, BRIDGE_REPO, 'relay/outbox.json', BRIDGE_OWNER)
-            if outbox2.get('id') == ping_id:
-                if outbox2.get('ready') or outbox2.get('stdout') is not None or outbox2.get('output') is not None:
-                    # Bridge v3 stores result in stdout field
-                    output = (outbox2.get('stdout') or outbox2.get('output') or '').strip()
-                    m = re.search(r'version:\s*([\d.]+)', output)
-                    if m:
-                        version = m.group(1)
-                        elapsed = int(20 - (deadline - time.time()))
-                        return 'online', version, f'Bridge alive ({elapsed}s) — Devvit version confirmed: {version}'
-                    elif output:
-                        return 'online', None, f'Bridge alive but version parse failed: {output[:80]}'
-                    else:
-                        stderr = (outbox2.get('stderr') or '').strip()
-                        detail = f'stderr: {stderr[:60]}' if stderr else f'exitCode: {outbox2.get("exitCode")}'
-                        return 'online', None, f'Bridge alive but empty stdout ({detail})'
+            o2, _ = gh_get_json(token, BRIDGE_REPO, 'relay/outbox.json', BRIDGE_OWNER)
+            if o2.get('id') == ping_id:
+                stdout = (o2.get('stdout') or o2.get('output') or '').strip()
+                if 'bridge-ok' in stdout or o2.get('exitCode') == 0:
+                    bridge_alive = True
+                    elapsed = int(20 - (deadline - time.time()))
+                    break
         except:
             pass
 
-    # No response
-    return 'offline', None, 'Bridge did not respond within 20s — likely offline'
+    if not bridge_alive:
+        return 'offline', None, 'Bridge did not respond to ping within 20s'
 
-# ── Doc checks ────────────────────────────────────────────────────────────────
+    # Step 2 — Read stored version from relay/version.json
+    try:
+        vdata, _ = gh_get_json(token, BRIDGE_REPO, 'relay/version.json', BRIDGE_OWNER)
+        version = vdata.get('version')
+        ts = vdata.get('ts', '')[:10]
+        if version:
+            return 'online', version, f'Bridge alive ({elapsed}s) — Devvit {version} (uploaded: {ts})'
+    except:
+        pass  # version.json not yet created
+
+    return 'online', None, (
+        f'Bridge alive ({elapsed}s) — version unknown. '
+        f'Run write_confirmed_version() after next upload.'
+    )
+
 
 def check_header(arch, audit, confirmed_version=None):
     issues = []
@@ -427,6 +434,29 @@ def post_session_update(token, session_num, devvit_version):
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 
+
+def write_confirmed_version(token, version):
+    """
+    Call this after a successful devvit upload to store the confirmed version.
+    Parse from stdout: "Automatically bumped app version to: X.X.X"
+    """
+    import re as _re
+    from datetime import datetime as _dt
+    m = _re.search(r'bumped app version to:\s*([\d.]+)', version)
+    v = m.group(1) if m else version
+    try:
+        _, sha = gh_get_json(token, BRIDGE_REPO, 'relay/version.json', BRIDGE_OWNER)
+    except:
+        sha = None
+    payload = {'version': v, 'ts': _dt.now().isoformat()}
+    url = f'https://api.github.com/repos/{BRIDGE_OWNER}/{BRIDGE_REPO}/contents/relay/version.json'
+    data = {'message': f'Version confirmed: {v}', 'content': base64.b64encode(json.dumps(payload, indent=2).encode()).decode()}
+    if sha: data['sha'] = sha
+    req = urllib.request.Request(url, data=json.dumps(data).encode(), headers=gh_headers(token), method='PUT')
+    with urllib.request.urlopen(req) as r:
+        result = json.loads(r.read())
+        return v, result['commit']['sha'][:7]
+
 def main():
     parser = argparse.ArgumentParser(description='Wigglers Room Session Health Check')
     parser.add_argument('--token', required=True)
@@ -543,16 +573,16 @@ def main():
             lines = [l.strip() for l in pq.group(0).strip().split('\n') if l.strip()][:3]
             p1_title = lines[0]
             for strip in ['### ⚠ P1 — ', '### P1 — ', 'START HERE: ', '**', '⚠ ']:
-                p1_title = p1_title.replace(strip, '')
-            print(f'\n📋 P1: {p1_title.strip()}')
+                p1_title = p1_title.replace(strip, '').strip()
+            print(f'\n📋 P1: {p1_title}')
+            # Show first non-heading, non-empty description line (strip markdown bold)
+            shown = False
             for l in lines[1:]:
-                clean = l.replace('**', '').strip()
-                if clean and not clean.startswith('#'):
+                clean = re.sub(r'\*\*', '', l).strip()
+                if clean and not clean.startswith('#') and not shown:
                     print(f'   {clean}')
+                    shown = True
                     break
-            if False: print('')  # placeholder
-            if len(lines) > 1:
-                print(f'   {lines[1]}')
     else:
         doc_issues = [i for i in all_issues if 'HARD FAIL' not in i]
         hard_fails = [i for i in all_issues if 'HARD FAIL' in i]
