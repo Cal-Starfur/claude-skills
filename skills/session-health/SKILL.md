@@ -3,6 +3,26 @@ name: session-health
 description: Load this skill at the start of EVERY Wigglers Room session, before touching any code. Runs an automated health check that pulls live files from GitHub, cross-checks GAME_ARCHITECTURE.md against the actual code, reports any drift, and auto-fixes stale session numbers, Devvit versions, and line counts. If bridge3.js is offline, displays the start command and waits up to 5 minutes for it to come online — Claude never asks the user to re-run, it polls automatically. Also runs a post-session update to keep all docs current after code changes ship. Triggers when the user says anything about Wigglers Room, game.js, PERF-1, the audit, or starting a new session. This is the agent that keeps all the docs honest so Claude never works from stale information.
 ---
 
+## ⚠ MANDATORY — After ANY Change to This Skill
+
+**Every time this skill's health_check.py or SKILL.md is modified:**
+1. Write the updated skill to `/mnt/user-data/outputs/SKILL.md`
+2. Call `present_files` immediately — no exceptions, no waiting to be asked
+
+```bash
+# Always run this after patching:
+python3 -c "
+from pathlib import Path
+skill = Path('/mnt/skills/user/session-health/SKILL.md').read_text()
+Path('/mnt/user-data/outputs/SKILL.md').write_text(skill)
+print('✓ Skill ready for Save Skill button')
+"
+```
+
+This is not optional. If you pushed a patch and did not present_files, you broke the workflow.
+
+---
+
 # Session Health Agent — Wigglers Room
 
 **Runs at the start of every session. No exceptions.**
