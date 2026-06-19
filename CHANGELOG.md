@@ -4,6 +4,15 @@ Tracks all skill changes across sessions. Newest entries at the top.
 
 ---
 
+## 2026-06-19 — Focus constraint set
+
+- Added FOCUS.md — strategic constraint locking calendar to 2 repos until Wigglers Room launches
+- Active lanes: claude-skills (skills + audits), Wigglers_Room
+- Locked out: Space-Cats-Game-2026 and any new repos until post-launch
+- Claude must check FOCUS.md before registering any new repo to the calendar
+
+---
+
 ## 2026-06-19 — Calendar sync
 
 - 55 tasks across 3 lanes (Skills: 25 open, Audits: 12 open, Wigglers Room: 18 open)
