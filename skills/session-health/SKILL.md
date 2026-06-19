@@ -15,10 +15,11 @@ Never touch code until this clears.
 - Pulls `GAME_ARCHITECTURE.md`, `WIGGLERS_AUDIT.md`, `main.tsx`, `game.js`, `devvit.yaml` fresh
 - Checks 9 categories of drift against live code
 - Auto-fixes: session number, Devvit version, line counts
-- If bridge offline: shows start command, **polls every 15s for up to 5 minutes** until it comes online
-- Flags: ghost messages, stale priority queue, closed issues still listed as open, missing globals
+- Bridge offline = **warning only**, session proceeds — version confirms after first upload
+- Flags critical drift (would cause bad edits) separately from informational warnings
+- Auto-fixes: session number, Devvit version from relay/version.json, line counts
+- Version captured automatically from `devvit upload` stdout → stored in relay/version.json
 - After session: bumps session number, Devvit version, updates priority queue
-- **Never asks the user to re-run** — waits and detects automatically
 
 ---
 
@@ -357,11 +358,17 @@ def check_kv_and_fields(arch, game_js):
     return issues
 
 def check_priority_queue(arch):
+    """
+    Returns (critical_issues, warnings)
+    critical = would cause Claude to work on wrong thing or break code
+    warnings = stale info but won't cause bad edits
+    """
     issues = []
+    # Critical: wrong P1 means Claude starts on completed/wrong work
     if 'START HERE: ISS-14' in arch:
-        issues.append('Priority queue: ISS-14 still listed as P1 (closed S20)')
+        issues.append('CRITICAL: Priority queue shows ISS-14 as P1 (closed S20) — Claude will work on done task')
     if 'PERF-1' not in arch:
-        issues.append('Priority queue: PERF-1 not listed (should be P1)')
+        issues.append('CRITICAL: PERF-1 not in priority queue — Claude won\'t know the real P1')
     return issues
 
 def check_preview(arch, main_tsx):
@@ -500,44 +507,21 @@ def main():
         print(f'  ✗ Failed: {e}')
         sys.exit(1)
 
-    # ── Bridge check + version confirmation ───────────────────────────────────
-    # Bridge is the ONLY source of confirmed Devvit version.
-    # If offline: tell user to start it, then poll until it comes up.
-    # Claude cannot start the bridge — it runs in the user's Codespace.
-    # But Claude CAN wait for it without making the user re-run anything.
+    # ── Bridge check (informational — not a hard fail) ──────────────────────
+    # Bridge liveness = nice to know for deploys, not a session blocker.
+    # Version = captured after uploads, reported if known, skipped if not.
+    # Neither blocks the session — only critical doc drift does.
 
-    print('\nChecking bridge3.js + confirming Devvit version...')
+    print('\nChecking bridge3.js...')
     bridge_status, confirmed_version, bridge_msg = check_bridge_and_version(token)
 
     if bridge_status == 'online':
         print(f'  ✓ {bridge_msg}')
     else:
-        err_label = 'OFFLINE' if bridge_status == 'offline' else 'ERROR'
-        print(f'  ✗ BRIDGE {err_label} — {bridge_msg}')
-        print(f'')
-        print(f'  Bridge must be running in your Codespace to confirm the Devvit version.')
-        print(f'  Start it:')
-        print(f'    export BRIDGE_TOKEN=<your-github-pat>')
-        print(f'    node ~/bridge3.js')
-        print(f'')
-        print(f'  Waiting up to 5 minutes for bridge to come online...')
-        print(f'  (start it now — Claude will detect it automatically)')
-
-        # Poll every 15s for up to 5 minutes
-        wait_deadline = time.time() + 300
-        poll_count = 0
-        while time.time() < wait_deadline:
-            time.sleep(15)
-            poll_count += 1
-            remaining = int((wait_deadline - time.time()) / 60)
-            print(f'  [{poll_count * 15}s] Still waiting... ({remaining}m left)', flush=True)
-            bridge_status, confirmed_version, bridge_msg = check_bridge_and_version(token)
-            if bridge_status == 'online':
-                print(f'  ✓ Bridge came online! {bridge_msg}')
-                break
-        else:
-            print(f'  ✗ Bridge did not come online within 5 minutes.')
-            print(f'  ✗ DEVVIT VERSION UNCONFIRMED — proceeding with doc checks only.')
+        err_label = 'offline' if bridge_status == 'offline' else 'error'
+        print(f'  ⚠ Bridge {err_label} — {bridge_msg}')
+        print(f'  → Start it: export BRIDGE_TOKEN=<pat> && node ~/bridge3.js')
+        print(f'  → Version will confirm automatically after first upload this session')
 
     # ── Run all checks ────────────────────────────────────────────────────────
     print('\nRunning checks...')
@@ -555,18 +539,23 @@ def main():
     all_issues = h_issues + lc_issues + g_issues + m_issues + kv_issues + pq_issues + pc_issues
     all_fixes  = h_fixes
 
-    # Bridge offline is always a hard fail — append last so it stands out
-    if bridge_status != 'online':
-        all_issues.append(f'HARD FAIL: Bridge {bridge_status} — Devvit version unconfirmed')
+    # Classify: critical (would cause bad edits) vs warnings (stale but harmless)
+    # Critical: wrong P1, ghost messages that don't exist in code, stale session number
+    # Warning: line counts off, minor global missing, version unknown
+
+    # Bridge offline = informational warning only, not a session blocker
+    # Version confirms itself after first upload — no need to gate on it
 
     # ── Report ────────────────────────────────────────────────────────────────
     if not all_issues:
         print(f'\n✅ ALL CLEAR')
         print(f'   main.tsx: {actual_main} lines | game.js: {actual_game} lines')
         if confirmed_version:
-            print(f'   Devvit: {confirmed_version} (bridge confirmed)')
+            print(f'   Devvit: {confirmed_version} (confirmed from last upload)')
+        elif bridge_status == 'online':
+            print(f'   Devvit: unknown — will confirm after first upload this session')
         else:
-            print(f'   Devvit: unconfirmed (bridge alive but version read failed — check devvit.yaml path)')
+            print(f'   Devvit: unknown — bridge offline (start bridge3.js to track versions)')
         # Show P1
         pq = re.search(r'START HERE.*?(?=###|$)', arch, re.DOTALL)
         if pq:
@@ -587,18 +576,25 @@ def main():
         doc_issues = [i for i in all_issues if 'HARD FAIL' not in i]
         hard_fails = [i for i in all_issues if 'HARD FAIL' in i]
 
-        if doc_issues:
-            print(f'\n⚠️  DOC DRIFT ({len(doc_issues)} issue(s)):')
-            for i in doc_issues:
+        # Separate critical from informational
+        critical = [i for i in doc_issues if i.startswith('CRITICAL:')]
+        warnings = [i for i in doc_issues if not i.startswith('CRITICAL:')]
+
+        if critical:
+            print(f'\n🔴 CRITICAL DRIFT ({len(critical)}) — fix before coding:')
+            for i in critical:
+                print(f'  · {i.replace("CRITICAL: ", "")}')
+
+        if warnings:
+            print(f'\n⚠️  DOC DRIFT ({len(warnings)}) — informational:')
+            for i in warnings:
                 print(f'  · {i}')
 
         if hard_fails:
-            print(f'\n🔴 HARD FAIL:')
+            print(f'\n🔴 CRITICAL DOC ISSUES:')
             for i in hard_fails:
                 print(f'  · {i.replace("HARD FAIL: ", "")}')
-            print(f'\n  Do NOT update version numbers without bridge confirmation.')
-            print(f'  Start bridge: export BRIDGE_TOKEN=<pat> && node ~/bridge3.js')
-            print(f'  Then re-run this check.')
+            print(f'\n  These must be fixed before code work — they would cause bad edits.')
 
         if args.fix and doc_issues:
             print(f'\n🔧 Auto-fixing doc drift...')
