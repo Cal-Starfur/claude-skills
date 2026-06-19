@@ -1,6 +1,6 @@
 ---
 name: session-health
-description: Load this skill at the start of EVERY Wigglers Room session, before touching any code. Runs an automated health check that pulls live files from GitHub, cross-checks GAME_ARCHITECTURE.md against the actual code, reports any drift, and auto-fixes stale session numbers, Devvit versions, and line counts. Also runs a post-session update to keep all docs current after code changes ship. Triggers when the user says anything about Wigglers Room, game.js, PERF-1, the audit, or starting a new session. This is the agent that keeps all the docs honest so Claude never works from stale information.
+description: Load this skill at the start of EVERY Wigglers Room session, before touching any code. Runs an automated health check that pulls live files from GitHub, cross-checks GAME_ARCHITECTURE.md against the actual code, reports any drift, and auto-fixes stale session numbers, Devvit versions, and line counts. If bridge3.js is offline, displays the start command and waits up to 5 minutes for it to come online — Claude never asks the user to re-run, it polls automatically. Also runs a post-session update to keep all docs current after code changes ship. Triggers when the user says anything about Wigglers Room, game.js, PERF-1, the audit, or starting a new session. This is the agent that keeps all the docs honest so Claude never works from stale information.
 ---
 
 # Session Health Agent — Wigglers Room
@@ -15,8 +15,10 @@ Never touch code until this clears.
 - Pulls `GAME_ARCHITECTURE.md`, `WIGGLERS_AUDIT.md`, `main.tsx`, `game.js`, `devvit.yaml` fresh
 - Checks 9 categories of drift against live code
 - Auto-fixes: session number, Devvit version, line counts
+- If bridge offline: shows start command, **polls every 15s for up to 5 minutes** until it comes online
 - Flags: ghost messages, stale priority queue, closed issues still listed as open, missing globals
 - After session: bumps session number, Devvit version, updates priority queue
+- **Never asks the user to re-run** — waits and detects automatically
 
 ---
 
@@ -51,8 +53,10 @@ python3 /tmp/session-health/health_check.py --token <PAT> --fix
 ```
 
 - `--fix` auto-pushes corrections for session number, Devvit version, line counts
+- If bridge is offline: displays start command, then **waits up to 5 minutes polling every 15s**
+- Claude never asks the user to re-run — it detects the bridge coming online automatically
 - All-clear → proceed to code work
-- Drift found → review flagged items, fix manually if needed, then proceed
+- Hard fail (bridge never came up) → version unconfirmed, doc fixes still applied
 
 **Token:** use the same GitHub PAT as github-sync — never store it
 
@@ -465,18 +469,43 @@ def main():
         sys.exit(1)
 
     # ── Bridge check + version confirmation ───────────────────────────────────
+    # Bridge is the ONLY source of confirmed Devvit version.
+    # If offline: tell user to start it, then poll until it comes up.
+    # Claude cannot start the bridge — it runs in the user's Codespace.
+    # But Claude CAN wait for it without making the user re-run anything.
+
     print('\nChecking bridge3.js + confirming Devvit version...')
     bridge_status, confirmed_version, bridge_msg = check_bridge_and_version(token)
 
     if bridge_status == 'online':
         print(f'  ✓ {bridge_msg}')
-    elif bridge_status == 'offline':
-        print(f'  ✗ BRIDGE OFFLINE — {bridge_msg}')
-        print(f'  → Start it: export BRIDGE_TOKEN=<pat> && node ~/bridge3.js')
-        print(f'  ✗ DEVVIT VERSION UNCONFIRMED — cannot update arch without bridge')
     else:
-        print(f'  ✗ BRIDGE ERROR — {bridge_msg}')
-        print(f'  ✗ DEVVIT VERSION UNCONFIRMED')
+        err_label = 'OFFLINE' if bridge_status == 'offline' else 'ERROR'
+        print(f'  ✗ BRIDGE {err_label} — {bridge_msg}')
+        print(f'')
+        print(f'  Bridge must be running in your Codespace to confirm the Devvit version.')
+        print(f'  Start it:')
+        print(f'    export BRIDGE_TOKEN=<your-github-pat>')
+        print(f'    node ~/bridge3.js')
+        print(f'')
+        print(f'  Waiting up to 5 minutes for bridge to come online...')
+        print(f'  (start it now — Claude will detect it automatically)')
+
+        # Poll every 15s for up to 5 minutes
+        wait_deadline = time.time() + 300
+        poll_count = 0
+        while time.time() < wait_deadline:
+            time.sleep(15)
+            poll_count += 1
+            remaining = int((wait_deadline - time.time()) / 60)
+            print(f'  [{poll_count * 15}s] Still waiting... ({remaining}m left)', flush=True)
+            bridge_status, confirmed_version, bridge_msg = check_bridge_and_version(token)
+            if bridge_status == 'online':
+                print(f'  ✓ Bridge came online! {bridge_msg}')
+                break
+        else:
+            print(f'  ✗ Bridge did not come online within 5 minutes.')
+            print(f'  ✗ DEVVIT VERSION UNCONFIRMED — proceeding with doc checks only.')
 
     # ── Run all checks ────────────────────────────────────────────────────────
     print('\nRunning checks...')
