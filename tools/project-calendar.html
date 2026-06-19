@@ -1,698 +1,664 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Cal's Dev Calendar</title>
 <style>
-:root{--bg:#0f0f11;--surface:#1a1a1f;--border:#2e2e38;--text:#e8e6f0;--muted:#6b6880;--game:#4ade80;--game-bg:#052010;--game-border:#1a4d2a;--skill:#818cf8;--skill-bg:#0d0d2a;--skill-border:#1e1e4a;--fix:#fb923c;--fix-bg:#1a0d00;--fix-border:#3d2000;--p1:#f87171;--p2:#fbbf24;--done:#22c55e;--font:'SF Mono','Fira Code',monospace;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+:root{--bg:#0f0f11;--surface:#1a1a1f;--border:#2e2e38;--text:#e8e6f0;--muted:#6b6880;--done:#22c55e;--p1:#f87171;--p2:#fbbf24;--font:'SF Mono','Fira Code',monospace;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding:24px 16px 48px}
-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
-.header-left h1{font-size:22px;font-weight:600;letter-spacing:-0.5px}
-.header-left p{font-size:13px;color:var(--muted);margin-top:4px}
-.sync-info{font-size:11px;font-family:var(--font);color:var(--muted);margin-bottom:20px}
-.stats-row{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
-.stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 20px;text-align:center}
-.stat-num{font-size:24px;font-weight:700;font-family:var(--font);display:block}
-.stat-label{font-size:11px;color:var(--muted);margin-top:2px;display:block}
-.legend{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap}
-.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
-.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.weeks{display:flex;flex-direction:column;gap:32px}
-.week-label{font-size:11px;font-family:var(--font);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
-.days-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
-.day-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;min-height:100px}
-.day-card.today{border-color:var(--skill);box-shadow:0 0 0 1px var(--skill) inset}
-.day-card.rest{opacity:.5}
-.day-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);padding:24px 16px 48px}
+header{margin-bottom:24px}
+h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
+.subtitle{font-size:13px;color:var(--muted);margin-top:4px}
+.sync-info{font-size:11px;font-family:var(--font);color:var(--muted);margin:12px 0 20px}
+.stats-row{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 18px;text-align:center}
+.stat-num{font-size:22px;font-weight:700;font-family:var(--font);display:block}
+.stat-label{font-size:11px;color:var(--muted);display:block;margin-top:2px}
+.lane-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.lane-pill{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid;background:transparent}
+.weeks{display:flex;flex-direction:column;gap:28px}
+.week-label{font-size:11px;font-family:var(--font);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+.days-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.day-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}
+.day-card.today{border-color:#818cf8;box-shadow:0 0 0 1px #818cf8 inset}
+.day-card.rest{opacity:.4}
+.day-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .day-name{font-size:13px;font-weight:600}
+.day-right{display:flex;align-items:center;gap:6px}
 .day-date{font-size:11px;font-family:var(--font);color:var(--muted)}
-.today-badge{font-size:10px;background:var(--skill);color:#fff;padding:2px 7px;border-radius:20px;font-weight:600;margin-left:8px}
-.rest-label,.empty-day{font-size:12px;color:var(--muted);font-style:italic}
-.tasks{display:flex;flex-direction:column;gap:8px}
-.task{border-radius:8px;padding:10px 12px;position:relative;transition:opacity .15s}
-.task.game{background:var(--game-bg);border:1px solid var(--game-border)}
-.task.skill{background:var(--skill-bg);border:1px solid var(--skill-border)}
-.task.fix{background:var(--fix-bg);border:1px solid var(--fix-border)}
-.task.done{opacity:.4}
+.today-badge{font-size:10px;background:#818cf8;color:#fff;padding:2px 7px;border-radius:20px;font-weight:600;margin-left:6px}
+.count-badge{font-size:10px;background:var(--border);color:var(--muted);padding:2px 6px;border-radius:10px;font-family:var(--font)}
+.rest-label{font-size:12px;color:var(--muted);font-style:italic}
+.tasks{display:flex;flex-direction:column;gap:7px}
+.task{border-radius:8px;padding:9px 11px;position:relative}
+.task.done{opacity:.35}
 .task.done .task-title{text-decoration:line-through}
-.task-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
-.task-title{font-size:13px;font-weight:500;flex:1;line-height:1.3;padding-right:24px}
-.task-badges{display:flex;gap:4px;flex-shrink:0}
-.badge{font-size:10px;font-family:var(--font);padding:2px 6px;border-radius:4px;font-weight:600;white-space:nowrap}
-.badge.game{background:#052010;color:var(--game);border:1px solid var(--game-border)}
-.badge.skill{background:#0d0d2a;color:var(--skill);border:1px solid var(--skill-border)}
-.badge.fix{background:#1a0d00;color:var(--fix);border:1px solid var(--fix-border)}
-.badge.P1{background:#2a0505;color:var(--p1);border:1px solid #4d0f0f}
-.badge.P2{background:#1a1000;color:var(--p2);border:1px solid #3d2800}
-.badge.P3{background:#1a1a1f;color:var(--muted);border:1px solid var(--border)}
-.badge.effort-S{background:#051a05;color:#4ade80;border:1px solid #1a4d1a}
-.badge.effort-M{background:#1a1000;color:#fbbf24;border:1px solid #3d2800}
-.badge.effort-L{background:#2a0505;color:#f87171;border:1px solid #4d0f0f}
-.task-desc{font-size:11px;color:var(--muted);line-height:1.5}
-.task-repo{font-size:10px;font-family:var(--font);color:var(--muted);margin-top:5px;opacity:.7}
-.check-btn{position:absolute;top:10px;right:10px;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border);background:transparent;cursor:pointer;font-size:10px;color:transparent;transition:all .15s}
+.lane-tag{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px;opacity:.8}
+.task-title{font-size:12px;font-weight:500;line-height:1.35;padding-right:22px;margin-bottom:5px}
+.task-meta{display:flex;gap:4px;margin-bottom:4px}
+.pill{font-size:10px;font-family:var(--font);padding:1px 6px;border-radius:4px;border:1px solid;font-weight:600}
+.task-desc{font-size:11px;color:var(--muted);line-height:1.45}
+.check-btn{position:absolute;top:9px;right:9px;width:17px;height:17px;border-radius:50%;border:1.5px solid var(--border);background:transparent;cursor:pointer;font-size:9px;color:transparent;transition:all .15s}
 .check-btn:hover{border-color:var(--done);color:var(--done)}
 .task.done .check-btn{border-color:var(--done);background:var(--done);color:#fff}
 @media(max-width:600px){.days-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<header><div class="header-left"><h1>🪱 Dev Calendar</h1><p>Max 2 tasks/day · pulled from GitHub · don't get overwhelmed</p></div></header>
-<div class="sync-info">Last built: 2026-06-19 · 43 tasks · Ask Claude to "sync the calendar" to update</div>
+<header>
+  <h1>🪱 Dev Calendar</h1>
+  <div class="subtitle">1 task per repo per day · every front advances · no burnout</div>
+</header>
+<div class="sync-info">Last built: 2026-06-19 · 55 tasks across 3 lanes · say "sync the calendar" to update</div>
 <div class="stats-row">
-  <div class="stat"><span class="stat-num">43</span><span class="stat-label">total</span></div>
+  <div class="stat"><span class="stat-num">55</span><span class="stat-label">total</span></div>
   <div class="stat"><span class="stat-num" style="color:var(--done)">0</span><span class="stat-label">done</span></div>
-  <div class="stat"><span class="stat-num" style="color:var(--p1)">0</span><span class="stat-label">P1 open</span></div>
-  <div class="stat"><span class="stat-num" style="color:var(--skill)">0</span><span class="stat-label">skills left</span></div>
+  <div class="stat"><span class="stat-num" style="color:var(--p1)">12</span><span class="stat-label">P1 open</span></div>
+  <div class="stat"><span class="stat-num">3</span><span class="stat-label">active lanes</span></div>
 </div>
-<div class="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:var(--game)"></div>Game</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--skill)"></div>Skill</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--fix)"></div>Fix</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--p1)"></div>P1</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--p2)"></div>P2</div>
-  <div class="legend-item">S=small · M=medium · L=large</div>
-</div>
+<div class="lane-pills"><div class="lane-pill" style="border-color:#818cf833;color:#818cf8">Skills · 25 open</div><div class="lane-pill" style="border-color:#86efac33;color:#86efac">Audits · 12 open</div><div class="lane-pill" style="border-color:#4ade8033;color:#4ade80">Wigglers Room · 18 open</div></div>
 <div class="weeks"><div class="week-section"><div class="week-label">This week · Jun 19 – Jun 25</div><div class="days-grid"><div class="day-card today">
         <div class="day-header">
           <span class="day-name">Friday<span class="today-badge">today</span></span>
-          <span class="day-date">Jun 19</span>
-        </div><div class="tasks"><div class="task skill" id="t-skills-skill-session-summary">
-      <div class="task-top">
-        <div class="task-title">Build: session-summary skill</div>
-        <div class="task-badges">
-          <span class="badge skill">SKILL</span>
-          <span class="badge P1">P1</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jun 19</span><span class="count-badge">3</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-skill-session-summary" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Build: session-summary skill</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
       <div class="task-desc">Phase 1 skill from buildout plan.</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-skill-session-summary',event)" title="Mark done">✓</button>
+      <button class="check-btn" onclick="toggleDone('skills-skill-session-summary',event)">✓</button>
+    </div><div class="task" id="t-audits-audit-png-canvas-art-optimizer" style="background:#0a1a0a;border:1px solid #1a3a1a">
+      <div class="lane-tag" style="color:#86efac">Audits</div>
+      <div class="task-title">Audit: png-canvas-art-optimizer (score: 60)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
+      </div>
+      <div class="task-desc">Score 60/100 — below 65, needs urgent attention.</div>
+      <button class="check-btn" onclick="toggleDone('audits-audit-png-canvas-art-optimizer',event)">✓</button>
+    </div><div class="task" id="t-wigglers-perf-1" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">PERF-1: Trash chunks: 21k canvas ops/frame — pre-render fix rea</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
+      </div>
+      <div class="task-desc">Trash chunks: 21k canvas ops/frame — pre-render fix ready</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-perf-1',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Saturday</span>
-          <span class="day-date">Jun 20</span>
-        </div><div class="tasks"><div class="task skill" id="t-skills-skill-preflight-checklist">
-      <div class="task-top">
-        <div class="task-title">Build: preflight-checklist skill</div>
-        <div class="task-badges">
-          <span class="badge skill">SKILL</span>
-          <span class="badge P1">P1</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jun 20</span><span class="count-badge">3</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-skill-preflight-checklist" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Build: preflight-checklist skill</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
       <div class="task-desc">Phase 1 skill from buildout plan.</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-skill-preflight-checklist',event)" title="Mark done">✓</button>
+      <button class="check-btn" onclick="toggleDone('skills-skill-preflight-checklist',event)">✓</button>
+    </div><div class="task" id="t-audits-audit-project-calendar" style="background:#0a1a0a;border:1px solid #1a3a1a">
+      <div class="lane-tag" style="color:#86efac">Audits</div>
+      <div class="task-title">Audit: project-calendar (score: 69)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
+      </div>
+      <div class="task-desc">Score 69/100 — room for improvement, target 85+.</div>
+      <button class="check-btn" onclick="toggleDone('audits-audit-project-calendar',event)">✓</button>
+    </div><div class="task" id="t-wigglers-perf-2" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">PERF-2: pPath nested scans: up to 400k iterations/frame</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
+      </div>
+      <div class="task-desc">pPath nested scans: up to 400k iterations/frame</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-perf-2',event)">✓</button>
     </div></div></div><div class="day-card rest">
         <div class="day-header">
           <span class="day-name">Sunday</span>
-          <span class="day-date">Jun 21</span>
+          <span class="day-right"><span class="day-date">Jun 21</span></span>
         </div><div class="rest-label">Rest day 🌱</div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Monday</span>
-          <span class="day-date">Jun 22</span>
-        </div><div class="tasks"><div class="task skill" id="t-skills-skill-rollback">
-      <div class="task-top">
-        <div class="task-title">Build: rollback skill</div>
-        <div class="task-badges">
-          <span class="badge skill">SKILL</span>
-          <span class="badge P1">P1</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jun 22</span><span class="count-badge">3</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-skill-rollback" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Build: rollback skill</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
       <div class="task-desc">Phase 1 skill from buildout plan.</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-skill-rollback',event)" title="Mark done">✓</button>
-    </div><div class="task game" id="t-wigglers-perf-1">
-      <div class="task-top">
-        <div class="task-title">PERF-1: Trash chunks: 21k canvas ops/frame — pre-render fix ready</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P1">P1</span>
-          <span class="badge effort-M">M</span>
-        </div>
+      <button class="check-btn" onclick="toggleDone('skills-skill-rollback',event)">✓</button>
+    </div><div class="task" id="t-audits-audit-wigglers-architecture" style="background:#0a1a0a;border:1px solid #1a3a1a">
+      <div class="lane-tag" style="color:#86efac">Audits</div>
+      <div class="task-title">Audit: wigglers-architecture (score: 72)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
       </div>
-      <div class="task-desc">Trash chunks: 21k canvas ops/frame — pre-render fix ready</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-perf-1',event)" title="Mark done">✓</button>
+      <div class="task-desc">Score 72/100 — room for improvement, target 85+.</div>
+      <button class="check-btn" onclick="toggleDone('audits-audit-wigglers-architecture',event)">✓</button>
+    </div><div class="task" id="t-wigglers-iss-13-bug-a" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">ISS-13 Bug A: Tunnel drains may not decrement `pooled` — check S20 fi</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
+      </div>
+      <div class="task-desc">Tunnel drains may not decrement `pooled` — check S20 fix</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-13-bug-a',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Tuesday</span>
-          <span class="day-date">Jun 23</span>
-        </div><div class="tasks"><div class="task game" id="t-wigglers-perf-2">
-      <div class="task-top">
-        <div class="task-title">PERF-2: pPath nested scans: up to 400k iterations/frame</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P1">P1</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jun 23</span><span class="count-badge">3</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-png-canvas-art-optimizer" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: png-canvas-art-optimizer</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">pPath nested scans: up to 400k iterations/frame</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-perf-2',event)" title="Mark done">✓</button>
-    </div><div class="task game" id="t-wigglers-iss-13-bug-a">
-      <div class="task-top">
-        <div class="task-title">ISS-13 Bug A: Tunnel drains may not decrement `pooled` — check S20 fix</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P1">P1</span>
-          <span class="badge effort-S">S</span>
-        </div>
+      <div class="task-desc">Document the actual iteration loop and vision API approach</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-png-canvas-art-optimizer',event)">✓</button>
+    </div><div class="task" id="t-audits-audit-save-skill-workflow" style="background:#0a1a0a;border:1px solid #1a3a1a">
+      <div class="lane-tag" style="color:#86efac">Audits</div>
+      <div class="task-title">Audit: save-skill-workflow (score: 72)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
       </div>
-      <div class="task-desc">Tunnel drains may not decrement `pooled` — check S20 fix</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-13-bug-a',event)" title="Mark done">✓</button>
+      <div class="task-desc">Score 72/100 — room for improvement, target 85+.</div>
+      <button class="check-btn" onclick="toggleDone('audits-audit-save-skill-workflow',event)">✓</button>
+    </div><div class="task" id="t-wigglers-perf-3" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">PERF-3: Blade fringe: 1,788 canvas calls/frame — easy offscreen</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
+      </div>
+      <div class="task-desc">Blade fringe: 1,788 canvas calls/frame — easy offscreen fix</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-perf-3',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Wednesday</span>
-          <span class="day-date">Jun 24</span>
-        </div><div class="tasks"><div class="task fix" id="t-skills-fix-png-canvas-art-optimizer">
-      <div class="task-top">
-        <div class="task-title">Fix: png-canvas-art-optimizer</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P1">P1</span>
-          <span class="badge effort-M">M</span>
-        </div>
-      </div>
-      <div class="task-desc">Document the actual iteration loop and vision API approach</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-png-canvas-art-optimizer',event)" title="Mark done">✓</button>
-    </div><div class="task fix" id="t-skills-fix-wigglers-architecture">
-      <div class="task-top">
-        <div class="task-title">Fix: wigglers-architecture</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P1">P1</span>
-          <span class="badge effort-S">S</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jun 24</span><span class="count-badge">3</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-wigglers-architecture" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: wigglers-architecture</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
       </div>
       <div class="task-desc">Auto-enforce github-sync pull at session start; remove hardcoded version</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-wigglers-architecture',event)" title="Mark done">✓</button>
+      <button class="check-btn" onclick="toggleDone('skills-fix-wigglers-architecture',event)">✓</button>
+    </div><div class="task" id="t-audits-audit-canvas-art-optimizer" style="background:#0a1a0a;border:1px solid #1a3a1a">
+      <div class="lane-tag" style="color:#86efac">Audits</div>
+      <div class="task-title">Audit: canvas-art-optimizer (score: 68)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
+      </div>
+      <div class="task-desc">Score 68/100 — room for improvement, target 85+.</div>
+      <button class="check-btn" onclick="toggleDone('audits-audit-canvas-art-optimizer',event)">✓</button>
+    </div><div class="task" id="t-wigglers-perf-4" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">PERF-4: Debris + scraps: 19,200 canvas ops/frame</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
+      </div>
+      <div class="task-desc">Debris + scraps: 19,200 canvas ops/frame</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-perf-4',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Thursday</span>
-          <span class="day-date">Jun 25</span>
-        </div><div class="tasks"><div class="task fix" id="t-skills-fix-remove-"auto-triggers"-claim-f">
-      <div class="task-top">
-        <div class="task-title">Fix: Remove "auto-triggers" claim from description OR enforce it in other skills</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P1">P1</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jun 25</span><span class="count-badge">3</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-remove-"auto-triggers"-claim-f" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: Remove "auto-triggers" claim from description OR enforce it in other skills</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
       <div class="task-desc">Trigger honesty — currently a false promise</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-remove-"auto-triggers"-claim-f',event)" title="Mark done">✓</button>
-    </div><div class="task fix" id="t-skills-fix-add-network-error-fallback-in-">
-      <div class="task-top">
-        <div class="task-title">Fix: Add network error fallback in pull_tasks.py with visible warning</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P1">P1</span>
-          <span class="badge effort-M">M</span>
-        </div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-remove-"auto-triggers"-claim-f',event)">✓</button>
+    </div><div class="task" id="t-audits-audit-skill-audit" style="background:#0a1a0a;border:1px solid #1a3a1a">
+      <div class="lane-tag" style="color:#86efac">Audits</div>
+      <div class="task-title">Audit: skill-audit (unscored)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
       </div>
-      <div class="task-desc">Prevents silent partial calendar</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-add-network-error-fallback-in-',event)" title="Mark done">✓</button>
+      <div class="task-desc">Never audited — run baseline audit to get a score.</div>
+      <button class="check-btn" onclick="toggleDone('audits-audit-skill-audit',event)">✓</button>
+    </div><div class="task" id="t-wigglers-iss-3" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">ISS-3: 17 `_underscore` function names (S4 rename reverted)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
+      </div>
+      <div class="task-desc">17 `_underscore` function names (S4 rename reverted)</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-3',event)">✓</button>
     </div></div></div></div></div><div class="week-section"><div class="week-label">Next week · Jun 26 – Jul 2</div><div class="days-grid"><div class="day-card">
         <div class="day-header">
           <span class="day-name">Friday</span>
-          <span class="day-date">Jun 26</span>
-        </div><div class="tasks"><div class="task fix" id="t-skills-fix-remove-step-4-sync_done.py-ref">
-      <div class="task-top">
-        <div class="task-title">Fix: Remove Step 4 sync_done.py reference OR write the script</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P1">P1</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jun 26</span><span class="count-badge">3</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-add-network-error-fallback-in-" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: Add network error fallback in pull_tasks.py with visible warning</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">Broken workflow step</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-remove-step-4-sync_done.py-ref',event)" title="Mark done">✓</button>
-    </div><div class="task skill" id="t-skills-skill-feature-spec">
-      <div class="task-top">
-        <div class="task-title">Build: feature-spec skill</div>
-        <div class="task-badges">
-          <span class="badge skill">SKILL</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+      <div class="task-desc">Prevents silent partial calendar</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-add-network-error-fallback-in-',event)">✓</button>
+    </div><div class="task" id="t-audits-audit-skill-creator" style="background:#0a1a0a;border:1px solid #1a3a1a">
+      <div class="lane-tag" style="color:#86efac">Audits</div>
+      <div class="task-title">Audit: skill-creator (unscored)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
       </div>
-      <div class="task-desc">Phase 2 skill from buildout plan.</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-skill-feature-spec',event)" title="Mark done">✓</button>
+      <div class="task-desc">Never audited — run baseline audit to get a score.</div>
+      <button class="check-btn" onclick="toggleDone('audits-audit-skill-creator',event)">✓</button>
+    </div><div class="task" id="t-wigglers-iss-4" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">ISS-4: `draw()` 2,022-line monolith (S5 split reverted)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
+      </div>
+      <div class="task-desc">`draw()` 2,022-line monolith (S5 split reverted)</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-4',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Saturday</span>
-          <span class="day-date">Jun 27</span>
-        </div><div class="tasks"><div class="task skill" id="t-skills-skill-test-scenario">
-      <div class="task-top">
-        <div class="task-title">Build: test-scenario skill</div>
-        <div class="task-badges">
-          <span class="badge skill">SKILL</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jun 27</span><span class="count-badge">3</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-remove-step-4-sync_done.py-ref" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: Remove Step 4 sync_done.py reference OR write the script</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">Phase 2 skill from buildout plan.</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-skill-test-scenario',event)" title="Mark done">✓</button>
+      <div class="task-desc">Broken workflow step</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-remove-step-4-sync_done.py-ref',event)">✓</button>
+    </div><div class="task" id="t-audits-audit-session-health" style="background:#0a1a0a;border:1px solid #1a3a1a">
+      <div class="lane-tag" style="color:#86efac">Audits</div>
+      <div class="task-title">Audit: session-health (score: 97)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
+      </div>
+      <div class="task-desc">Score 97/100 — healthy, re-audit after major changes.</div>
+      <button class="check-btn" onclick="toggleDone('audits-audit-session-health',event)">✓</button>
+    </div><div class="task" id="t-wigglers-iss-5" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">ISS-5: 5 duplicate Snoo SVG helper pairs</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
+      </div>
+      <div class="task-desc">5 duplicate Snoo SVG helper pairs</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-5',event)">✓</button>
     </div></div></div><div class="day-card rest">
         <div class="day-header">
           <span class="day-name">Sunday</span>
-          <span class="day-date">Jun 28</span>
+          <span class="day-right"><span class="day-date">Jun 28</span></span>
         </div><div class="rest-label">Rest day 🌱</div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Monday</span>
-          <span class="day-date">Jun 29</span>
-        </div><div class="tasks"><div class="task skill" id="t-skills-skill-tech-debt-tracker">
-      <div class="task-top">
-        <div class="task-title">Build: tech-debt-tracker skill</div>
-        <div class="task-badges">
-          <span class="badge skill">SKILL</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jun 29</span><span class="count-badge">3</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-skill-feature-spec" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Build: feature-spec skill</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
       <div class="task-desc">Phase 2 skill from buildout plan.</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-skill-tech-debt-tracker',event)" title="Mark done">✓</button>
-    </div><div class="task game" id="t-wigglers-perf-3">
-      <div class="task-top">
-        <div class="task-title">PERF-3: Blade fringe: 1,788 canvas calls/frame — easy offscreen fix</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+      <button class="check-btn" onclick="toggleDone('skills-skill-feature-spec',event)">✓</button>
+    </div><div class="task" id="t-audits-audit-devvit-pipeline" style="background:#0a1a0a;border:1px solid #1a3a1a">
+      <div class="lane-tag" style="color:#86efac">Audits</div>
+      <div class="task-title">Audit: devvit-pipeline (score: 92)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
       </div>
-      <div class="task-desc">Blade fringe: 1,788 canvas calls/frame — easy offscreen fix</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-perf-3',event)" title="Mark done">✓</button>
+      <div class="task-desc">Score 92/100 — healthy, re-audit after major changes.</div>
+      <button class="check-btn" onclick="toggleDone('audits-audit-devvit-pipeline',event)">✓</button>
+    </div><div class="task" id="t-wigglers-iss-6" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">ISS-6: 18 raw message strings in game.js (S2 reverted)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
+      </div>
+      <div class="task-desc">18 raw message strings in game.js (S2 reverted)</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-6',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Tuesday</span>
-          <span class="day-date">Jun 30</span>
-        </div><div class="tasks"><div class="task game" id="t-wigglers-perf-4">
-      <div class="task-top">
-        <div class="task-title">PERF-4: Debris + scraps: 19,200 canvas ops/frame</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jun 30</span><span class="count-badge">3</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-skill-test-scenario" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Build: test-scenario skill</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">Debris + scraps: 19,200 canvas ops/frame</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-perf-4',event)" title="Mark done">✓</button>
-    </div><div class="task game" id="t-wigglers-iss-3">
-      <div class="task-top">
-        <div class="task-title">ISS-3: 17 `_underscore` function names (S4 rename reverted)</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+      <div class="task-desc">Phase 2 skill from buildout plan.</div>
+      <button class="check-btn" onclick="toggleDone('skills-skill-test-scenario',event)">✓</button>
+    </div><div class="task" id="t-audits-audit-github-sync" style="background:#0a1a0a;border:1px solid #1a3a1a">
+      <div class="lane-tag" style="color:#86efac">Audits</div>
+      <div class="task-title">Audit: github-sync (score: 88)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
       </div>
-      <div class="task-desc">17 `_underscore` function names (S4 rename reverted)</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-3',event)" title="Mark done">✓</button>
+      <div class="task-desc">Score 88/100 — healthy, re-audit after major changes.</div>
+      <button class="check-btn" onclick="toggleDone('audits-audit-github-sync',event)">✓</button>
+    </div><div class="task" id="t-wigglers-iss-7" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">ISS-7: 4 dead functions in codebase</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
+      </div>
+      <div class="task-desc">4 dead functions in codebase</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-7',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Wednesday</span>
-          <span class="day-date">Jul 1</span>
-        </div><div class="tasks"><div class="task game" id="t-wigglers-iss-4">
-      <div class="task-top">
-        <div class="task-title">ISS-4: `draw()` 2,022-line monolith (S5 split reverted)</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jul 1</span><span class="count-badge">3</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-skill-tech-debt-tracker" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Build: tech-debt-tracker skill</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">`draw()` 2,022-line monolith (S5 split reverted)</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-4',event)" title="Mark done">✓</button>
-    </div><div class="task game" id="t-wigglers-iss-5">
-      <div class="task-top">
-        <div class="task-title">ISS-5: 5 duplicate Snoo SVG helper pairs</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+      <div class="task-desc">Phase 2 skill from buildout plan.</div>
+      <button class="check-btn" onclick="toggleDone('skills-skill-tech-debt-tracker',event)">✓</button>
+    </div><div class="task" id="t-audits-audit-lead-dev" style="background:#0a1a0a;border:1px solid #1a3a1a">
+      <div class="lane-tag" style="color:#86efac">Audits</div>
+      <div class="task-title">Audit: lead-dev (score: 85)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
       </div>
-      <div class="task-desc">5 duplicate Snoo SVG helper pairs</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-5',event)" title="Mark done">✓</button>
+      <div class="task-desc">Score 85/100 — healthy, re-audit after major changes.</div>
+      <button class="check-btn" onclick="toggleDone('audits-audit-lead-dev',event)">✓</button>
+    </div><div class="task" id="t-wigglers-feat-2" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">FEAT-2: Cross-device session continuity (design doc below)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">L</span>
+      </div>
+      <div class="task-desc">Cross-device session continuity (design doc below)</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-feat-2',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Thursday</span>
-          <span class="day-date">Jul 2</span>
-        </div><div class="tasks"><div class="task game" id="t-wigglers-iss-6">
-      <div class="task-top">
-        <div class="task-title">ISS-6: 18 raw message strings in game.js (S2 reverted)</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jul 2</span><span class="count-badge">3</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-save-skill-workflow" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: save-skill-workflow</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
       </div>
-      <div class="task-desc">18 raw message strings in game.js (S2 reverted)</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-6',event)" title="Mark done">✓</button>
-    </div><div class="task game" id="t-wigglers-iss-7">
-      <div class="task-top">
-        <div class="task-title">ISS-7: 4 dead functions in codebase</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+      <div class="task-desc">Fix copy-paste error in example template</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-save-skill-workflow',event)">✓</button>
+    </div><div class="task" id="t-audits-audit-contractor" style="background:#0a1a0a;border:1px solid #1a3a1a">
+      <div class="lane-tag" style="color:#86efac">Audits</div>
+      <div class="task-title">Audit: contractor (score: 82)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
       </div>
-      <div class="task-desc">4 dead functions in codebase</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-7',event)" title="Mark done">✓</button>
+      <div class="task-desc">Score 82/100 — healthy, re-audit after major changes.</div>
+      <button class="check-btn" onclick="toggleDone('audits-audit-contractor',event)">✓</button>
+    </div><div class="task" id="t-wigglers-feat-4" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">FEAT-4: Long-press drain/tunnel placement + sleep scoping + dra</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">L</span>
+      </div>
+      <div class="task-desc">Long-press drain/tunnel placement + sleep scoping + drain visual unification (design doc below)</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-feat-4',event)">✓</button>
     </div></div></div></div></div><div class="week-section"><div class="week-label">Week 3 · Jul 3 – Jul 9</div><div class="days-grid"><div class="day-card">
         <div class="day-header">
           <span class="day-name">Friday</span>
-          <span class="day-date">Jul 3</span>
-        </div><div class="tasks"><div class="task game" id="t-wigglers-feat-2">
-      <div class="task-top">
-        <div class="task-title">FEAT-2: Cross-device session continuity (design doc below)</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-L">L</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jul 3</span><span class="count-badge">2</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-lead-dev" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: lead-dev</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">Cross-device session continuity (design doc below)</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-feat-2',event)" title="Mark done">✓</button>
-    </div><div class="task fix" id="t-skills-fix-save-skill-workflow">
-      <div class="task-top">
-        <div class="task-title">Fix: save-skill-workflow</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-S">S</span>
-        </div>
+      <div class="task-desc">Make session log examples dynamic</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-lead-dev',event)">✓</button>
+    </div><div class="task" id="t-wigglers-iss-8" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">ISS-8: `DEBUG_PASSWORD` plaintext `'wigglers2025'`</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
       </div>
-      <div class="task-desc">Fix copy-paste error in example template</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-save-skill-workflow',event)" title="Mark done">✓</button>
+      <div class="task-desc">`DEBUG_PASSWORD` plaintext `'wigglers2025'`</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-8',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Saturday</span>
-          <span class="day-date">Jul 4</span>
-        </div><div class="tasks"><div class="task fix" id="t-skills-fix-lead-dev">
-      <div class="task-top">
-        <div class="task-title">Fix: lead-dev</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jul 4</span><span class="count-badge">2</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-contractor" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: contractor</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">Make session log examples dynamic</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-lead-dev',event)" title="Mark done">✓</button>
+      <div class="task-desc">Clarify handoff boundary with lead-dev</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-contractor',event)">✓</button>
+    </div><div class="task" id="t-wigglers-iss-9" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">ISS-9: `bornTs` not stamped on cocoon hatch respawn</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
+      </div>
+      <div class="task-desc">`bornTs` not stamped on cocoon hatch respawn</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-9',event)">✓</button>
     </div></div></div><div class="day-card rest">
         <div class="day-header">
           <span class="day-name">Sunday</span>
-          <span class="day-date">Jul 5</span>
+          <span class="day-right"><span class="day-date">Jul 5</span></span>
         </div><div class="rest-label">Rest day 🌱</div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Monday</span>
-          <span class="day-date">Jul 6</span>
-        </div><div class="tasks"><div class="task game" id="t-wigglers-feat-4">
-      <div class="task-top">
-        <div class="task-title">FEAT-4: Long-press drain/tunnel placement + sleep scoping + drain vi</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-L">L</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jul 6</span><span class="count-badge">2</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-namespace-task-ids-by-repo-(e." style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: Namespace task IDs by repo (e.g. `wigglers:perf-1`)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">Long-press drain/tunnel placement + sleep scoping + drain visual unification (design doc below)</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-feat-4',event)" title="Mark done">✓</button>
-    </div><div class="task fix" id="t-skills-fix-contractor">
-      <div class="task-top">
-        <div class="task-title">Fix: contractor</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+      <div class="task-desc">Prevents done-state bleed</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-namespace-task-ids-by-repo-(e.',event)">✓</button>
+    </div><div class="task" id="t-wigglers-iss-10" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">ISS-10: `weeklyContrib` client-authoritative</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">Clarify handoff boundary with lead-dev</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-contractor',event)" title="Mark done">✓</button>
+      <div class="task-desc">`weeklyContrib` client-authoritative</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-10',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Tuesday</span>
-          <span class="day-date">Jul 7</span>
-        </div><div class="tasks"><div class="task fix" id="t-skills-fix-namespace-task-ids-by-repo-(e.">
-      <div class="task-top">
-        <div class="task-title">Fix: Namespace task IDs by repo (e.g. `wigglers:perf-1`)</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
-      </div>
-      <div class="task-desc">Prevents done-state bleed</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-namespace-task-ids-by-repo-(e.',event)" title="Mark done">✓</button>
-    </div><div class="task fix" id="t-skills-fix-add-approve-before-push-gate-c">
-      <div class="task-top">
-        <div class="task-title">Fix: Add approve-before-push gate consistent with github-sync</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jul 7</span><span class="count-badge">2</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-add-approve-before-push-gate-c" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: Add approve-before-push gate consistent with github-sync</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
       <div class="task-desc">Ecosystem consistency</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-add-approve-before-push-gate-c',event)" title="Mark done">✓</button>
+      <button class="check-btn" onclick="toggleDone('skills-fix-add-approve-before-push-gate-c',event)">✓</button>
+    </div><div class="task" id="t-wigglers-iss-11" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">ISS-11: Weekly drain only fires while a player is open</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
+      </div>
+      <div class="task-desc">Weekly drain only fires while a player is open</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-iss-11',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Wednesday</span>
-          <span class="day-date">Jul 8</span>
-        </div><div class="tasks"><div class="task fix" id="t-skills-fix-fix-parse_skills-phase-1-2-pri">
-      <div class="task-top">
-        <div class="task-title">Fix: Fix parse_skills Phase 1/2 priority assignment</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jul 8</span><span class="count-badge">2</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-fix-parse_skills-phase-1-2-pri" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: Fix parse_skills Phase 1/2 priority assignment</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
       <div class="task-desc">Phase 2 skills showing as P1</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-fix-parse_skills-phase-1-2-pri',event)" title="Mark done">✓</button>
-    </div><div class="task fix" id="t-skills-fix-implement-l-task-spread-rule-i">
-      <div class="task-top">
-        <div class="task-title">Fix: Implement L-task spread rule in build_calendar.py</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-fix-parse_skills-phase-1-2-pri',event)">✓</button>
+    </div><div class="task" id="t-wigglers-feat-1" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">FEAT-1: Cross-player tunnel clogging (design doc below)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">L</span>
       </div>
-      <div class="task-desc">Currently documented but ignored</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-implement-l-task-spread-rule-i',event)" title="Mark done">✓</button>
+      <div class="task-desc">Cross-player tunnel clogging (design doc below)</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-feat-1',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Thursday</span>
-          <span class="day-date">Jul 9</span>
-        </div><div class="tasks"><div class="task fix" id="t-skills-fix-add-changelog-update-step-to-s">
-      <div class="task-top">
-        <div class="task-title">Fix: Add CHANGELOG update step to sync workflow</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jul 9</span><span class="count-badge">2</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-implement-l-task-spread-rule-i" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: Implement L-task spread rule in build_calendar.py</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">Consistency with ecosystem</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-add-changelog-update-step-to-s',event)" title="Mark done">✓</button>
-    </div><div class="task fix" id="t-skills-fix-single-source-of-truth-for-rep">
-      <div class="task-top">
-        <div class="task-title">Fix: Single source of truth for repo registry (Python only, not duplicated in markdown)</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P2">P2</span>
-          <span class="badge effort-M">M</span>
-        </div>
+      <div class="task-desc">Currently documented but ignored</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-implement-l-task-spread-rule-i',event)">✓</button>
+    </div><div class="task" id="t-wigglers-feat-3" style="background:#052010;border:1px solid #1a4d2a">
+      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
+      <div class="task-title">FEAT-3: Passive bridge version capture (design doc below)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">L</span>
       </div>
-      <div class="task-desc">Prevents drift</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-single-source-of-truth-for-rep',event)" title="Mark done">✓</button>
+      <div class="task-desc">Passive bridge version capture (design doc below)</div>
+      <button class="check-btn" onclick="toggleDone('wigglers-feat-3',event)">✓</button>
     </div></div></div></div></div><div class="week-section"><div class="week-label">Week 4 · Jul 10 – Jul 16</div><div class="days-grid"><div class="day-card">
         <div class="day-header">
           <span class="day-name">Friday</span>
-          <span class="day-date">Jul 10</span>
-        </div><div class="tasks"><div class="task game" id="t-wigglers-iss-8">
-      <div class="task-top">
-        <div class="task-title">ISS-8: `DEBUG_PASSWORD` plaintext `'wigglers2025'`</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P3">P3</span>
-          <span class="badge effort-S">S</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jul 10</span><span class="count-badge">1</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-add-changelog-update-step-to-s" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: Add CHANGELOG update step to sync workflow</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">`DEBUG_PASSWORD` plaintext `'wigglers2025'`</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-8',event)" title="Mark done">✓</button>
-    </div><div class="task game" id="t-wigglers-iss-9">
-      <div class="task-top">
-        <div class="task-title">ISS-9: `bornTs` not stamped on cocoon hatch respawn</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P3">P3</span>
-          <span class="badge effort-M">M</span>
-        </div>
-      </div>
-      <div class="task-desc">`bornTs` not stamped on cocoon hatch respawn</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-9',event)" title="Mark done">✓</button>
+      <div class="task-desc">Consistency with ecosystem</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-add-changelog-update-step-to-s',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Saturday</span>
-          <span class="day-date">Jul 11</span>
-        </div><div class="tasks"><div class="task game" id="t-wigglers-iss-10">
-      <div class="task-top">
-        <div class="task-title">ISS-10: `weeklyContrib` client-authoritative</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P3">P3</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jul 11</span><span class="count-badge">1</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-single-source-of-truth-for-rep" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: Single source of truth for repo registry (Python only, not duplicated in markdown)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">`weeklyContrib` client-authoritative</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-10',event)" title="Mark done">✓</button>
+      <div class="task-desc">Prevents drift</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-single-source-of-truth-for-rep',event)">✓</button>
     </div></div></div><div class="day-card rest">
         <div class="day-header">
           <span class="day-name">Sunday</span>
-          <span class="day-date">Jul 12</span>
+          <span class="day-right"><span class="day-date">Jul 12</span></span>
         </div><div class="rest-label">Rest day 🌱</div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Monday</span>
-          <span class="day-date">Jul 13</span>
-        </div><div class="tasks"><div class="task game" id="t-wigglers-iss-11">
-      <div class="task-top">
-        <div class="task-title">ISS-11: Weekly drain only fires while a player is open</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P3">P3</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jul 13</span><span class="count-badge">1</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-github-sync" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: github-sync</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
       </div>
-      <div class="task-desc">Weekly drain only fires while a player is open</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-11',event)" title="Mark done">✓</button>
-    </div><div class="task game" id="t-wigglers-feat-1">
-      <div class="task-top">
-        <div class="task-title">FEAT-1: Cross-player tunnel clogging (design doc below)</div>
-        <div class="task-badges">
-          <span class="badge game">GAME</span>
-          <span class="badge P3">P3</span>
-          <span class="badge effort-L">L</span>
-        </div>
-      </div>
-      <div class="task-desc">Cross-player tunnel clogging (design doc below)</div>
-      <div class="task-repo">📁 Wigglers_Room</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-feat-1',event)" title="Mark done">✓</button>
+      <div class="task-desc">Remove hardcoded V62 from examples</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-github-sync',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Tuesday</span>
-          <span class="day-date">Jul 14</span>
-        </div><div class="tasks"><div class="task fix" id="t-skills-fix-github-sync">
-      <div class="task-top">
-        <div class="task-title">Fix: github-sync</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P3">P3</span>
-          <span class="badge effort-S">S</span>
-        </div>
-      </div>
-      <div class="task-desc">Remove hardcoded V62 from examples</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-github-sync',event)" title="Mark done">✓</button>
-    </div><div class="task fix" id="t-skills-fix-devvit-pipeline">
-      <div class="task-top">
-        <div class="task-title">Fix: devvit-pipeline</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P3">P3</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jul 14</span><span class="count-badge">1</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-devvit-pipeline" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: devvit-pipeline</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
       <div class="task-desc">Add stale-warning note to devvit upload workaround</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-devvit-pipeline',event)" title="Mark done">✓</button>
+      <button class="check-btn" onclick="toggleDone('skills-fix-devvit-pipeline',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Wednesday</span>
-          <span class="day-date">Jul 15</span>
-        </div><div class="tasks"><div class="task fix" id="t-skills-fix-add-"what-should-i-work-on-tod">
-      <div class="task-top">
-        <div class="task-title">Fix: Add "what should I work on today" as trigger phrase</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P3">P3</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jul 15</span><span class="count-badge">1</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-add-"what-should-i-work-on-tod" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: Add "what should I work on today" as trigger phrase</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
       <div class="task-desc">More natural entry point</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-add-"what-should-i-work-on-tod',event)" title="Mark done">✓</button>
-    </div><div class="task fix" id="t-skills-fix-add-manual-task-injection-supp">
-      <div class="task-top">
-        <div class="task-title">Fix: Add manual task injection support</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P3">P3</span>
-          <span class="badge effort-M">M</span>
-        </div>
-      </div>
-      <div class="task-desc">Useful edge case</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-add-manual-task-injection-supp',event)" title="Mark done">✓</button>
+      <button class="check-btn" onclick="toggleDone('skills-fix-add-"what-should-i-work-on-tod',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Thursday</span>
-          <span class="day-date">Jul 16</span>
-        </div><div class="tasks"><div class="task fix" id="t-skills-fix-add-last-synced-commit-referen">
-      <div class="task-top">
-        <div class="task-title">Fix: Add last-synced commit reference to calendar HTML footer</div>
-        <div class="task-badges">
-          <span class="badge fix">FIX</span>
-          <span class="badge P3">P3</span>
-          <span class="badge effort-M">M</span>
-        </div>
+          <span class="day-right"><span class="day-date">Jul 16</span><span class="count-badge">1</span></span>
+        </div><div class="tasks"><div class="task" id="t-skills-fix-add-manual-task-injection-supp" style="background:#0d0d2a;border:1px solid #1e1e4a">
+      <div class="lane-tag" style="color:#818cf8">Skills</div>
+      <div class="task-title">Fix: Add manual task injection support</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">Debuggability</div>
-      <div class="task-repo">📁 claude-skills</div>
-      <button class="check-btn" onclick="toggleDone('skills-fix-add-last-synced-commit-referen',event)" title="Mark done">✓</button>
+      <div class="task-desc">Useful edge case</div>
+      <button class="check-btn" onclick="toggleDone('skills-fix-add-manual-task-injection-supp',event)">✓</button>
     </div></div></div></div></div></div>
 <script>
-const K='cal_done_v2';
+const K='cal_done_v3';
 function getDone(){try{return JSON.parse(localStorage.getItem(K)||'{}')}catch{return {}}}
 function toggleDone(id,e){
   e.stopPropagation();
@@ -701,6 +667,9 @@ function toggleDone(id,e){
   const el=document.getElementById('t-'+id);
   if(el)el.classList.toggle('done',!!d[id]);
 }
-(function(){const d=getDone();Object.entries(d).forEach(([id,v])=>{if(v){const el=document.getElementById('t-'+id);if(el)el.classList.add('done');}});})();
+(function(){
+  const d=getDone();
+  Object.entries(d).forEach(([id,v])=>{if(v){const el=document.getElementById('t-'+id);if(el)el.classList.add('done');}});
+})();
 </script>
 </body></html>
