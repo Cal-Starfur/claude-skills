@@ -18,12 +18,12 @@ description: Load for any Wigglers Room worm bin game session, or whenever the u
 
 ```bash
 python3 /tmp/github-sync/scripts/sync_from_github.py read GAME_ARCHITECTURE.md
-python3 /tmp/github-sync/scripts/sync_from_github.py read WIGGLERS_AUDIT_V20.md
+python3 /tmp/github-sync/scripts/sync_from_github.py read WIGGLERS_AUDIT.md
 ```
 
 Read **both files fully** before writing a single line of code.
 `GAME_ARCHITECTURE.md` = living source of truth (version, line counts, open issues, function registry).
-`WIGGLERS_AUDIT_V20.md` = full bug log, PERF analysis, FEAT designs, lessons learned.
+`WIGGLERS_AUDIT.md` = full bug log, PERF analysis, FEAT designs, lessons learned.
 
 ---
 
@@ -42,7 +42,7 @@ Wigglers_Room/
 ├── .github/workflows/
 │   └── deploy.yml            — tsc + devvit build check on every push — NO auto-upload
 ├── GAME_ARCHITECTURE.md      — Living systems map (read every session)
-├── WIGGLERS_AUDIT_V20.md     — Bug log, PERF analysis, FEAT designs, lessons
+├── WIGGLERS_AUDIT.md     — Bug log, PERF analysis, FEAT designs, lessons
 └── devvit.yaml               — App config (redis, realtime, redditAPI, kvStore)
 ```
 
@@ -390,8 +390,8 @@ Starved to death | ☯ 14 karma | Ate 11,240 bites
 | ISS-9 | Low | `bornTs` not stamped on cocoon hatch respawn |
 | ISS-10 | P3 | `weeklyContrib` client-authoritative |
 | ISS-11 | Future | Drain only fires while a player is open |
-| FEAT-1 | Future | Cross-player tunnel clogging (design doc in WIGGLERS_AUDIT_V20.md) |
-| FEAT-2 | P2 | Cross-device session continuity (design doc in WIGGLERS_AUDIT_V20.md) |
+| FEAT-1 | Future | Cross-player tunnel clogging (design doc in WIGGLERS_AUDIT.md) |
+| FEAT-2 | P2 | Cross-device session continuity (design doc in WIGGLERS_AUDIT.md) |
 
 **Closed since baseline skill (S8):** ISS-1, ISS-2 (weekly drain persistence), ISS-12 (drain Snoo X alignment), ISS-13 Bug B (evaporation removed), ISS-13 Bug C (pooled runtime-only), ISS-14 (pHP/pAcid/position restore + visibilitychange save), ISS-15–17 (canvas/coordinate fixes), ISS-desktop (centreOffsetX system).
 
@@ -420,7 +420,7 @@ Starved to death | ☯ 14 karma | Ate 11,240 bites
 ## Safe Editing Protocol
 
 1. Pull fresh from GitHub — `sync_from_github.py read GAME_ARCHITECTURE.md` — mandatory
-2. Read GAME_ARCHITECTURE.md and WIGGLERS_AUDIT_V20.md before writing code
+2. Read GAME_ARCHITECTURE.md and WIGGLERS_AUDIT.md before writing code
 3. Copy file to `/home/claude/` before editing (uploads dir is read-only)
 4. Use `str_replace` with unique surrounding context — never line numbers
 5. Grep for changed function name after edits — verify no duplicates
