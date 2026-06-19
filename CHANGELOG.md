@@ -62,3 +62,10 @@ save-skill-workflow, canvas-art-optimizer, png-canvas-art-optimizer, skill-creat
 - Redesigned version tracking: relay/version.json, bridge offline = warning not fail
 - Added critical vs warning classification in output
 - Score: 94 -> 97 | All 6 live tests pass
+
+## 2026-06-19 - devvit-pipeline deep audit
+
+- 9 issues found vs current workflow
+- Added: session-health step 0, tmux guidance, 240min idle timeout
+- Fixed: 409 crash note, Node v24, version capture, Reddit creds optional
+- Score: 63 -> 92 (+29) | Freshness biggest gain: 37 -> 83
