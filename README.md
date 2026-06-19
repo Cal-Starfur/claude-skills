@@ -25,6 +25,11 @@ This repo tracks the Claude AI skill ecosystem for the Wigglers Room project and
 | canvas-art-optimizer | 68 | SVG → HTML5 Canvas conversion |
 | png-canvas-art-optimizer | 60 | PNG/JPG → HTML5 Canvas via vision |
 
+## Current Focus
+
+> **Pre-launch mode** — calendar locked to `claude-skills` and `Wigglers_Room` until Wigglers Room goes live on Reddit.
+> See [FOCUS.md](FOCUS.md) for the full constraint and launch gate.
+
 ## Gap Analysis (June 2026)
 
 Full analysis in [`audits/2026-06-19-gap-analysis.md`](audits/2026-06-19-gap-analysis.md)
