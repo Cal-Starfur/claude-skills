@@ -4,6 +4,16 @@ Tracks all skill changes across sessions. Newest entries at the top.
 
 ---
 
+## 2026-06-19 — Over-achiever pattern documented
+
+- Updated FOCUS.md with Cal's work style note
+- Calendar is always a rolling schedule from today — never fixed dates
+- After high-energy sessions clearing multiple days of work, sync repacks from current state
+- Claude prompted to offer a sync after any session where multiple tasks were completed
+- No "missed days" concept — only done tasks and remaining tasks
+
+---
+
 ## 2026-06-19 — Focus constraint set
 
 - Added FOCUS.md — strategic constraint locking calendar to 2 repos until Wigglers Room launches
