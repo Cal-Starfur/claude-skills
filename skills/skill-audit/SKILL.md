@@ -53,14 +53,14 @@ Each skill scored 0–100 across four dimensions:
 | github-sync | 90 | 88 | 92 | 80 | **88** |
 | lead-dev | 85 | 90 | 88 | 75 | **85** |
 | contractor | 82 | 85 | 88 | 72 | **82** |
-| devvit-pipeline | 80 | 82 | 85 | 68 | **79** |
+| devvit-pipeline | 100 | 87 | 100 | 83 | **92** |
 | wigglers-architecture | 88 | 75 | 70 | 55 | **72** |
 | save-skill-workflow | 70 | 72 | 80 | 65 | **72** |
 | canvas-art-optimizer | 75 | 70 | 65 | 60 | **68** |
 | png-canvas-art-optimizer | 65 | 60 | 55 | 58 | **60** |
 | session-health | 95 | 98 | 98 | 97 | **97** |
 
-**Average: 77/100** (incl. session-health v2) | Last audited: 2026-06-19
+**Average: 80/100** (incl. devvit-pipeline update) | Last audited: 2026-06-19
 
 ---
 
