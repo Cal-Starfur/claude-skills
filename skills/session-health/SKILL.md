@@ -132,21 +132,30 @@ Order every Wigglers session:
 #!/usr/bin/env python3
 """
 session-health/scripts/health_check.py
-Pulls live files from GitHub, cross-checks GAME_ARCHITECTURE.md against
-actual code, reports drift, and auto-fixes what it can.
+
+Pulls live files, cross-checks GAME_ARCHITECTURE.md against code,
+checks bridge liveness, confirms/updates Devvit version.
 
 Usage:
-    python3 health_check.py --token <pat> [--fix] [--post-session]
+    python3 health_check.py --token <pat> [--fix]
+    python3 health_check.py --token <pat> --post-session --session 21
+
+Version check logic:
+    Bridge ONLINE  → ping devvit.yaml version to confirm → update arch if stale → PASS
+    Bridge OFFLINE → FAIL (cannot confirm version — arch may be wrong)
+    Bridge TIMEOUT → FAIL (same)
 """
 
-import sys, re, json, base64, urllib.request, urllib.error, argparse
+import sys, re, json, base64, urllib.request, urllib.error, argparse, time
 from pathlib import Path
 from datetime import datetime
 
-OWNER = 'Cal-Starfur'
-REPO  = 'Wigglers_Room'
+OWNER        = 'Cal-Starfur'
+REPO         = 'Wigglers_Room'
+BRIDGE_OWNER = 'Cal-Starfur'
+BRIDGE_REPO  = 'codespace-bridge'
 
-# ── GitHub helpers ────────────────────────────────────────────────────────────
+# ── GitHub helpers ─────────────────────────────────────────────────────────────
 
 def gh_headers(token):
     return {
@@ -156,19 +165,27 @@ def gh_headers(token):
         'User-Agent': 'SessionHealthAgent/1.0',
     }
 
-def gh_get(token, path):
-    url = f'https://api.github.com/repos/{OWNER}/{REPO}/contents/{path}'
+def gh_get(token, repo, path, owner=None):
+    o = owner or OWNER
+    url = f'https://api.github.com/repos/{o}/{repo}/contents/{path}'
     req = urllib.request.Request(url, headers=gh_headers(token))
     with urllib.request.urlopen(req) as r:
         data = json.loads(r.read())
         content = base64.b64decode(data['content'].replace('\n', '')).decode('utf-8')
         return content, data['sha']
 
-def gh_put(token, path, content, sha, message):
-    url = f'https://api.github.com/repos/{OWNER}/{REPO}/contents/{path}'
+def gh_get_json(token, repo, path, owner=None):
+    content, sha = gh_get(token, repo, path, owner)
+    return json.loads(content), sha
+
+def gh_put(token, repo, path, content, sha, message, owner=None):
+    o = owner or OWNER
+    url = f'https://api.github.com/repos/{o}/{repo}/contents/{path}'
+    if isinstance(content, str):
+        content = content.encode('utf-8')
     data = {
         'message': message,
-        'content': base64.b64encode(content.encode('utf-8')).decode(),
+        'content': base64.b64encode(content).decode(),
         'sha': sha,
     }
     req = urllib.request.Request(
@@ -178,142 +195,91 @@ def gh_put(token, path, content, sha, message):
         result = json.loads(r.read())
         return result['commit']['sha'][:7]
 
-def gh_get_raw(token, path):
-    """Get file without decoding — for binary size check."""
-    url = f'https://api.github.com/repos/{OWNER}/{REPO}/contents/{path}'
-    req = urllib.request.Request(url, headers=gh_headers(token))
-    with urllib.request.urlopen(req) as r:
-        return json.loads(r.read())
+# ── Bridge check + version confirmation ───────────────────────────────────────
 
-# ── Checks ────────────────────────────────────────────────────────────────────
+def check_bridge_and_version(token):
+    """
+    The bridge is the ONLY reliable source of the real Devvit version.
 
-def check_header(arch, audit):
+    Returns:
+        (status, version_or_none, message)
+        status: 'online' | 'offline' | 'error'
+        version_or_none: e.g. '0.0.180' if confirmed, None if not
+        message: human-readable description
+    """
+    # Read current relay state
+    try:
+        outbox, outbox_sha = gh_get_json(token, BRIDGE_REPO, 'relay/outbox.json', BRIDGE_OWNER)
+        inbox,  inbox_sha  = gh_get_json(token, BRIDGE_REPO, 'relay/inbox.json',  BRIDGE_OWNER)
+    except Exception as e:
+        return 'error', None, f'Cannot reach bridge relay: {e}'
+
+    # Send ping to confirm bridge is alive
+    ping_id  = f'health-ping-{int(time.time())}'
+    ping_cmd = {
+        'cmd': 'cat /workspaces/Wigglers_Room/devvit.yaml | grep "^version:"',
+        'id':  ping_id,
+        'cwd': '/workspaces/Wigglers_Room',
+        'ts':  datetime.now().isoformat(),
+    }
+
+    try:
+        gh_put(token, BRIDGE_REPO, 'relay/inbox.json',
+               json.dumps(ping_cmd, indent=2).encode(),
+               inbox_sha, f'Health check ping {ping_id}', BRIDGE_OWNER)
+    except Exception as e:
+        return 'error', None, f'Could not write ping to inbox: {e}'
+
+    # Poll outbox for up to 20s
+    deadline = time.time() + 20
+    while time.time() < deadline:
+        time.sleep(3)
+        try:
+            outbox2, _ = gh_get_json(token, BRIDGE_REPO, 'relay/outbox.json', BRIDGE_OWNER)
+            if outbox2.get('id') == ping_id:
+                if outbox2.get('ready') or outbox2.get('output') is not None:
+                    output = outbox2.get('output', '').strip()
+                    # Parse version from "version: 0.0.179"
+                    m = re.search(r'version:\s*([\d.]+)', output)
+                    if m:
+                        version = m.group(1)
+                        elapsed = int(20 - (deadline - time.time()))
+                        return 'online', version, f'Bridge alive ({elapsed}s) — Devvit version confirmed: {version}'
+                    elif output:
+                        return 'online', None, f'Bridge alive but version parse failed: {output[:80]}'
+                    else:
+                        return 'online', None, 'Bridge alive but empty output from devvit.yaml'
+        except:
+            pass
+
+    # No response
+    return 'offline', None, 'Bridge did not respond within 20s — likely offline'
+
+# ── Doc checks ────────────────────────────────────────────────────────────────
+
+def check_header(arch, audit, confirmed_version=None):
     issues = []
     fixes  = []
 
     # Session number
     arch_s  = re.search(r'Session (\d+)', arch)
-    audit_s = re.search(r'Current session.*?(\d+)', audit)
+    audit_s = re.search(r'Current session[^\d]*(\d+)', audit)
     if arch_s and audit_s:
         a, b = int(arch_s.group(1)), int(audit_s.group(1))
         if b > a:
-            issues.append(f'Session number: arch says {a}, audit says {b}')
+            issues.append(f'Session number stale: arch says {a}, audit says {b}')
             fixes.append(('session', a, b))
 
-    # Devvit version
-    arch_v   = re.search(r'Devvit\s+([\d.]+)', arch)
-    devvit_v = re.search(r'version:\s*([\d.]+)', open('/tmp/sh_devvit.yaml').read()) if Path('/tmp/sh_devvit.yaml').exists() else None
-    if arch_v and devvit_v:
-        av, dv = arch_v.group(1), devvit_v.group(1)
-        if av != dv:
-            issues.append(f'Devvit version: arch says {av}, devvit.yaml says {dv}')
-            fixes.append(('devvit', av, dv))
-
-    # Next P1 stale
-    if 'START HERE: ISS-14' in arch:
-        if 'ISS-14' in audit and ('✅' in audit or 'CLOSED' in audit or 'closed' in audit.lower()):
-            issues.append('Priority queue: ISS-14 listed as P1 but marked closed in audit')
-    if 'START HERE: ISS-13' in arch:
-        issues.append('Priority queue: ISS-13 listed as P1 but bugs B+C closed in S20')
+    # Devvit version — only check if bridge confirmed it
+    if confirmed_version:
+        arch_v = re.search(r'Devvit\s+([\d.]+)', arch)
+        if arch_v and arch_v.group(1) != confirmed_version:
+            issues.append(f'Devvit version stale: arch says {arch_v.group(1)}, confirmed {confirmed_version}')
+            fixes.append(('devvit', arch_v.group(1), confirmed_version))
+        elif not arch_v:
+            issues.append('Devvit version missing from arch header')
 
     return issues, fixes
-
-def check_globals(arch, game_js):
-    issues = []
-    expected = [
-        ('var pAcid',       'pAcid missing from global state'),
-        ('var weekStartTs', 'weekStartTs missing from global state'),
-        ('var camX',        'camX missing from coordinate section'),
-        ('var centreOffsetX', 'centreOffsetX missing'),
-        ('var WORLD_W',     'WORLD_W missing'),
-    ]
-    for pattern, msg in expected:
-        if pattern in game_js and pattern not in arch:
-            issues.append(msg)
-    return issues
-
-def check_messages(arch, main_tsx, game_js):
-    issues = []
-    arch_msgs = set(re.findall(r'MSG_\w+', arch))
-    live_msgs = set(re.findall(r'MSG_\w+', main_tsx)) | set(re.findall(r'MSG_\w+', game_js))
-
-    ghost = arch_msgs - live_msgs - {'MSG_SET_WEATHER'}  # MSG_SET_WEATHER intentionally noted as removed
-    for m in ghost:
-        issues.append(f'Ghost message: {m} in arch but not in code')
-
-    # Check MSG_SET_WEATHER is noted as removed, not listed as active
-    if 'MSG_SET_WEATHER' in arch:
-        context = arch[max(0, arch.index('MSG_SET_WEATHER')-50):arch.index('MSG_SET_WEATHER')+80]
-        if 'removed' not in context.lower() and 'gone' not in context.lower():
-            issues.append('MSG_SET_WEATHER listed as active but was removed S20')
-
-    return issues
-
-def check_kv_keys(arch, main_tsx):
-    issues = []
-    # pooled should NOT be in KV_WORLD description as a synced field
-    if 'KV_WORLD' in arch:
-        kv_idx = arch.index('KV_WORLD')
-        kv_ctx = arch[kv_idx:kv_idx+200]
-        if 'pooled' in kv_ctx and 'runtime-only' not in kv_ctx and 'REMOVED' not in kv_ctx:
-            issues.append('KV_WORLD still shows pooled as synced — should be marked runtime-only')
-
-    # getEvapRate should be noted as removed
-    if 'getEvapRate' in arch:
-        idx = arch.index('getEvapRate')
-        ctx = arch[max(0,idx-30):idx+80]
-        if 'deleted' not in ctx and 'removed' not in ctx.lower():
-            issues.append('getEvapRate in arch but not marked as deleted (removed S20)')
-
-    return issues
-
-def check_session_fields(arch, game_js):
-    issues = []
-    required_fields = ['pAcid', 'bornTs', 'emergencyKarmaPot', 'visibilitychange']
-    for f in required_fields:
-        if f in game_js and f not in arch:
-            issues.append(f'Session field {f} in game.js but missing from arch')
-
-    # pooled should NOT be in saveSession fields list
-    if 'Fields:' in arch:
-        fields_idx = arch.index('Fields:')
-        fields_ctx = arch[fields_idx:fields_idx+300]
-        if 'pooled' in fields_ctx and 'runtime' not in fields_ctx:
-            issues.append('pooled still in saveSession fields — was removed S20')
-
-    return issues
-
-def check_open_issues(arch):
-    """Check that closed issues aren't still listed as open P1."""
-    issues = []
-    closed_in_s20 = ['ISS-14', 'ISS-13 Bug B', 'ISS-13 Bug C']
-
-    # Check open issues table
-    if '## Known Issues' in arch:
-        oi_idx = arch.index('## Known Issues')
-        oi_section = arch[oi_idx:oi_idx+1000]
-        for closed in closed_in_s20:
-            if closed in oi_section and 'Closed' not in oi_section[:oi_section.find(closed)+50]:
-                if f'| {closed} |' in oi_section or f'| {closed.split()[0]} |' in oi_section:
-                    issues.append(f'{closed} still in open issues table — was closed S20')
-
-    return issues
-
-def check_priority_queue(arch):
-    issues = []
-    stale_p1 = [
-        ('START HERE: ISS-14', 'ISS-14 fixed S20'),
-        ('START HERE: ISS-13', 'ISS-13 Bugs B+C fixed S20 — only Bug A needs verify'),
-    ]
-    for marker, reason in stale_p1:
-        if marker in arch:
-            issues.append(f'Priority queue stale: {reason}')
-
-    # PERF-1 should be P1
-    if 'PERF-1' not in arch or 'P1' not in arch[arch.find('Priority Queue') if 'Priority Queue' in arch else 0:]:
-        issues.append('PERF-1 not listed as P1 in priority queue')
-
-    return issues
 
 def check_line_counts(arch, main_tsx, game_js):
     issues = []
@@ -324,173 +290,145 @@ def check_line_counts(arch, main_tsx, game_js):
     if m:
         claimed = int(m.group(1))
         if abs(claimed - actual_main) > 50:
-            issues.append(f'main.tsx line count: arch claims ~{claimed}, actual {actual_main}')
+            issues.append(f'main.tsx lines: arch ~{claimed}, actual {actual_main}')
 
     m = re.search(r'game\.js.*?~?(\d+)\s*lines', arch)
     if m:
         claimed = int(m.group(1))
         if abs(claimed - actual_game) > 100:
-            issues.append(f'game.js line count: arch claims ~{claimed}, actual {actual_game}')
+            issues.append(f'game.js lines: arch ~{claimed}, actual {actual_game}')
 
     return issues, actual_main, actual_game
 
-def check_preview_card(arch, main_tsx):
+def check_globals(arch, game_js):
+    issues = []
+    for pattern, msg in [
+        ('var pAcid',         'pAcid missing from global state'),
+        ('var weekStartTs',   'weekStartTs missing from global state'),
+        ('var camX',          'camX missing from arch'),
+        ('var centreOffsetX', 'centreOffsetX missing from arch'),
+    ]:
+        if pattern in game_js and pattern not in arch:
+            issues.append(msg)
+    return issues
+
+def check_messages(arch, main_tsx, game_js):
+    issues = []
+    arch_msgs = set(re.findall(r'MSG_\w+', arch))
+    live_msgs = set(re.findall(r'MSG_\w+', main_tsx)) | set(re.findall(r'MSG_\w+', game_js))
+    for m in arch_msgs - live_msgs - {'MSG_SET_WEATHER'}:
+        issues.append(f'Ghost message: {m} in arch but not in code')
+    if 'MSG_SET_WEATHER' in arch:
+        idx = arch.index('MSG_SET_WEATHER')
+        ctx = arch[max(0, idx-50):idx+100]
+        if 'removed' not in ctx.lower():
+            issues.append('MSG_SET_WEATHER listed as active — was removed S20')
+    return issues
+
+def check_kv_and_fields(arch, game_js):
+    issues = []
+    # pooled should not be in KV_WORLD as synced
+    if 'KV_WORLD' in arch:
+        idx = arch.index('KV_WORLD')
+        ctx = arch[idx:idx+200]
+        if 'pooled' in ctx and 'REMOVED' not in ctx and 'runtime-only' not in ctx:
+            issues.append('KV_WORLD still shows pooled as synced (removed S20)')
+    # pAcid in session fields
+    if 'Fields:' in arch:
+        idx = arch.index('Fields:')
+        ctx = arch[idx:idx+400]
+        if 'pAcid' not in ctx:
+            issues.append('pAcid missing from saveSession fields list')
+        if 'pooled' in ctx and 'runtime' not in ctx:
+            issues.append('pooled still in saveSession fields (removed S20)')
+    return issues
+
+def check_priority_queue(arch):
+    issues = []
+    if 'START HERE: ISS-14' in arch:
+        issues.append('Priority queue: ISS-14 still listed as P1 (closed S20)')
+    if 'PERF-1' not in arch:
+        issues.append('Priority queue: PERF-1 not listed (should be P1)')
+    return issues
+
+def check_preview(arch, main_tsx):
     issues = []
     if 'buildBgDataUrl' in main_tsx:
         if 'Animated' not in arch and 'animated' not in arch:
-            issues.append('Preview card described as static but buildBgDataUrl is in main.tsx — it\'s animated')
-        if 'preview-bg.png" imageWidth' in arch and 'url={bgUrl}' not in arch:
-            issues.append('Preview card shows static zstack — should show animated bgUrl version')
+            issues.append('Preview card: arch says static but code has animated buildBgDataUrl')
     return issues
 
 # ── Auto-fix ──────────────────────────────────────────────────────────────────
 
-def apply_fixes(arch, fixes, actual_main, actual_game):
-    """Apply auto-fixable issues directly to the arch string."""
+def apply_fixes(token, arch, arch_sha, fixes, actual_main, actual_game):
     changed = []
 
     for fix in fixes:
         if fix[0] == 'session':
-            old_s, new_s = fix[1], fix[2]
-            arch = re.sub(
-                r'(Session\s+)' + str(old_s),
-                r'\g<1>' + str(new_s),
-                arch
-            )
-            changed.append(f'Session {old_s} → {new_s}')
-
+            arch = re.sub(r'(Session\s+)' + str(fix[1]), r'\g<1>' + str(fix[2]), arch)
+            changed.append(f'Session {fix[1]} → {fix[2]}')
         elif fix[0] == 'devvit':
-            old_v, new_v = fix[1], fix[2]
-            arch = arch.replace(f'Devvit {old_v}', f'Devvit {new_v}')
-            changed.append(f'Devvit version {old_v} → {new_v}')
+            arch = arch.replace(f'Devvit {fix[1]}', f'Devvit {fix[2]}')
+            # Also update devvit.yaml
+            try:
+                yaml_content, yaml_sha = gh_get(token, REPO, 'devvit.yaml')
+                new_yaml = re.sub(r'version:\s*[\d.]+', f'version: {fix[2]}', yaml_content)
+                if new_yaml != yaml_content:
+                    gh_put(token, REPO, 'devvit.yaml', new_yaml, yaml_sha,
+                           f'Sync devvit.yaml version to {fix[2]} (confirmed by bridge)')
+                    changed.append(f'devvit.yaml version → {fix[2]}')
+            except Exception as e:
+                changed.append(f'Devvit version in arch → {fix[2]} (devvit.yaml update failed: {e})')
+            else:
+                changed.append(f'Devvit version arch + devvit.yaml → {fix[2]}')
 
-    # Always fix line counts if off
-    m_main = re.search(r'(main\.tsx\s+.*?~?)(\d+)(\s*lines)', arch)
-    if m_main:
-        claimed = int(m_main.group(2))
-        if abs(claimed - actual_main) > 50:
-            arch = arch[:m_main.start(2)] + str(actual_main) + arch[m_main.end(2):]
-            changed.append(f'main.tsx lines {claimed} → {actual_main}')
+    # Line counts
+    m = re.search(r'(main\.tsx.*?~?)(\d+)(\s*lines)', arch)
+    if m and abs(int(m.group(2)) - actual_main) > 50:
+        arch = arch[:m.start(2)] + str(actual_main) + arch[m.end(2):]
+        changed.append(f'main.tsx lines → {actual_main}')
 
-    m_game = re.search(r'(game\.js\s+.*?~?)(\d+)(\s*lines)', arch)
-    if m_game:
-        claimed = int(m_game.group(2))
-        if abs(claimed - actual_game) > 100:
-            arch = arch[:m_game.start(2)] + str(actual_game) + arch[m_game.end(2):]
-            changed.append(f'game.js lines {claimed} → {actual_game}')
+    m = re.search(r'(game\.js.*?~?)(\d+)(\s*lines)', arch)
+    if m and abs(int(m.group(2)) - actual_game) > 100:
+        arch = arch[:m.start(2)] + str(actual_game) + arch[m.end(2):]
+        changed.append(f'game.js lines → {actual_game}')
 
-    return arch, changed
+    if changed:
+        commit = gh_put(token, REPO, 'GAME_ARCHITECTURE.md', arch, arch_sha,
+                        f'Health check auto-fix: {", ".join(changed)}')
+        return changed, commit
+    return [], None
 
-# ── Post-session update ───────────────────────────────────────────────────────
+# ── Post-session ──────────────────────────────────────────────────────────────
 
-def post_session_update(arch, audit, session_num, devvit_version, what_shipped):
-    """
-    Called after a session to:
-    1. Bump session number
-    2. Update priority queue based on what shipped
-    3. Update header
-    Returns updated arch string.
-    """
-    # Bump session in header
-    arch = re.sub(
-        r'(> Last updated:.*?Session\s+)(\d+)',
-        lambda m: m.group(1) + str(session_num),
-        arch
-    )
-    # Update devvit version in header
-    arch = re.sub(r'(Devvit\s+)[\d.]+', r'\g<1>' + devvit_version, arch)
-    # Update date
+def post_session_update(token, session_num, devvit_version):
+    arch, arch_sha = gh_get(token, REPO, 'GAME_ARCHITECTURE.md')
     today = datetime.now().strftime('%Y-%m-%d')
     arch = re.sub(r'(> Last updated:\s*)[\d-]+', r'\g<1>' + today, arch)
-
-    return arch
-
-
-def check_bridge(token):
-    """
-    Check if bridge3.js is running in the Codespace.
-    Strategy: read outbox.json — if 'running': true and the ts is recent, bridge is alive.
-    If no recent activity, send a ping command and wait for response.
-    """
-    import time
-
-    BRIDGE_OWNER = 'Cal-Starfur'
-    BRIDGE_REPO  = 'codespace-bridge'
-
-    def bridge_get(path):
-        url = f'https://api.github.com/repos/{BRIDGE_OWNER}/{BRIDGE_REPO}/contents/{path}'
-        req = urllib.request.Request(url, headers=gh_headers(token))
-        with urllib.request.urlopen(req) as r:
-            data = json.loads(r.read())
-            content = base64.b64decode(data['content'].replace('\n','')).decode()
-            return json.loads(content), data['sha']
-
-    def bridge_put(path, content, sha, message):
-        url = f'https://api.github.com/repos/{BRIDGE_OWNER}/{BRIDGE_REPO}/contents/{path}'
-        data = {
-            'message': message,
-            'content': base64.b64encode(json.dumps(content, indent=2).encode()).decode(),
-            'sha': sha,
-        }
-        req = urllib.request.Request(url, data=json.dumps(data).encode(), headers=gh_headers(token), method='PUT')
-        with urllib.request.urlopen(req) as r:
-            return json.loads(r.read())
-
+    arch = re.sub(r'(Session\s+)\d+', r'\g<1>' + str(session_num), arch)
+    arch = re.sub(r'(Devvit\s+)[\d.]+', r'\g<1>' + devvit_version, arch)
+    commit = gh_put(token, REPO, 'GAME_ARCHITECTURE.md', arch, arch_sha,
+                    f'Post-session update: Session {session_num}, Devvit {devvit_version}')
+    # Also update devvit.yaml
     try:
-        outbox, outbox_sha = bridge_get('relay/outbox.json')
-        inbox, inbox_sha   = bridge_get('relay/inbox.json')
-    except Exception as e:
-        return False, f'Cannot read bridge relay: {e}'
-
-    # If outbox shows running:true and it matches the last inbox id → bridge is alive
-    inbox_id  = inbox.get('id', '')
-    outbox_id = outbox.get('id', '')
-
-    if outbox.get('running') and inbox_id == outbox_id:
-        # Same command being processed — bridge is alive but busy
-        return True, 'Bridge alive (processing command)'
-
-    if outbox.get('ready') or (outbox.get('output') and inbox_id == outbox_id):
-        return True, 'Bridge alive (last command complete)'
-
-    # Send a ping and wait up to 15s for response
-    import time
-    ping_id = f'health-ping-{int(time.time())}'
-    ping_cmd = {'cmd': 'echo bridge-ok', 'id': ping_id, 'cwd': '/workspaces/Wigglers_Room', 'ts': datetime.now().isoformat()}
-
-    try:
-        bridge_put('relay/inbox.json', ping_cmd, inbox_sha, f'Health check ping {ping_id}')
-    except Exception as e:
-        return False, f'Could not write ping to inbox: {e}'
-
-    # Poll outbox for up to 15s
-    deadline = time.time() + 15
-    while time.time() < deadline:
-        time.sleep(3)
-        try:
-            outbox2, _ = bridge_get('relay/outbox.json')
-            if outbox2.get('id') == ping_id and (outbox2.get('ready') or outbox2.get('output')):
-                output = outbox2.get('output', '').strip()
-                if 'bridge-ok' in output:
-                    return True, f'Bridge alive — ping responded in {int(15-(deadline-time.time()))}s'
-                return True, f'Bridge responded: {output[:60]}'
-        except:
-            pass
-
-    return False, 'Bridge did not respond to ping within 15s — may be down'
-
+        yaml_content, yaml_sha = gh_get(token, REPO, 'devvit.yaml')
+        new_yaml = re.sub(r'version:\s*[\d.]+', f'version: {devvit_version}', yaml_content)
+        gh_put(token, REPO, 'devvit.yaml', new_yaml, yaml_sha,
+               f'Post-session: sync version to {devvit_version}')
+    except:
+        pass
+    return commit
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser(description='Wigglers Room Session Health Check')
-    parser.add_argument('--token', required=True, help='GitHub PAT')
-    parser.add_argument('--fix', action='store_true', help='Auto-fix stale data and push')
-    parser.add_argument('--post-session', action='store_true', help='Run end-of-session update')
-    parser.add_argument('--session', type=int, help='New session number (for --post-session)')
-    parser.add_argument('--devvit', help='Current Devvit version (for --post-session)')
+    parser.add_argument('--token', required=True)
+    parser.add_argument('--fix', action='store_true')
+    parser.add_argument('--post-session', action='store_true')
+    parser.add_argument('--session', type=int)
+    parser.add_argument('--devvit', help='Devvit version (post-session only)')
     args = parser.parse_args()
-
     token = args.token
 
     print(f'\n{"="*60}')
@@ -498,117 +436,108 @@ def main():
     print(f'  {datetime.now().strftime("%Y-%m-%d %H:%M")}')
     print(f'{"="*60}\n')
 
-    # Pull files
-    print('Pulling live files from GitHub...')
+    # ── Post-session shortcut ─────────────────────────────────────────────────
+    if args.post_session:
+        if not args.session or not args.devvit:
+            print('Post-session requires --session N and --devvit X.X.X')
+            sys.exit(1)
+        print(f'Post-session update: Session {args.session}, Devvit {args.devvit}')
+        commit = post_session_update(token, args.session, args.devvit)
+        print(f'✓ Pushed — {commit}')
+        return
+
+    # ── Pull live files ───────────────────────────────────────────────────────
+    print('Pulling live files...')
     try:
-        arch,    arch_sha    = gh_get(token, 'GAME_ARCHITECTURE.md')
-        audit,   audit_sha   = gh_get(token, 'WIGGLERS_AUDIT.md')
-        main_tsx, _          = gh_get(token, 'src/main.tsx')
-        game_js, _           = gh_get(token, 'webroot/game.js')
-        devvit_yaml, _       = gh_get(token, 'devvit.yaml')
-        Path('/tmp/sh_devvit.yaml').write_text(devvit_yaml)
-        print(f'  ✓ GAME_ARCHITECTURE.md  ({len(arch.splitlines())} lines)')
-        print(f'  ✓ WIGGLERS_AUDIT.md     ({len(audit.splitlines())} lines)')
-        print(f'  ✓ src/main.tsx          ({len(main_tsx.splitlines())} lines)')
-        print(f'  ✓ webroot/game.js       ({len(game_js.splitlines())} lines)')
-        print(f'  ✓ devvit.yaml')
+        arch,     arch_sha = gh_get(token, REPO, 'GAME_ARCHITECTURE.md')
+        audit,    _        = gh_get(token, REPO, 'WIGGLERS_AUDIT.md')
+        main_tsx, _        = gh_get(token, REPO, 'src/main.tsx')
+        game_js,  _        = gh_get(token, REPO, 'webroot/game.js')
+        # Cache for downstream skill reads
+        Path('/tmp/sh_arch.md').write_text(arch)
+        Path('/tmp/sh_audit.md').write_text(audit)
+        print(f'  ✓ GAME_ARCHITECTURE.md ({len(arch.splitlines())} lines)')
+        print(f'  ✓ WIGGLERS_AUDIT.md    ({len(audit.splitlines())} lines)')
+        print(f'  ✓ main.tsx             ({len(main_tsx.splitlines())} lines)')
+        print(f'  ✓ game.js              ({len(game_js.splitlines())} lines)')
     except Exception as e:
-        print(f'  ✗ Failed to pull files: {e}')
+        print(f'  ✗ Failed: {e}')
         sys.exit(1)
 
-    # Run all checks
-    all_issues = []
+    # ── Bridge check + version confirmation ───────────────────────────────────
+    print('\nChecking bridge3.js + confirming Devvit version...')
+    bridge_status, confirmed_version, bridge_msg = check_bridge_and_version(token)
 
-    h_issues, h_fixes = check_header(arch, audit)
-    all_issues += h_issues
-
-    g_issues = check_globals(arch, game_js)
-    all_issues += g_issues
-
-    msg_issues = check_messages(arch, main_tsx, game_js)
-    all_issues += msg_issues
-
-    kv_issues = check_kv_keys(arch, main_tsx)
-    all_issues += kv_issues
-
-    sf_issues = check_session_fields(arch, game_js)
-    all_issues += sf_issues
-
-    oi_issues = check_open_issues(arch)
-    all_issues += oi_issues
-
-    pq_issues = check_priority_queue(arch)
-    all_issues += pq_issues
-
-    lc_issues, actual_main, actual_game = check_line_counts(arch, main_tsx, game_js)
-    all_issues += lc_issues
-
-    pc_issues = check_preview_card(arch, main_tsx)
-    all_issues += pc_issues
-
-    # Report
-    # Bridge check
-    print('\nChecking bridge3.js...')
-    try:
-        bridge_ok, bridge_msg = check_bridge(token)
-        if bridge_ok:
-            print(f'  ✓ {bridge_msg}')
-        else:
-            print(f'  ✗ Bridge offline: {bridge_msg}')
-            print(f'  → Start it: export BRIDGE_TOKEN=<pat> && node ~/bridge3.js')
-            all_issues.append(f'Bridge offline: {bridge_msg}')
-    except Exception as e:
-        print(f'  ? Bridge check failed: {e}')
-
-    if not all_issues:
-        print('\n✅ ALL CLEAR — GAME_ARCHITECTURE.md is current')
-        print(f'   main.tsx: {actual_main} lines | game.js: {actual_game} lines')
-
-        # Print current P1
-        pq_match = re.search(r'START HERE.*?---', arch, re.DOTALL)
-        if pq_match:
-            p1_lines = pq_match.group(0).strip().split('\n')[:3]
-            print(f'\n📋 Current P1:')
-            for l in p1_lines:
-                print(f'   {l.strip()}')
+    if bridge_status == 'online':
+        print(f'  ✓ {bridge_msg}')
+    elif bridge_status == 'offline':
+        print(f'  ✗ BRIDGE OFFLINE — {bridge_msg}')
+        print(f'  → Start it: export BRIDGE_TOKEN=<pat> && node ~/bridge3.js')
+        print(f'  ✗ DEVVIT VERSION UNCONFIRMED — cannot update arch without bridge')
     else:
-        print(f'\n⚠️  DRIFT FOUND — {len(all_issues)} issue(s):')
-        for i, issue in enumerate(all_issues, 1):
-            print(f'  {i}. {issue}')
+        print(f'  ✗ BRIDGE ERROR — {bridge_msg}')
+        print(f'  ✗ DEVVIT VERSION UNCONFIRMED')
 
-        if args.fix:
-            print('\n🔧 Auto-fixing...')
-            updated_arch, fixed = apply_fixes(arch, h_fixes, actual_main, actual_game)
-            if fixed:
-                commit = gh_put(
-                    token, 'GAME_ARCHITECTURE.md', updated_arch, arch_sha,
-                    f'Health check auto-fix: {", ".join(fixed)}'
-                )
-                print(f'  ✓ Pushed fixes — commit {commit}')
-                for f in fixed:
-                    print(f'     → {f}')
-                remaining = [i for i in all_issues if not any(
-                    k in i for k in ['Session number', 'Devvit version', 'line count']
-                )]
-                if remaining:
-                    print(f'\n  ⚠️  {len(remaining)} issue(s) need manual attention:')
-                    for r in remaining:
-                        print(f'     → {r}')
+    # ── Run all checks ────────────────────────────────────────────────────────
+    print('\nRunning checks...')
+    all_issues = []
+    all_fixes  = []
+
+    h_issues, h_fixes = check_header(arch, audit, confirmed_version)
+    lc_issues, actual_main, actual_game = check_line_counts(arch, main_tsx, game_js)
+    g_issues  = check_globals(arch, game_js)
+    m_issues  = check_messages(arch, main_tsx, game_js)
+    kv_issues = check_kv_and_fields(arch, game_js)
+    pq_issues = check_priority_queue(arch)
+    pc_issues = check_preview(arch, main_tsx)
+
+    all_issues = h_issues + lc_issues + g_issues + m_issues + kv_issues + pq_issues + pc_issues
+    all_fixes  = h_fixes
+
+    # Bridge offline is always a hard fail — append last so it stands out
+    if bridge_status != 'online':
+        all_issues.append(f'HARD FAIL: Bridge {bridge_status} — Devvit version unconfirmed')
+
+    # ── Report ────────────────────────────────────────────────────────────────
+    if not all_issues:
+        print(f'\n✅ ALL CLEAR')
+        print(f'   main.tsx: {actual_main} lines | game.js: {actual_game} lines')
+        print(f'   Devvit: {confirmed_version} (bridge confirmed)')
+        # Show P1
+        pq = re.search(r'START HERE.*?(?=###|$)', arch, re.DOTALL)
+        if pq:
+            lines = [l.strip() for l in pq.group(0).strip().split('\n') if l.strip()][:2]
+            print(f'\n📋 P1: {lines[0].replace("### ⚠ P1 — ", "").replace("START HERE: ", "")}')
+            if len(lines) > 1:
+                print(f'   {lines[1]}')
+    else:
+        doc_issues = [i for i in all_issues if 'HARD FAIL' not in i]
+        hard_fails = [i for i in all_issues if 'HARD FAIL' in i]
+
+        if doc_issues:
+            print(f'\n⚠️  DOC DRIFT ({len(doc_issues)} issue(s)):')
+            for i in doc_issues:
+                print(f'  · {i}')
+
+        if hard_fails:
+            print(f'\n🔴 HARD FAIL:')
+            for i in hard_fails:
+                print(f'  · {i.replace("HARD FAIL: ", "")}')
+            print(f'\n  Do NOT update version numbers without bridge confirmation.')
+            print(f'  Start bridge: export BRIDGE_TOKEN=<pat> && node ~/bridge3.js')
+            print(f'  Then re-run this check.')
+
+        if args.fix and doc_issues:
+            print(f'\n🔧 Auto-fixing doc drift...')
+            changed, commit = apply_fixes(token, arch, arch_sha, all_fixes, actual_main, actual_game)
+            if changed:
+                print(f'  ✓ Pushed {commit}:')
+                for c in changed:
+                    print(f'    → {c}')
+                if hard_fails:
+                    print(f'  ⚠ Doc fixes applied but version NOT updated — bridge required')
             else:
-                print('  No auto-fixable issues found — all need manual attention')
-        else:
-            print('\nRun with --fix to auto-push fixes for stale session/version/line counts.')
-            print('Other issues require manual review.')
-
-    # Post-session mode
-    if args.post_session and args.session and args.devvit:
-        print(f'\n📝 POST-SESSION UPDATE — Session {args.session}, Devvit {args.devvit}')
-        updated = post_session_update(arch, audit, args.session, args.devvit, [])
-        commit = gh_put(
-            token, 'GAME_ARCHITECTURE.md', updated, arch_sha,
-            f'Post-session update: Session {args.session}, Devvit {args.devvit}'
-        )
-        print(f'  ✓ Pushed — commit {commit}')
+                print(f'  No auto-fixable items (manual review needed)')
 
     print(f'\n{"="*60}\n')
 
