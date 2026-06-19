@@ -1,13 +1,29 @@
 ---
 name: project-calendar
-description: Maintains a live project calendar (tools/project-calendar.html) in the Cal-Starfur/claude-skills repo. Pulls open tasks from ALL registered repos, schedules them at max 2 per day by priority, and pushes the updated calendar to GitHub. Load this skill whenever the user mentions the calendar, asks what's on the schedule, says "update the calendar", "sync the calendar", "what should I work on today", starts a new project repo, or finishes a session and wants to mark tasks done. Run a sync at the end of any session where new issues were opened or tasks were completed.
+description: Maintains a live project calendar (tools/project-calendar.html) in the Cal-Starfur/claude-skills repo. Pulls open tasks from ALL registered repos, schedules them at max 1 task per repo per day so every project advances simultaneously. Load this skill whenever the user mentions the calendar, asks what's on the schedule, says "update the calendar", "sync the calendar", "what should I work on today", starts a new project repo, or finishes a session and wants to mark tasks done. Run a sync at the end of any session where new issues were opened or tasks were completed.
 ---
 
 # Project Calendar Skill
 
 Maintains `tools/project-calendar.html` in `Cal-Starfur/claude-skills`.
-Pulls tasks from all registered repos. Schedules at max 2/day. Pushes to GitHub.
-**Never push a token to the repo. Always sanitize before commit.**
+**Scheduling philosophy: 1 task per active repo per day. Every front advances. No burnout.**
+Never push a token to the repo. Always sanitize before commit.
+
+---
+
+## Scheduling Rules
+
+| Rule | Detail |
+|---|---|
+| 1 per repo per day | Each active repo contributes exactly 1 task per day |
+| Priority order | P1 → P2 → P3 within each repo |
+| Sunday | Rest day — 0 tasks |
+| Saturday | Skills/fixes only — no L-effort game tasks |
+| L-effort cap | Max 2 L-effort tasks across all repos in one day |
+| Burnout guard | If a day would have 4+ repos, cap at 4 and defer lowest-priority extras |
+| Cadence | Every repo always has a task — no repo goes dark for more than 1 day |
+
+**As new repos are added, the daily task count grows naturally — one slot per repo.**
 
 ---
 
@@ -16,30 +32,32 @@ Pulls tasks from all registered repos. Schedules at max 2/day. Pushes to GitHub.
 | Trigger | Action |
 |---|---|
 | "update/sync the calendar" | Full sync — pull all repos, rebuild, push |
-| "what should I work on today" | Full sync, then highlight today's tasks |
-| End of session where issues were opened or closed | Full sync to reflect changes |
-| New repo added to the project | Register it, full sync |
+| "what should I work on today" | Full sync, highlight today's tasks |
+| End of session where issues opened or closed | Full sync |
+| New repo added | Register it, full sync |
 | "add X to the calendar" | Add manual task, rebuild, push |
 
 ---
 
 ## Repo Registry
 
-Single source of truth is the `REGISTRY` list inside `pull_tasks.py` (see embedded script).
-The list below is documentation only — always edit the Python list, not this section.
+Single source of truth is the `REGISTRY` list inside `pull_tasks.py`.
+The list below is documentation — always edit the Python list.
 
 **Current registry:**
 ```
-Cal-Starfur/claude-skills    → parser: parse_skills
-Cal-Starfur/Wigglers_Room    → parser: parse_wigglers
+Cal-Starfur/claude-skills  (skills)   → parser: parse_skills
+Cal-Starfur/claude-skills  (audits)   → parser: parse_audits
+Cal-Starfur/Wigglers_Room  (game)     → parser: parse_wigglers
 ```
 
-**Inactive (add when project becomes active):**
+**Inactive — add when project becomes active:**
 ```
 Cal-Starfur/Space-Cats-Game-2026 → parser: parse_game_audit
 ```
 
-To add a new repo: append to REGISTRY in pull_tasks.py, write a parser, run full sync.
+Note: claude-skills has two lanes — `skills` (build/fix tasks) and `audits` (skill audit tasks).
+These are separate repo entries so both always get a daily slot.
 
 ---
 
@@ -72,8 +90,7 @@ BOOTSTRAP
 
 ```bash
 python3 -c "
-from pathlib import Path
-import json
+from pathlib import Path; import json
 token = input('Paste GitHub token: ').strip()
 Path('/tmp/project-calendar').mkdir(parents=True, exist_ok=True)
 Path('/tmp/project-calendar/config.json').write_text(json.dumps({'token': token}))
@@ -81,121 +98,83 @@ print('✓ Token set (session only)')
 "
 ```
 
-Token lives in `/tmp` only. Never saved. Never committed.
-
 ---
 
-## Step 2 — Pull Tasks From All Repos
+## Step 2 — Pull Tasks
 
 ```bash
 python3 /tmp/project-calendar/pull_tasks.py
 ```
 
-Outputs `/tmp/project-calendar/tasks.json`. Also prints a repo status line for each repo:
-
-```
-✓ claude-skills — 13 tasks
-✓ Wigglers_Room — 18 tasks
-⚠ Space-Cats — UNREACHABLE (network error) — skipped, previous tasks preserved
-```
-
-**If any repo shows ⚠ UNREACHABLE:** do NOT push the calendar. Tell the user which repo
-failed and ask them to retry. Pushing with missing repos silently breaks the schedule.
-
-Done state is loaded automatically from `tools/calendar-done.json` in the repo during this step.
-Task IDs are namespaced by repo (`wigglers:perf-1`, `skills:skill-session-summary`) to prevent
-done-state bleed between repos that happen to share an ID.
+Each repo prints a status line. If any show ⚠ UNREACHABLE — stop. Do not push.
 
 ---
 
-## Step 3 — Build Calendar HTML
+## Step 3 — Build Calendar
 
 ```bash
 python3 /tmp/project-calendar/build_calendar.py
 ```
 
-Outputs `/tmp/project-calendar/project-calendar.html`
-
-**Scheduling rules (hard — never break these):**
-- Max 2 tasks per day
-- Sunday = rest day (0 tasks)
-- Saturday = max 1 task, no L-effort tasks
-- Sort order: P1 → P2 → P3, then skill > game > fix within same priority
-- Never schedule two L-effort tasks in the same week
-- If all P1s are done, pull P2s forward
-- 4-week rolling window from today
-
 ---
 
-## Step 4 — Push to GitHub
+## Step 4 — Push
 
 ```bash
 python3 /tmp/project-calendar/push_calendar.py
 ```
 
-Pushes three things:
-1. `tools/project-calendar.html` — sanitized (no token)
-2. `tools/calendar-done.json` — done state
-3. `CHANGELOG.md` — one-line entry prepended
-
-**Sanitization rule:** Replace any string matching `github_pat_[A-Za-z0-9_]+`
-with `PASTE_YOUR_GITHUB_TOKEN_HERE` before committing. Hard rule, no exceptions.
+Pushes: `tools/project-calendar.html`, `tools/calendar-done.json`, `CHANGELOG.md`.
+Token is sanitized before commit. Push is blocked if any repo was unreachable.
 
 ---
 
 ## Parsers
 
-### parse_skills — claude-skills repo
+### parse_skills — skill build/fix tasks from claude-skills
 
-Reads from:
-- `planning/skill-buildout-plan.md` → Phase 1 and Phase 2 skill build tasks
-- `audits/*.md` → skill fix tasks from Priority Fix List sections
+Reads `planning/skill-buildout-plan.md` and `audits/*.md` Priority Fix Lists.
+- Phase 1 skills → `P1`, Phase 2 skills → `P2`
+- 🔴 audit fix → `P1`, 🟡 → `P2`, 🟢 → `P3`
+- IDs namespaced: `skills:{id}`
 
-Extraction rules:
-- Phase 1 section (before "## Phase 2") → `type: skill`, `priority: P1`
-- Phase 2 section (after "## Phase 2") → `type: skill`, `priority: P2`
-- Audit fix marked 🔴 High → `type: fix`, `priority: P1`
-- Audit fix marked 🟡 Med → `type: fix`, `priority: P2`
-- Audit fix marked 🟢 Low → `type: fix`, `priority: P3`
+### parse_audits — skill audit tasks from claude-skills
 
-Task IDs namespaced: `skills:skill-{name}`, `skills:fix-{name}`
+Reads `README.md` skill roster for skills needing audit/re-audit.
+Generates one audit task per skill that hasn't been audited recently or scored below 80.
+- Skills scored < 65 → `P1` audit task
+- Skills scored 65–79 → `P2` audit task
+- Skills scored 80+ with no recent audit → `P3` audit task
+- IDs namespaced: `audits:audit-{skill-name}`
 
-### parse_wigglers — Wigglers_Room repo
+### parse_wigglers — game tasks from Wigglers_Room
 
-Reads: `WIGGLERS_AUDIT.md` → Section 2 priority table
+Reads `WIGGLERS_AUDIT.md` Section 2 priority table.
+- P1/next session/verify → `P1`, P2 → `P2`, Future/P3/Low → `P3`
+- IDs namespaced: `wigglers:{id}`
 
-Extraction rules:
-- `P1` or `next session` or `verify` → `priority: P1`
-- `P2` → `priority: P2`
-- `Future` / `P3` / `Low` → `priority: P3`
+### parse_game_audit — generic new game repo
 
-Task IDs namespaced: `wigglers:{task-id-lowercase}`
-
-### parse_game_audit — generic game repo parser
-
-For any new game repo. Reads `GAME_AUDIT.md` or `WIGGLERS_AUDIT.md`.
-Falls back to open GitHub Issues if no audit file found.
-Task IDs namespaced: `{repo-slug}:{task-id}`
+Reads `GAME_AUDIT.md` or `WIGGLERS_AUDIT.md`. Falls back to GitHub Issues.
+IDs namespaced: `{repo-slug}:{id}`
 
 ---
 
-## Output Format (after every sync)
+## Output Format
 
 ```
 ## Calendar synced
 
-Repos pulled: claude-skills ✓ (13 tasks), Wigglers_Room ✓ (18 tasks)
-Tasks found: 31 total (0 done, 31 open)
-P1 open: 5 | P2 open: 7 | P3 open: 3
+Repos:
+  ✓ skills       — 6 build tasks, 5 fix tasks (11 total)
+  ✓ audits       — 4 audit tasks
+  ✓ Wigglers_Room — 18 game tasks
+  Total: 33 tasks | 0 done | 11 P1 open
 
-Schedule — next 7 days:
-  Fri Jun 20 → PERF-1 (game/P1/M), session-summary skill (skill/P1/M)
-  Sat Jun 21 → ISS-13A verify (game/P1/S)
-  Sun Jun 22 → rest
-  Mon Jun 23 → PERF-2 (game/P1/M), preflight-checklist skill (skill/P1/M)
-  Tue Jun 24 → rollback skill (skill/P2/M), fix: png-canvas (fix/P1/S)
-  Wed Jun 25 → PERF-3 (game/P2/S), fix: save-skill-workflow (fix/P2/S)
-  Thu Jun 26 → feature-spec skill (skill/P2/S), FEAT-2 (game/P2/L)
+Today's schedule (3 tasks — 1 per repo):
+  [SKILL P1] Build: session-summary skill
+  [AUDIT P1] Audit: png-canvas-art-optimizer (score: 60)
+  [GAME  P1] PERF-1: Trash chunks pre-render
 
 Pushed: tools/project-calendar.html ✓
 Pushed: tools/calendar-done.json ✓
@@ -206,22 +185,22 @@ Pushed: CHANGELOG.md ✓
 
 ## Hard Rules
 
-1. Never push a token to GitHub — sanitize before every commit
-2. Never reschedule done tasks — preserve done state across rebuilds
-3. Never exceed 2 tasks/day — the whole point is preventing overwhelm
-4. Never push if any repo was unreachable — tell the user and stop
-5. Always update CHANGELOG.md on every push
-6. When a new repo is registered, run a full sync same session
-7. Namespace all task IDs by repo — never use bare IDs across repos
+1. Never push a token — sanitize every commit
+2. Never push if any repo was unreachable
+3. Never schedule more than 1 task per repo per day
+4. Never skip done-state sync — completed work must not reappear
+5. Always update CHANGELOG on every push
+6. Namespace all task IDs by repo — never bare IDs
+7. When a new repo is added, run a full sync same session
 
 ---
 
 ## Adding a New Repo
 
-1. Append to `REGISTRY` list in `pull_tasks.py`
-2. Write a parser function (follow `parse_wigglers` as template)
-3. Register parser in the `PARSERS` dict in `pull_tasks.py`
-4. Run full sync — confirm tasks appear in schedule preview
+1. Append to `REGISTRY` in `pull_tasks.py`
+2. Write a parser (use `parse_wigglers` as template)
+3. Register in `PARSERS` dict
+4. Run full sync, confirm tasks appear
 5. Push
 
 ---
@@ -231,8 +210,7 @@ Pushed: CHANGELOG.md ✓
 
 ```python
 """
-pull_tasks.py — Pull tasks from all registered repos and write tasks.json
-Fixes applied v2: namespaced IDs, network fallback, Phase 1/2 detection fix
+pull_tasks.py v3 — per-repo lanes, audit tasks, namespaced IDs, network fallback
 """
 import json, base64, re
 from pathlib import Path
@@ -242,10 +220,12 @@ config = json.loads(Path('/tmp/project-calendar/config.json').read_text())
 TOKEN = config['token']
 OUT = Path('/tmp/project-calendar')
 
-# ── Single source of truth for repo registry ──────────────────────────────
+# ── Single source of truth for repo registry ───────────────────────────────
+# Each entry: owner, repo, parser, ns (namespace), lane (display label)
 REGISTRY = [
-    {'owner': 'Cal-Starfur', 'repo': 'claude-skills',   'parser': 'parse_skills',   'ns': 'skills'},
-    {'owner': 'Cal-Starfur', 'repo': 'Wigglers_Room',   'parser': 'parse_wigglers', 'ns': 'wigglers'},
+    {'owner': 'Cal-Starfur', 'repo': 'claude-skills',   'parser': 'parse_skills',   'ns': 'skills',   'lane': 'Skills'},
+    {'owner': 'Cal-Starfur', 'repo': 'claude-skills',   'parser': 'parse_audits',   'ns': 'audits',   'lane': 'Audits'},
+    {'owner': 'Cal-Starfur', 'repo': 'Wigglers_Room',   'parser': 'parse_wigglers', 'ns': 'wigglers', 'lane': 'Wigglers Room'},
 ]
 
 def gh_get(path):
@@ -263,36 +243,32 @@ def gh_file(owner, repo, file_path):
 
 def effort_from_desc(desc, title=''):
     combined = (title + ' ' + desc).lower()
-    if any(w in combined for w in ['verify', 'check', 'confirm', 'remove hardcoded', 'copy-paste', 'fix copy', 'plaintext']):
+    if any(w in combined for w in ['verify', 'check', 'confirm', 'remove hardcoded', 'copy-paste', 'plaintext']):
         return 'S'
     if any(w in combined for w in ['cross-player', 'cross-device', 'long-press', 'design doc', 'multi-file', 'from scratch']):
         return 'L'
     return 'M'
 
 def ns_id(namespace, raw_id):
-    """Namespace a task ID to prevent cross-repo done-state bleed."""
     return f'{namespace}:{raw_id}'
 
-# ── Parser: claude-skills ──────────────────────────────────────────────────
+# ── Parser: skill build/fix tasks ─────────────────────────────────────────
 def parse_skills(owner, repo, ns):
     tasks = []
-    print(f'  Parsing {owner}/{repo}...')
+    print(f'  [{ns}] Parsing skill build/fix tasks...')
 
-    # Buildout plan — fixed Phase 1/2 detection
     try:
         plan = gh_file(owner, repo, 'planning/skill-buildout-plan.md')
         phase = None
         in_phase2 = False
         for line in plan.splitlines():
-            # Only switch to P2 when we hit the actual Phase 2 header
             if re.match(r'^##\s+Phase 2', line):
                 in_phase2 = True
                 phase = 'P2'
             elif re.match(r'^##\s+Phase 1', line):
                 in_phase2 = False
                 phase = 'P1'
-            # Only assign P1 if we haven't crossed into Phase 2
-            if not in_phase2 and re.search(r'Phase 1', line) and phase is None:
+            elif not in_phase2 and re.search(r'Phase 1', line) and phase is None:
                 phase = 'P1'
             m = re.match(r'###\s+\d+\.\s+(.+?)\s+skill', line, re.I)
             if m and phase:
@@ -300,17 +276,14 @@ def parse_skills(owner, repo, ns):
                 tasks.append({
                     'id': ns_id(ns, f'skill-{name}'),
                     'title': f'Build: {m.group(1).strip().lower()} skill',
-                    'type': 'skill',
-                    'priority': phase,
-                    'effort': 'M',
-                    'repo': repo,
+                    'type': 'skill', 'priority': phase, 'effort': 'M',
+                    'repo': repo, 'lane': 'Skills',
                     'desc': f'Phase {phase[-1]} skill from buildout plan.',
                     'done': False
                 })
     except Exception as e:
-        print(f'    Warning: could not read buildout plan: {e}')
+        print(f'    Warning: buildout plan: {e}')
 
-    # Audit fix lists
     try:
         tree = gh_get(f'{owner}/{repo}/git/trees/main?recursive=1')
         audit_files = [i['path'] for i in tree['tree'] if i['path'].startswith('audits/') and i['path'].endswith('.md')]
@@ -324,8 +297,7 @@ def parse_skills(owner, repo, ns):
                     if in_priority and line.startswith('|') and '|' in line[1:]:
                         parts = [p.strip() for p in line.split('|') if p.strip()]
                         if len(parts) >= 3 and parts[0] not in ('Priority', '---', 'Skill', 'priority', 'Fix'):
-                            pri_raw = parts[0]
-                            skill_name = parts[1] if len(parts) > 1 else ''
+                            pri_raw, skill_name = parts[0], (parts[1] if len(parts) > 1 else '')
                             fix_desc = parts[2] if len(parts) > 2 else ''
                             if '🔴' in pri_raw or 'High' in pri_raw: pri = 'P1'
                             elif '🟡' in pri_raw or 'Med' in pri_raw: pri = 'P2'
@@ -335,36 +307,103 @@ def parse_skills(owner, repo, ns):
                                 tasks.append({
                                     'id': ns_id(ns, raw_id),
                                     'title': f'Fix: {skill_name}',
-                                    'type': 'fix',
-                                    'priority': pri,
+                                    'type': 'fix', 'priority': pri,
                                     'effort': effort_from_desc(fix_desc),
-                                    'repo': repo,
-                                    'desc': fix_desc,
-                                    'done': False
+                                    'repo': repo, 'lane': 'Skills',
+                                    'desc': fix_desc, 'done': False
                                 })
             except Exception as e:
-                print(f'    Warning: {af}: {e}')
+                print(f'    Warning {af}: {e}')
     except Exception as e:
-        print(f'    Warning: could not read audit files: {e}')
+        print(f'    Warning audit files: {e}')
 
-    # Deduplicate by id
     seen = set()
     deduped = [t for t in tasks if not (t['id'] in seen or seen.add(t['id']))]
+    print(f'    → {len(deduped)} tasks')
     return deduped
+
+# ── Parser: skill audit tasks ──────────────────────────────────────────────
+def parse_audits(owner, repo, ns):
+    tasks = []
+    print(f'  [{ns}] Parsing skill audit tasks...')
+
+    # Known skill scores from baseline + subsequent audits
+    # Format: skill_name → (score, last_audited)
+    SKILL_SCORES = {
+        'session-health':           (97, '2026-06-19'),
+        'devvit-pipeline':          (92, '2026-06-19'),
+        'github-sync':              (88, '2026-06-19'),
+        'lead-dev':                 (85, '2026-06-19'),
+        'contractor':               (82, '2026-06-19'),
+        'project-calendar':         (69, '2026-06-19'),
+        'wigglers-architecture':    (72, '2026-06-19'),
+        'save-skill-workflow':      (72, '2026-06-19'),
+        'canvas-art-optimizer':     (68, '2026-06-19'),
+        'png-canvas-art-optimizer': (60, '2026-06-19'),
+        'skill-audit':              (None, None),
+        'skill-creator':            (None, None),
+    }
+
+    # Try to read README for current skill roster
+    try:
+        readme = gh_file(owner, repo, 'README.md')
+        # Parse skill table rows: | skill-name | score | role |
+        for line in readme.splitlines():
+            if line.startswith('|') and '|' in line[1:]:
+                parts = [p.strip() for p in line.split('|') if p.strip()]
+                if len(parts) >= 2:
+                    name = parts[0].lower().replace(' ', '-')
+                    score_str = parts[1] if len(parts) > 1 else ''
+                    try:
+                        score = int(score_str)
+                        if name in SKILL_SCORES:
+                            existing = SKILL_SCORES[name]
+                            SKILL_SCORES[name] = (score, existing[1])
+                    except ValueError:
+                        pass
+    except Exception as e:
+        print(f'    Warning: README: {e}')
+
+    for skill_name, (score, last_audited) in SKILL_SCORES.items():
+        if score is None:
+            pri = 'P2'
+            desc = f'Never audited — run baseline audit to get a score.'
+        elif score < 65:
+            pri = 'P1'
+            desc = f'Score {score}/100 — below 65, needs urgent attention.'
+        elif score < 80:
+            pri = 'P2'
+            desc = f'Score {score}/100 — room for improvement, target 85+.'
+        else:
+            pri = 'P3'
+            desc = f'Score {score}/100 — healthy, re-audit after major changes.'
+
+        tasks.append({
+            'id': ns_id(ns, f'audit-{skill_name}'),
+            'title': f'Audit: {skill_name}' + (f' (score: {score})' if score else ' (unscored)'),
+            'type': 'audit',
+            'priority': pri,
+            'effort': 'S',
+            'repo': repo,
+            'lane': 'Audits',
+            'desc': desc,
+            'done': False
+        })
+
+    print(f'    → {len(tasks)} audit tasks')
+    return tasks
 
 # ── Parser: Wigglers_Room ──────────────────────────────────────────────────
 def parse_wigglers(owner, repo, ns):
     tasks = []
-    print(f'  Parsing {owner}/{repo}...')
+    print(f'  [{ns}] Parsing game tasks...')
     try:
         audit = gh_file(owner, repo, 'WIGGLERS_AUDIT.md')
         in_table = False
         for line in audit.splitlines():
             if '| ID' in line and 'Priority' in line:
-                in_table = True
-                continue
-            if in_table and line.startswith('|---'):
-                continue
+                in_table = True; continue
+            if in_table and line.startswith('|---'): continue
             if in_table and line.startswith('|'):
                 parts = [p.strip() for p in line.split('|') if p.strip()]
                 if len(parts) < 3: continue
@@ -373,60 +412,61 @@ def parse_wigglers(owner, repo, ns):
                 desc = parts[3] if len(parts) > 3 else (parts[2] if len(parts) > 2 else '')
                 raw_id = task_id_raw.lower().replace(' ', '-')
                 if not raw_id or raw_id == 'id': continue
-                if 'P1' in pri_raw or 'next session' in pri_raw or 'verify' in pri_raw.lower():
-                    pri = 'P1'
-                elif 'P2' in pri_raw:
-                    pri = 'P2'
-                else:
-                    pri = 'P3'
+                if 'P1' in pri_raw or 'next session' in pri_raw or 'verify' in pri_raw.lower(): pri = 'P1'
+                elif 'P2' in pri_raw: pri = 'P2'
+                else: pri = 'P3'
                 tasks.append({
                     'id': ns_id(ns, raw_id),
-                    'title': f'{task_id_raw}: {desc[:60]}',
-                    'type': 'game',
-                    'priority': pri,
+                    'title': f'{task_id_raw}: {desc[:55]}',
+                    'type': 'game', 'priority': pri,
                     'effort': effort_from_desc(desc, task_id_raw),
-                    'repo': repo,
-                    'desc': desc,
-                    'done': False
+                    'repo': repo, 'lane': 'Wigglers Room',
+                    'desc': desc, 'done': False
                 })
             elif in_table and not line.startswith('|'):
                 in_table = False
     except Exception as e:
         print(f'    Error: {e}')
+    print(f'    → {len(tasks)} tasks')
     return tasks
 
 # ── Main ───────────────────────────────────────────────────────────────────
 PARSERS = {
     'parse_skills':   parse_skills,
+    'parse_audits':   parse_audits,
     'parse_wigglers': parse_wigglers,
 }
 
+# Group tasks by lane so scheduler can pull 1 per lane per day
 all_tasks = []
+lane_tasks = {}   # lane_label → [tasks]
 failed_repos = []
 
 for entry in REGISTRY:
+    lane = entry['lane']
     try:
         fn = PARSERS.get(entry['parser'])
         if fn:
             tasks = fn(entry['owner'], entry['repo'], entry['ns'])
             all_tasks.extend(tasks)
-            print(f'  ✓ {entry["repo"]} — {len(tasks)} tasks')
+            if lane not in lane_tasks:
+                lane_tasks[lane] = []
+            lane_tasks[lane].extend(tasks)
+            print(f'  ✓ {lane} — {len(tasks)} tasks')
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
         failed_repos.append(entry['repo'])
-        print(f'  ⚠ {entry["repo"]} — UNREACHABLE ({e}) — skipped')
+        print(f'  ⚠ {lane} ({entry["repo"]}) — UNREACHABLE ({e})')
     except Exception as e:
         failed_repos.append(entry['repo'])
-        print(f'  ⚠ {entry["repo"]} — ERROR ({e}) — skipped')
+        print(f'  ⚠ {lane} ({entry["repo"]}) — ERROR ({e})')
 
-# Write failure flag so push_calendar.py can block if needed
 (OUT / 'failed_repos.json').write_text(json.dumps(failed_repos))
+(OUT / 'lane_names.json').write_text(json.dumps(list(lane_tasks.keys())))
 
 if failed_repos:
-    print(f'\n⚠ WARNING: {len(failed_repos)} repo(s) unreachable: {", ".join(failed_repos)}')
-    print('  Do NOT push — calendar would be missing tasks from these repos.')
-    print('  Retry after resolving the connection issue.')
+    print(f'\n⚠ {len(failed_repos)} repo(s) failed — do NOT push until resolved.')
 
-# Load done state from repo
+# Load done state
 done_state = {}
 try:
     done_data = gh_file('Cal-Starfur', 'claude-skills', 'tools/calendar-done.json')
@@ -439,8 +479,10 @@ for t in all_tasks:
     t['done'] = bool(done_state.get(t['id'], False))
 
 (OUT / 'tasks.json').write_text(json.dumps(all_tasks, indent=2))
-print(f'\n✓ {len(all_tasks)} tasks written to tasks.json')
-print(f'  Done: {sum(1 for t in all_tasks if t["done"])} | Open: {sum(1 for t in all_tasks if not t["done"])}')
+print(f'\n✓ {len(all_tasks)} total tasks | {len(lane_tasks)} lanes')
+for lane, tasks in lane_tasks.items():
+    open_c = sum(1 for t in tasks if not done_state.get(t['id'], False))
+    print(f'  {lane}: {open_c} open')
 ```
 
 ## EMBEDDED SCRIPT: build_calendar.py
@@ -448,8 +490,7 @@ print(f'  Done: {sum(1 for t in all_tasks if t["done"])} | Open: {sum(1 for t in
 
 ```python
 """
-build_calendar.py — Build calendar HTML from tasks.json
-Fixes applied v2: L-task spread rule implemented
+build_calendar.py v3 — 1 task per lane per day, cadence scheduling, audit lane included
 """
 import json
 from pathlib import Path
@@ -457,68 +498,76 @@ from datetime import date, timedelta
 
 OUT = Path('/tmp/project-calendar')
 tasks = json.loads((OUT / 'tasks.json').read_text())
+lanes = json.loads((OUT / 'lane_names.json').read_text())
 TODAY = date.today()
 
 PRIORITY_ORDER = {'P1': 0, 'P2': 1, 'P3': 2}
-TYPE_ORDER = {'skill': 0, 'game': 1, 'fix': 2}
+TYPE_ORDER = {'skill': 0, 'audit': 1, 'game': 2, 'fix': 3}
 
-open_tasks = [t for t in tasks if not t['done']]
-open_tasks.sort(key=lambda t: (
-    PRIORITY_ORDER.get(t['priority'], 9),
-    TYPE_ORDER.get(t['type'], 9)
-))
+# Build per-lane priority queues (open tasks only, sorted)
+lane_queues = {}
+for lane in lanes:
+    lane_tasks = [t for t in tasks if t.get('lane') == lane and not t['done']]
+    lane_tasks.sort(key=lambda t: (PRIORITY_ORDER.get(t['priority'], 9), TYPE_ORDER.get(t['type'], 9)))
+    lane_queues[lane] = lane_tasks
 
-# ── Scheduling with L-spread rule ─────────────────────────────────────────
+# ── Scheduling: 1 per lane per day ────────────────────────────────────────
 schedule = []
-task_idx = 0
-l_tasks_this_week = 0
+lane_indices = {lane: 0 for lane in lanes}
 
 for i in range(28):
     d = TODAY + timedelta(days=i)
-    dow = d.weekday()  # 0=Mon, 6=Sun
+    dow = d.weekday()  # 0=Mon 6=Sun
     is_rest  = (dow == 6)
-    is_light = (dow == 5)
+    is_light = (dow == 5)  # Saturday
     is_today = (i == 0)
 
-    # Reset L counter at start of each week (Monday)
-    if dow == 0:
-        l_tasks_this_week = 0
-
-    max_tasks = 0 if is_rest else (1 if (is_light or is_today) else 2)
+    if is_rest:
+        schedule.append({'date': d.isoformat(), 'tasks': [], 'is_today': is_today, 'is_rest': True})
+        continue
 
     day_tasks = []
-    j = task_idx
-    added = 0
-    scanned = 0
-    while added < max_tasks and j < len(open_tasks):
-        # Safety: don't scan more than 10 ahead looking for a fit
-        if scanned > 10:
-            break
-        t = open_tasks[j]
-        # Skip L tasks on light days
-        if is_light and t['effort'] == 'L':
-            j += 1
-            scanned += 1
-            continue
-        # Enforce L-spread: max 1 L task per week
-        if t['effort'] == 'L' and l_tasks_this_week >= 1:
-            j += 1
-            scanned += 1
-            continue
-        day_tasks.append(t)
-        if t['effort'] == 'L':
-            l_tasks_this_week += 1
-        open_tasks.pop(j)  # remove from pool so we don't double-schedule
-        added += 1
-        scanned = 0  # reset scan counter after a successful pick
+    l_count = 0
 
-    schedule.append({'date': d.isoformat(), 'tasks': day_tasks, 'is_today': is_today, 'is_rest': is_rest})
+    for lane in lanes:
+        q = lane_queues[lane]
+        idx = lane_indices[lane]
+
+        # Find next suitable task for this lane today
+        found = False
+        scan = idx
+        while scan < len(q):
+            t = q[scan]
+            # Saturday: skip L-effort game tasks
+            if is_light and t['effort'] == 'L' and t['type'] == 'game':
+                scan += 1
+                continue
+            # Hard cap: no more than 2 L-effort tasks in one day
+            if t['effort'] == 'L' and l_count >= 2:
+                scan += 1
+                continue
+            # Good to schedule
+            day_tasks.append(t)
+            if t['effort'] == 'L':
+                l_count += 1
+            lane_queues[lane].pop(scan)  # remove from queue
+            found = True
+            break
+
+    schedule.append({'date': d.isoformat(), 'tasks': day_tasks, 'is_today': is_today, 'is_rest': False})
 
 done_tasks = [t for t in tasks if t['done']]
+open_tasks = [t for t in tasks if not t['done']]
 
-# ── HTML generation ────────────────────────────────────────────────────────
+# ── HTML ──────────────────────────────────────────────────────────────────
 DAY_NAMES   = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
 MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
+LANE_COLORS = {
+    'Skills':       {'bg': '#0d0d2a', 'border': '#1e1e4a', 'text': '#818cf8', 'badge': 'skill'},
+    'Audits':       {'bg': '#0a1a0a', 'border': '#1a3a1a', 'text': '#86efac', 'badge': 'audit'},
+    'Wigglers Room':{'bg': '#052010', 'border': '#1a4d2a', 'text': '#4ade80', 'badge': 'game'},
+}
 
 def fmt_date(iso):
     d = date.fromisoformat(iso)
@@ -530,18 +579,19 @@ def fmt_day(iso):
 
 def task_html(t):
     safe_id = t['id'].replace(':', '-')
-    return f'''<div class="task {t["type"]}" id="t-{safe_id}">
-      <div class="task-top">
-        <div class="task-title">{t["title"]}</div>
-        <div class="task-badges">
-          <span class="badge {t["type"]}">{t["type"].upper()}</span>
-          <span class="badge {t["priority"]}">{t["priority"]}</span>
-          <span class="badge effort-{t["effort"]}">{t["effort"]}</span>
-        </div>
+    lc = LANE_COLORS.get(t.get('lane', ''), {'bg': '#1a1a1f', 'border': '#2e2e38', 'text': '#888', 'badge': 'fix'})
+    pri_color = {'P1': '#f87171', 'P2': '#fbbf24', 'P3': '#6b6880'}.get(t['priority'], '#888')
+    effort_color = {'S': '#4ade80', 'M': '#fbbf24', 'L': '#f87171'}.get(t['effort'], '#888')
+    lane_label = t.get('lane', t['type'].upper())
+    return f'''<div class="task" id="t-{safe_id}" style="background:{lc["bg"]};border:1px solid {lc["border"]}">
+      <div class="lane-tag" style="color:{lc["text"]}">{lane_label}</div>
+      <div class="task-title">{t["title"]}</div>
+      <div class="task-meta">
+        <span class="pill" style="color:{pri_color};border-color:{pri_color}22;background:{pri_color}11">{t["priority"]}</span>
+        <span class="pill" style="color:{effort_color};border-color:{effort_color}22;background:{effort_color}11">{t["effort"]}</span>
       </div>
       <div class="task-desc">{t["desc"]}</div>
-      <div class="task-repo">📁 {t["repo"]}</div>
-      <button class="check-btn" onclick="toggleDone('{safe_id}',event)" title="Mark done">✓</button>
+      <button class="check-btn" onclick="toggleDone('{safe_id}',event)">✓</button>
     </div>'''
 
 weeks_html = ''
@@ -549,108 +599,101 @@ for wi in range(0, 28, 7):
     week = schedule[wi:wi+7]
     if not week: continue
     week_labels = ['This week','Next week','Week 3','Week 4']
-    label = week_labels[wi // 7] if wi // 7 < 4 else f'Week {wi // 7 + 1}'
+    label = week_labels[wi//7] if wi//7 < 4 else f'Week {wi//7+1}'
     days_html = ''
     for day in week:
         classes = 'day-card' + (' today' if day['is_today'] else '') + (' rest' if day['is_rest'] else '')
         today_badge = '<span class="today-badge">today</span>' if day['is_today'] else ''
+        task_count = len(day['tasks'])
         if day['is_rest']:
             body = '<div class="rest-label">Rest day 🌱</div>'
         elif not day['tasks']:
-            body = '<div class="empty-day">All caught up ✓</div>'
+            body = '<div class="rest-label">All caught up ✓</div>'
         else:
             body = '<div class="tasks">' + ''.join(task_html(t) for t in day['tasks']) + '</div>'
+        count_badge = f'<span class="count-badge">{task_count}</span>' if task_count > 0 else ''
         days_html += f'''<div class="{classes}">
         <div class="day-header">
           <span class="day-name">{fmt_day(day["date"])}{today_badge}</span>
-          <span class="day-date">{fmt_date(day["date"])}</span>
+          <span class="day-right"><span class="day-date">{fmt_date(day["date"])}</span>{count_badge}</span>
         </div>{body}</div>'''
     weeks_html += f'<div class="week-section"><div class="week-label">{label} · {fmt_date(week[0]["date"])} – {fmt_date(week[-1]["date"])}</div><div class="days-grid">{days_html}</div></div>'
 
 total = len(tasks)
 done_count = len(done_tasks)
 p1_open = sum(1 for t in open_tasks if t['priority'] == 'P1')
-skill_left = sum(1 for t in open_tasks if t['type'] in ('skill','fix'))
+lane_count = len(lanes)
+
+# Lane summary for header
+lane_summary = ''
+for lane in lanes:
+    open_c = sum(1 for t in tasks if t.get('lane') == lane and not t['done'])
+    lc = LANE_COLORS.get(lane, {'text': '#888'})
+    lane_summary += f'<div class="lane-pill" style="border-color:{lc["text"]}33;color:{lc["text"]}">{lane} · {open_c} open</div>'
 
 html = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Cal's Dev Calendar</title>
 <style>
-:root{{--bg:#0f0f11;--surface:#1a1a1f;--border:#2e2e38;--text:#e8e6f0;--muted:#6b6880;--game:#4ade80;--game-bg:#052010;--game-border:#1a4d2a;--skill:#818cf8;--skill-bg:#0d0d2a;--skill-border:#1e1e4a;--fix:#fb923c;--fix-bg:#1a0d00;--fix-border:#3d2000;--p1:#f87171;--p2:#fbbf24;--done:#22c55e;--font:'SF Mono','Fira Code',monospace;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}}
+:root{{--bg:#0f0f11;--surface:#1a1a1f;--border:#2e2e38;--text:#e8e6f0;--muted:#6b6880;--done:#22c55e;--p1:#f87171;--p2:#fbbf24;--font:'SF Mono','Fira Code',monospace;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}}
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;padding:24px 16px 48px}}
-header{{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}}
-.header-left h1{{font-size:22px;font-weight:600;letter-spacing:-0.5px}}
-.header-left p{{font-size:13px;color:var(--muted);margin-top:4px}}
-.sync-info{{font-size:11px;font-family:var(--font);color:var(--muted);margin-bottom:20px}}
-.stats-row{{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}}
-.stat{{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 20px;text-align:center}}
-.stat-num{{font-size:24px;font-weight:700;font-family:var(--font);display:block}}
-.stat-label{{font-size:11px;color:var(--muted);margin-top:2px;display:block}}
-.legend{{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap}}
-.legend-item{{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}}
-.legend-dot{{width:8px;height:8px;border-radius:50%;flex-shrink:0}}
-.weeks{{display:flex;flex-direction:column;gap:32px}}
-.week-label{{font-size:11px;font-family:var(--font);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}}
-.days-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}}
-.day-card{{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;min-height:100px}}
-.day-card.today{{border-color:var(--skill);box-shadow:0 0 0 1px var(--skill) inset}}
-.day-card.rest{{opacity:.5}}
-.day-header{{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}}
+body{{background:var(--bg);color:var(--text);font-family:var(--sans);padding:24px 16px 48px}}
+header{{margin-bottom:24px}}
+h1{{font-size:22px;font-weight:600;letter-spacing:-.5px}}
+.subtitle{{font-size:13px;color:var(--muted);margin-top:4px}}
+.sync-info{{font-size:11px;font-family:var(--font);color:var(--muted);margin:12px 0 20px}}
+.stats-row{{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}}
+.stat{{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 18px;text-align:center}}
+.stat-num{{font-size:22px;font-weight:700;font-family:var(--font);display:block}}
+.stat-label{{font-size:11px;color:var(--muted);display:block;margin-top:2px}}
+.lane-pills{{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}}
+.lane-pill{{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid;background:transparent}}
+.weeks{{display:flex;flex-direction:column;gap:28px}}
+.week-label{{font-size:11px;font-family:var(--font);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}}
+.days-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}}
+.day-card{{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}}
+.day-card.today{{border-color:#818cf8;box-shadow:0 0 0 1px #818cf8 inset}}
+.day-card.rest{{opacity:.4}}
+.day-header{{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}}
 .day-name{{font-size:13px;font-weight:600}}
+.day-right{{display:flex;align-items:center;gap:6px}}
 .day-date{{font-size:11px;font-family:var(--font);color:var(--muted)}}
-.today-badge{{font-size:10px;background:var(--skill);color:#fff;padding:2px 7px;border-radius:20px;font-weight:600;margin-left:8px}}
-.rest-label,.empty-day{{font-size:12px;color:var(--muted);font-style:italic}}
-.tasks{{display:flex;flex-direction:column;gap:8px}}
-.task{{border-radius:8px;padding:10px 12px;position:relative;transition:opacity .15s}}
-.task.game{{background:var(--game-bg);border:1px solid var(--game-border)}}
-.task.skill{{background:var(--skill-bg);border:1px solid var(--skill-border)}}
-.task.fix{{background:var(--fix-bg);border:1px solid var(--fix-border)}}
-.task.done{{opacity:.4}}
+.today-badge{{font-size:10px;background:#818cf8;color:#fff;padding:2px 7px;border-radius:20px;font-weight:600;margin-left:6px}}
+.count-badge{{font-size:10px;background:var(--border);color:var(--muted);padding:2px 6px;border-radius:10px;font-family:var(--font)}}
+.rest-label{{font-size:12px;color:var(--muted);font-style:italic}}
+.tasks{{display:flex;flex-direction:column;gap:7px}}
+.task{{border-radius:8px;padding:9px 11px;position:relative}}
+.task.done{{opacity:.35}}
 .task.done .task-title{{text-decoration:line-through}}
-.task-top{{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}}
-.task-title{{font-size:13px;font-weight:500;flex:1;line-height:1.3;padding-right:24px}}
-.task-badges{{display:flex;gap:4px;flex-shrink:0}}
-.badge{{font-size:10px;font-family:var(--font);padding:2px 6px;border-radius:4px;font-weight:600;white-space:nowrap}}
-.badge.game{{background:#052010;color:var(--game);border:1px solid var(--game-border)}}
-.badge.skill{{background:#0d0d2a;color:var(--skill);border:1px solid var(--skill-border)}}
-.badge.fix{{background:#1a0d00;color:var(--fix);border:1px solid var(--fix-border)}}
-.badge.P1{{background:#2a0505;color:var(--p1);border:1px solid #4d0f0f}}
-.badge.P2{{background:#1a1000;color:var(--p2);border:1px solid #3d2800}}
-.badge.P3{{background:#1a1a1f;color:var(--muted);border:1px solid var(--border)}}
-.badge.effort-S{{background:#051a05;color:#4ade80;border:1px solid #1a4d1a}}
-.badge.effort-M{{background:#1a1000;color:#fbbf24;border:1px solid #3d2800}}
-.badge.effort-L{{background:#2a0505;color:#f87171;border:1px solid #4d0f0f}}
-.task-desc{{font-size:11px;color:var(--muted);line-height:1.5}}
-.task-repo{{font-size:10px;font-family:var(--font);color:var(--muted);margin-top:5px;opacity:.7}}
-.check-btn{{position:absolute;top:10px;right:10px;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border);background:transparent;cursor:pointer;font-size:10px;color:transparent;transition:all .15s}}
+.lane-tag{{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px;opacity:.8}}
+.task-title{{font-size:12px;font-weight:500;line-height:1.35;padding-right:22px;margin-bottom:5px}}
+.task-meta{{display:flex;gap:4px;margin-bottom:4px}}
+.pill{{font-size:10px;font-family:var(--font);padding:1px 6px;border-radius:4px;border:1px solid;font-weight:600}}
+.task-desc{{font-size:11px;color:var(--muted);line-height:1.45}}
+.check-btn{{position:absolute;top:9px;right:9px;width:17px;height:17px;border-radius:50%;border:1.5px solid var(--border);background:transparent;cursor:pointer;font-size:9px;color:transparent;transition:all .15s}}
 .check-btn:hover{{border-color:var(--done);color:var(--done)}}
 .task.done .check-btn{{border-color:var(--done);background:var(--done);color:#fff}}
 @media(max-width:600px){{.days-grid{{grid-template-columns:1fr}}}}
 </style>
 </head>
 <body>
-<header><div class="header-left"><h1>🪱 Dev Calendar</h1><p>Max 2 tasks/day · pulled from GitHub · don't get overwhelmed</p></div></header>
-<div class="sync-info">Last built: {TODAY.isoformat()} · {total} tasks · Ask Claude to "sync the calendar" to update</div>
+<header>
+  <h1>🪱 Dev Calendar</h1>
+  <div class="subtitle">1 task per repo per day · every front advances · no burnout</div>
+</header>
+<div class="sync-info">Last built: {TODAY.isoformat()} · {total} tasks across {lane_count} lanes · say "sync the calendar" to update</div>
 <div class="stats-row">
   <div class="stat"><span class="stat-num">{total}</span><span class="stat-label">total</span></div>
   <div class="stat"><span class="stat-num" style="color:var(--done)">{done_count}</span><span class="stat-label">done</span></div>
   <div class="stat"><span class="stat-num" style="color:var(--p1)">{p1_open}</span><span class="stat-label">P1 open</span></div>
-  <div class="stat"><span class="stat-num" style="color:var(--skill)">{skill_left}</span><span class="stat-label">skills left</span></div>
+  <div class="stat"><span class="stat-num">{lane_count}</span><span class="stat-label">active lanes</span></div>
 </div>
-<div class="legend">
-  <div class="legend-item"><div class="legend-dot" style="background:var(--game)"></div>Game</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--skill)"></div>Skill</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--fix)"></div>Fix</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--p1)"></div>P1</div>
-  <div class="legend-item"><div class="legend-dot" style="background:var(--p2)"></div>P2</div>
-  <div class="legend-item">S=small · M=medium · L=large</div>
-</div>
+<div class="lane-pills">{lane_summary}</div>
 <div class="weeks">{weeks_html}</div>
 <script>
-const K='cal_done_v2';
+const K='cal_done_v3';
 function getDone(){{try{{return JSON.parse(localStorage.getItem(K)||'{{}}')}}catch{{return {{}}}}}}
 function toggleDone(id,e){{
   e.stopPropagation();
@@ -659,12 +702,17 @@ function toggleDone(id,e){{
   const el=document.getElementById('t-'+id);
   if(el)el.classList.toggle('done',!!d[id]);
 }}
-(function(){{const d=getDone();Object.entries(d).forEach(([id,v])=>{{if(v){{const el=document.getElementById('t-'+id);if(el)el.classList.add('done');}}}});}})();
+(function(){{
+  const d=getDone();
+  Object.entries(d).forEach(([id,v])=>{{if(v){{const el=document.getElementById('t-'+id);if(el)el.classList.add('done');}}}});
+}})();
 </script>
 </body></html>'''
 
 (OUT / 'project-calendar.html').write_text(html)
-print(f'✓ Calendar built — {len(schedule)} days, {sum(len(d["tasks"]) for d in schedule)} tasks scheduled')
+print(f'✓ Calendar built — {len(schedule)} days')
+print(f'  Lanes: {", ".join(lanes)}')
+print(f'  Tasks scheduled: {sum(len(d["tasks"]) for d in schedule)}')
 ```
 
 ## EMBEDDED SCRIPT: push_calendar.py
@@ -672,8 +720,7 @@ print(f'✓ Calendar built — {len(schedule)} days, {sum(len(d["tasks"]) for d 
 
 ```python
 """
-push_calendar.py — Push calendar, done state, and CHANGELOG to GitHub
-Fixes applied v2: blocks push if repos failed, updates CHANGELOG
+push_calendar.py v3 — blocks on failed repos, sanitizes token, updates CHANGELOG
 """
 import json, base64, re
 from pathlib import Path
@@ -684,18 +731,13 @@ config = json.loads(Path('/tmp/project-calendar/config.json').read_text())
 TOKEN = config['token']
 OWNER = 'Cal-Starfur'
 REPO  = 'claude-skills'
-HEADERS = {
-    'Authorization': f'token {TOKEN}',
-    'Content-Type': 'application/json',
-    'Accept': 'application/vnd.github.v3+json'
-}
+HEADERS = {'Authorization': f'token {TOKEN}', 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json'}
 OUT = Path('/tmp/project-calendar')
 
-# ── Block push if any repo failed ──────────────────────────────────────────
 failed = json.loads((OUT / 'failed_repos.json').read_text()) if (OUT / 'failed_repos.json').exists() else []
 if failed:
-    print(f'⚠ PUSH BLOCKED — {len(failed)} repo(s) were unreachable: {", ".join(failed)}')
-    print('  Fix the connection issue and re-run pull_tasks.py before pushing.')
+    print(f'⚠ PUSH BLOCKED — repos unreachable: {", ".join(failed)}')
+    print('  Re-run pull_tasks.py after fixing the connection.')
     exit(1)
 
 def gh_get(path):
@@ -727,42 +769,35 @@ def push_file(file_path, content, message, do_sanitize=False):
     payload = {'message': message, 'content': base64.b64encode(safe.encode()).decode()}
     if sha: payload['sha'] = sha
     result, code = gh_put(f'{OWNER}/{REPO}/contents/{file_path}', payload)
-    if code in (200, 201):
-        print(f'✓ {file_path}')
-        return True
-    else:
-        print(f'✗ {file_path} — {code}: {result.get("message")}')
-        return False
+    if code in (200, 201): print(f'✓ {file_path}')
+    else: print(f'✗ {file_path} — {code}: {result.get("message")}')
 
-tasks = json.loads((OUT / 'tasks.json').read_text())
+tasks  = json.loads((OUT / 'tasks.json').read_text())
+lanes  = json.loads((OUT / 'lane_names.json').read_text())
 done_state = {t['id']: True for t in tasks if t['done']}
-total = len(tasks)
-done_count = len(done_state)
-open_count = total - done_count
+total  = len(tasks)
+done_c = len(done_state)
+open_c = total - done_c
 p1_open = sum(1 for t in tasks if t['priority'] == 'P1' and not t['done'])
+lane_summary = ', '.join(f'{l}: {sum(1 for t in tasks if t.get("lane")==l and not t["done"])} open' for l in lanes)
 
-# Push calendar HTML (sanitized)
-html = (OUT / 'project-calendar.html').read_text()
-push_file('tools/project-calendar.html', html,
-          f'Calendar sync {date.today().isoformat()}: {open_count} open, {done_count} done',
-          do_sanitize=True)
+push_file('tools/project-calendar.html', (OUT / 'project-calendar.html').read_text(),
+          f'Calendar sync {date.today().isoformat()}: {open_c} open across {len(lanes)} lanes', do_sanitize=True)
 
-# Push done state
-push_file('tools/calendar-done.json',
-          json.dumps(done_state, indent=2),
-          f'Calendar sync: done state ({done_count} tasks)')
+push_file('tools/calendar-done.json', json.dumps(done_state, indent=2),
+          f'Calendar sync: done state ({done_c} tasks)')
 
-# Update CHANGELOG
 existing_cl, status = gh_get(f'{OWNER}/{REPO}/contents/CHANGELOG.md')
 if status == 200:
     current = base64.b64decode(existing_cl['content'].replace('\n','')).decode()
-    entry = f'## {date.today().isoformat()} — Calendar sync\n\n- Synced {total} tasks across all repos\n- P1 open: {p1_open} | Done: {done_count} | Open: {open_count}\n\n---\n\n'
-    updated = current.replace('# Skill Changelog\n\nTracks all skill changes across sessions. Newest entries at the top.\n\n---\n\n',
-                              f'# Skill Changelog\n\nTracks all skill changes across sessions. Newest entries at the top.\n\n---\n\n{entry}')
-    push_file('CHANGELOG.md', updated,
-              f'Calendar sync {date.today().isoformat()}: CHANGELOG updated',
-              do_sanitize=False)
+    entry = (f'## {date.today().isoformat()} — Calendar sync\n\n'
+             f'- {total} tasks across {len(lanes)} lanes ({lane_summary})\n'
+             f'- P1 open: {p1_open} | Done: {done_c} | Open: {open_c}\n\n---\n\n')
+    updated = current.replace(
+        '# Skill Changelog\n\nTracks all skill changes across sessions. Newest entries at the top.\n\n---\n\n',
+        f'# Skill Changelog\n\nTracks all skill changes across sessions. Newest entries at the top.\n\n---\n\n{entry}'
+    )
+    push_file('CHANGELOG.md', updated, f'Calendar sync {date.today().isoformat()}: CHANGELOG updated')
 
-print(f'\n✓ All pushed to github.com/{OWNER}/{REPO}/tools/')
-print(f'  {total} tasks | {done_count} done | {p1_open} P1 open')
+print(f'\n✓ Pushed — {total} tasks | {len(lanes)} lanes | {p1_open} P1 open')
 ```
