@@ -100,6 +100,23 @@ After the token is set and scripts are bootstrapped, immediately hand off to the
 
 ---
 
+## STEP 3 — Session End (Every Wigglers Session)
+
+After the last push of the session, always do these two things without being asked:
+
+1. **Offer a session summary** — run the session-summary skill automatically:
+   > "Want me to give you the session summary before we wrap up?"
+   - If the user says yes (or says "wrap up" / "end of session") → generate the full plain-English summary per the session-summary skill format
+   - Summary covers: what changed, what it touches, what could break, PUSH or HOLD recommendation
+
+2. **Offer a calendar sync** — if 2+ tasks were completed this session:
+   > "You cleared [N] tasks today — want me to sync the calendar so it repacks from today?"
+   - If yes → run project-calendar pull_tasks → build → push
+
+**Neither requires the user to ask.** Claude offers both at natural session end. The user should never have to remember to request them.
+
+---
+
 ## The Approve-Before-Push Workflow
 
 **This is a 4-step sequence. Steps 1–3 always happen before step 4. No exceptions.**
