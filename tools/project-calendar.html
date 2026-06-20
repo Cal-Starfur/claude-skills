@@ -50,18 +50,18 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
   <h1>🪱 Dev Calendar</h1>
   <div class="subtitle">1 task per repo per day · every front advances · no burnout</div>
 </header>
-<div class="sync-info">Last built: 2026-06-20 · 56 tasks across 3 lanes · say "sync the calendar" to update</div>
+<div class="sync-info">Last built: 2026-06-20 · 61 tasks across 4 lanes · say "sync the calendar" to update</div>
 <div class="stats-row">
-  <div class="stat"><span class="stat-num">56</span><span class="stat-label">total</span></div>
+  <div class="stat"><span class="stat-num">61</span><span class="stat-label">total</span></div>
   <div class="stat"><span class="stat-num" style="color:var(--done)">1</span><span class="stat-label">done</span></div>
-  <div class="stat"><span class="stat-num" style="color:var(--p1)">9</span><span class="stat-label">P1 open</span></div>
-  <div class="stat"><span class="stat-num">3</span><span class="stat-label">active lanes</span></div>
+  <div class="stat"><span class="stat-num" style="color:var(--p1)">11</span><span class="stat-label">P1 open</span></div>
+  <div class="stat"><span class="stat-num">4</span><span class="stat-label">active lanes</span></div>
 </div>
-<div class="lane-pills"><div class="lane-pill" style="border-color:#818cf833;color:#818cf8">Skills · 25 open</div><div class="lane-pill" style="border-color:#86efac33;color:#86efac">Audits · 12 open</div><div class="lane-pill" style="border-color:#4ade8033;color:#4ade80">Wigglers Room · 18 open</div></div>
+<div class="lane-pills"><div class="lane-pill" style="border-color:#818cf833;color:#818cf8">Skills · 25 open</div><div class="lane-pill" style="border-color:#86efac33;color:#86efac">Audits · 12 open</div><div class="lane-pill" style="border-color:#4ade8033;color:#4ade80">Wigglers Room · 18 open</div><div class="lane-pill" style="border-color:#88833;color:#888">GitHub · 5 open</div></div>
 <div class="weeks"><div class="week-section"><div class="week-label">This week · Jun 20 – Jun 26</div><div class="days-grid"><div class="day-card today">
         <div class="day-header">
           <span class="day-name">Saturday<span class="today-badge">today</span></span>
-          <span class="day-right"><span class="day-date">Jun 20</span><span class="count-badge">3</span></span>
+          <span class="day-right"><span class="day-date">Jun 20</span><span class="count-badge">4</span></span>
         </div><div class="tasks"><div class="task" id="t-skills-skill-session-summary" style="background:#0d0d2a;border:1px solid #1e1e4a">
       <div class="lane-tag" style="color:#818cf8">Skills</div>
       <div class="task-title">Build: session-summary skill</div>
@@ -89,6 +89,15 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">Tea drifts out of tube through compost to lowest world-Y point</div>
       <button class="check-btn" onclick="toggleDone('wigglers-iss-15',event)">✓</button>
+    </div><div class="task" id="t-github-layer-2-branch-protection" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">GitHub</div>
+      <div class="task-title">Layer 2: Branch protection on main</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
+      </div>
+      <div class="task-desc">Require PR + CI pass before merge to main. No force pushes. Protect main branch.</div>
+      <button class="check-btn" onclick="toggleDone('github-layer-2-branch-protection',event)">✓</button>
     </div></div></div><div class="day-card rest">
         <div class="day-header">
           <span class="day-name">Sunday</span>
@@ -96,7 +105,7 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
         </div><div class="rest-label">Rest day 🌱</div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Monday</span>
-          <span class="day-right"><span class="day-date">Jun 22</span><span class="count-badge">3</span></span>
+          <span class="day-right"><span class="day-date">Jun 22</span><span class="count-badge">4</span></span>
         </div><div class="tasks"><div class="task" id="t-skills-skill-preflight-checklist" style="background:#0d0d2a;border:1px solid #1e1e4a">
       <div class="lane-tag" style="color:#818cf8">Skills</div>
       <div class="task-title">Build: preflight-checklist skill</div>
@@ -124,10 +133,19 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">17 `_underscore` function names (S4 rename reverted)</div>
       <button class="check-btn" onclick="toggleDone('wigglers-iss-3',event)">✓</button>
+    </div><div class="task" id="t-github-layer-3-auto-versioning" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">GitHub</div>
+      <div class="task-title">Layer 3: Auto-versioning on merge</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
+      </div>
+      <div class="task-desc">Read V## from commit message on merge to main, create tagged GitHub Release with changelog.</div>
+      <button class="check-btn" onclick="toggleDone('github-layer-3-auto-versioning',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Tuesday</span>
-          <span class="day-right"><span class="day-date">Jun 23</span><span class="count-badge">3</span></span>
+          <span class="day-right"><span class="day-date">Jun 23</span><span class="count-badge">4</span></span>
         </div><div class="tasks"><div class="task" id="t-skills-skill-rollback" style="background:#0d0d2a;border:1px solid #1e1e4a">
       <div class="lane-tag" style="color:#818cf8">Skills</div>
       <div class="task-title">Build: rollback skill</div>
@@ -155,10 +173,19 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">`draw()` 2,022-line monolith (S5 split reverted)</div>
       <button class="check-btn" onclick="toggleDone('wigglers-iss-4',event)">✓</button>
+    </div><div class="task" id="t-github-layer-4-build-failure-issues" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">GitHub</div>
+      <div class="task-title">Layer 4: Auto-create issues on build failure</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
+      </div>
+      <div class="task-desc">CI fail → auto-open GitHub Issue. CI recover → auto-close it. Keeps audit honest.</div>
+      <button class="check-btn" onclick="toggleDone('github-layer-4-build-failure-issues',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Wednesday</span>
-          <span class="day-right"><span class="day-date">Jun 24</span><span class="count-badge">3</span></span>
+          <span class="day-right"><span class="day-date">Jun 24</span><span class="count-badge">4</span></span>
         </div><div class="tasks"><div class="task" id="t-skills-fix-png-canvas-art-optimizer" style="background:#0d0d2a;border:1px solid #1e1e4a">
       <div class="lane-tag" style="color:#818cf8">Skills</div>
       <div class="task-title">Fix: png-canvas-art-optimizer</div>
@@ -186,10 +213,19 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">5 duplicate Snoo SVG helper pairs</div>
       <button class="check-btn" onclick="toggleDone('wigglers-iss-5',event)">✓</button>
+    </div><div class="task" id="t-github-layer-5-scheduled-jobs" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">GitHub</div>
+      <div class="task-title">Layer 5: Scheduled calendar sync (Monday 9am)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
+      </div>
+      <div class="task-desc">Calendar syncs every Monday automatically — no push needed to trigger it.</div>
+      <button class="check-btn" onclick="toggleDone('github-layer-5-scheduled-jobs',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Thursday</span>
-          <span class="day-right"><span class="day-date">Jun 25</span><span class="count-badge">3</span></span>
+          <span class="day-right"><span class="day-date">Jun 25</span><span class="count-badge">4</span></span>
         </div><div class="tasks"><div class="task" id="t-skills-fix-wigglers-architecture" style="background:#0d0d2a;border:1px solid #1e1e4a">
       <div class="lane-tag" style="color:#818cf8">Skills</div>
       <div class="task-title">Fix: wigglers-architecture</div>
@@ -217,6 +253,15 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">18 raw message strings in game.js (S2 reverted)</div>
       <button class="check-btn" onclick="toggleDone('wigglers-iss-6',event)">✓</button>
+    </div><div class="task" id="t-github-layer-6-status-dashboard" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">GitHub</div>
+      <div class="task-title">Layer 6: Cross-repo status dashboard</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">L</span>
+      </div>
+      <div class="task-desc">status.html in claude-skills: live build health, calendar last synced, open P1s across all repos.</div>
+      <button class="check-btn" onclick="toggleDone('github-layer-6-status-dashboard',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Friday</span>
