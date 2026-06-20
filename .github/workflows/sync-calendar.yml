@@ -1,0 +1,39 @@
+name: Sync Project Calendar
+
+on:
+  repository_dispatch:
+    types: [wigglers-pushed]
+
+jobs:
+  build-calendar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout claude-skills
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.CALENDAR_SYNC_PAT }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Write token config
+        run: |
+          mkdir -p /tmp/project-calendar
+          echo '{"token":"${{ secrets.CALENDAR_SYNC_PAT }}"}' > /tmp/project-calendar/config.json
+
+      - name: Copy calendar scripts from repo
+        run: |
+          cp tools/pull_tasks.py /tmp/project-calendar/pull_tasks.py
+          cp tools/build_calendar.py /tmp/project-calendar/build_calendar.py
+          cp tools/push_calendar.py /tmp/project-calendar/push_calendar.py
+
+      - name: Pull tasks from all repos
+        run: python3 /tmp/project-calendar/pull_tasks.py
+
+      - name: Build calendar HTML
+        run: python3 /tmp/project-calendar/build_calendar.py
+
+      - name: Push calendar to repo
+        run: python3 /tmp/project-calendar/push_calendar.py
