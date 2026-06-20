@@ -206,6 +206,7 @@ Examples:
    - Write it to `/mnt/user-data/outputs/SKILL.md`
    - Call `present_files` with that path
    - Do this without being asked. No exceptions. The user needs the Save Skill button every time.
+10. **At session end, always offer session-summary + calendar sync** — see STEP 3 above. Never wait to be asked.
 
 ---
 
