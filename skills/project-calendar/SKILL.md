@@ -273,8 +273,7 @@ Pushed: CHANGELOG.md ✓
 
 ```python
 """
-pull_tasks.py v4 — per-repo lanes, audit tasks, namespaced IDs, network fallback
-v4 adds: rich task descriptions for Wigglers with forward-looking gameplay suggestions
+pull_tasks.py v3 — per-repo lanes, audit tasks, namespaced IDs, network fallback
 """
 import json, base64, re
 from pathlib import Path
@@ -285,6 +284,7 @@ TOKEN = config['token']
 OUT = Path('/tmp/project-calendar')
 
 # ── Single source of truth for repo registry ───────────────────────────────
+# Each entry: owner, repo, parser, ns (namespace), lane (display label)
 REGISTRY = [
     {'owner': 'Cal-Starfur', 'repo': 'claude-skills',   'parser': 'parse_skills',   'ns': 'skills',   'lane': 'Skills'},
     {'owner': 'Cal-Starfur', 'repo': 'claude-skills',   'parser': 'parse_audits',   'ns': 'audits',   'lane': 'Audits'},
@@ -390,6 +390,8 @@ def parse_audits(owner, repo, ns):
     tasks = []
     print(f'  [{ns}] Parsing skill audit tasks...')
 
+    # Known skill scores from baseline + subsequent audits
+    # Format: skill_name → (score, last_audited)
     SKILL_SCORES = {
         'session-health':           (97, '2026-06-19'),
         'devvit-pipeline':          (92, '2026-06-19'),
@@ -405,8 +407,10 @@ def parse_audits(owner, repo, ns):
         'skill-creator':            (None, None),
     }
 
+    # Try to read README for current skill roster
     try:
         readme = gh_file(owner, repo, 'README.md')
+        # Parse skill table rows: | skill-name | score | role |
         for line in readme.splitlines():
             if line.startswith('|') and '|' in line[1:]:
                 parts = [p.strip() for p in line.split('|') if p.strip()]
@@ -452,102 +456,6 @@ def parse_audits(owner, repo, ns):
     print(f'    → {len(tasks)} audit tasks')
     return tasks
 
-# ── Rich task descriptions for Wigglers ───────────────────────────────────
-# Forward-looking gameplay suggestions keyed by task ID
-WIGGLERS_RICH_DESC = {
-    'perf-1': (
-        "Pre-render each trash chunk to OffscreenCanvas at spawn time. "
-        "drawImage replaces 436 canvas ops per item. Expected 50–100× speedup. "
-        "🎮 Unlocks: with trash render cost near zero, you can safely double the chunk count "
-        "for a much fuller, busier bin — more visual richness, more eating variety."
-    ),
-    'perf-2': (
-        "Y-bucket index on pPath — divide into 8px buckets, scan only 1–3 instead of all 2,000. "
-        "Expected 50–200× speedup on drop routing. "
-        "🎮 Unlocks: smooth real-time tunnel feedback even with 10+ simultaneous drops in play — "
-        "opens the door to multiplayer drop interactions without lag."
-    ),
-    'iss-13-bug-a': (
-        "Verify the S20 fix: the !d.inTunnel guard was removed so tunnel drops now decrement pooled. "
-        "Check game.js ~line 4554 — the _teaHit block should decrement pooled with no inTunnel guard. "
-        "🎮 Unlocks: the entire moisture economy. Once draining actually reduces pooled, the sweet-spot "
-        "reward (0.3–0.5 = HP regen) becomes meaningful and players have a real reason to build drains."
-    ),
-    'perf-3': (
-        "Pre-render 298 blade triangles to offscreen canvas once in setup(). Single drawImage replaces "
-        "1,788 canvas calls/frame. "
-        "🎮 Unlocks: richer grass horizon — can add wind animation, seasonal color shifts, or depth layers "
-        "without any frame cost once blades are a single texture."
-    ),
-    'perf-4': (
-        "Pre-render unique debris/scrap combos offscreen. Lower cap 300→80. Skip rotation for settled scraps. "
-        "🎮 Unlocks: more expressive debris behavior — scraps could visually react to moisture, glow when "
-        "castingEnrichment is high, or leave compost trails without perf penalty."
-    ),
-    'iss-3': (
-        "Rename 17 underscore-prefixed functions to camelCase (S4 rename reverted). "
-        "🎮 No player-visible change but makes codebase legible for the next big feature push."
-    ),
-    'iss-4': (
-        "Split 2,022-line draw() monolith into logical subfunctions (S5 split reverted). "
-        "🎮 Once split, you can add layer-specific effects (depth blur, moisture shimmer on wet layers) "
-        "without hunting through thousands of lines."
-    ),
-    'iss-5': (
-        "Remove 5 duplicate Snoo SVG helper pairs — consolidate to one canonical set. "
-        "🎮 Prerequisite for adding new Snoo emotional states (gaunt from starvation, swollen from acid) "
-        "without code explosion."
-    ),
-    'iss-6': (
-        "Replace 18 raw message strings with MSG_* constants. "
-        "🎮 Makes FEAT-2 (cross-device) much safer to implement — typed constants prevent silent "
-        "message-type mismatches across device sessions."
-    ),
-    'iss-7': (
-        "Remove 4 dead functions from codebase. "
-        "🎮 Smaller game.js = faster parse on mobile Reddit webview = snappier first load."
-    ),
-    'iss-8': (
-        "Replace plaintext DEBUG_PASSWORD 'wigglers2025' with env var or hashed check. "
-        "🎮 Low effort, keeps the cheat gate closed as the game gets more players."
-    ),
-    'iss-9': (
-        "Stamp bornTs on cocoon hatch respawn paths. Currently only stamped on fresh spawn. "
-        "🎮 Enables lifetime tracking for reborn worms — foundation for achievements like 'Survived 3 lives'."
-    ),
-    'iss-10': (
-        "Move weeklyContrib validation server-side. Currently client-authoritative. "
-        "🎮 Closes the leaderboard exploit path before weekly rankings become a social feature."
-    ),
-    'iss-11': (
-        "Weekly drain fires only while a player is open — offline players don't drain. "
-        "🎮 Design decision: fix this only after deciding if offline persistence is a feature or a bug. "
-        "Consider: sleeping worm slowly evaporates moisture as a passive mechanic."
-    ),
-    'feat-1': (
-        "Cross-player tunnel clogging via Realtime presence updates. Full design doc in S20. "
-        "🎮 This is the biggest multiplayer moment in the game — your poop blocking another player's "
-        "drain is the first time two worms meaningfully interact. Big karma/social potential."
-    ),
-    'feat-2': (
-        "Device heartbeat token in KV — conflict UI on second open (Take over / Wait). "
-        "Full message type spec in WIGGLERS_AUDIT.md. "
-        "🎮 Removes the last frustration for returning players who left the game open on another tab. "
-        "Prerequisite for any web-to-mobile expansion."
-    ),
-    'feat-3': (
-        "bridge3.js passively captures devvit upload version from stdout → relay/outbox.json. "
-        "Claude reads it next session, syncs devvit.yaml with real number. "
-        "🎮 Zero-friction version tracking — removes manual +1 estimates and prevents audit drift."
-    ),
-    'feat-4': (
-        "Long-press gesture system: scope sleep to worm hit radius, add drain/junction autopilot. "
-        "Full gesture map + sleep scoping fix + drain visual unification spec in WIGGLERS_AUDIT.md. "
-        "🎮 This is the UX unlock that makes drains and junctions discoverable. Right now almost "
-        "no players find the junction system — autopilot makes it a natural, satisfying action."
-    ),
-}
-
 # ── Parser: Wigglers_Room ──────────────────────────────────────────────────
 def parse_wigglers(owner, repo, ns):
     tasks = []
@@ -564,22 +472,17 @@ def parse_wigglers(owner, repo, ns):
                 if len(parts) < 3: continue
                 task_id_raw = parts[0]
                 pri_raw = parts[1] if len(parts) > 1 else ''
-                summary = parts[3] if len(parts) > 3 else (parts[2] if len(parts) > 2 else '')
+                desc = parts[3] if len(parts) > 3 else (parts[2] if len(parts) > 2 else '')
                 raw_id = task_id_raw.lower().replace(' ', '-')
                 if not raw_id or raw_id == 'id': continue
                 if 'P1' in pri_raw or 'next session' in pri_raw or 'verify' in pri_raw.lower(): pri = 'P1'
                 elif 'P2' in pri_raw: pri = 'P2'
                 else: pri = 'P3'
-
-                # Use rich description if available, fall back to audit summary
-                rich = WIGGLERS_RICH_DESC.get(raw_id, '')
-                desc = rich if rich else summary
-
                 tasks.append({
                     'id': ns_id(ns, raw_id),
-                    'title': f'{task_id_raw}: {summary[:55]}',
+                    'title': f'{task_id_raw}: {desc[:55]}',
                     'type': 'game', 'priority': pri,
-                    'effort': effort_from_desc(summary, task_id_raw),
+                    'effort': effort_from_desc(desc, task_id_raw),
                     'repo': repo, 'lane': 'Wigglers Room',
                     'desc': desc, 'done': False
                 })
@@ -597,8 +500,9 @@ PARSERS = {
     'parse_wigglers': parse_wigglers,
 }
 
+# Group tasks by lane so scheduler can pull 1 per lane per day
 all_tasks = []
-lane_tasks = {}
+lane_tasks = {}   # lane_label → [tasks]
 failed_repos = []
 
 for entry in REGISTRY:
@@ -642,7 +546,6 @@ print(f'\n✓ {len(all_tasks)} total tasks | {len(lane_tasks)} lanes')
 for lane, tasks in lane_tasks.items():
     open_c = sum(1 for t in tasks if not done_state.get(t['id'], False))
     print(f'  {lane}: {open_c} open')
-
 ```
 
 ## EMBEDDED SCRIPT: build_calendar.py
@@ -650,12 +553,62 @@ for lane, tasks in lane_tasks.items():
 
 ```python
 """
-build_calendar.py v4 — 1 task per lane per day, cadence scheduling, audit lane included
-v4 adds: Gameplay Insights panel with forward-looking design suggestions
+build_calendar.py v4 — adds status header (CI, Devvit version, open P1s)
 """
-import json
+import json, base64, urllib.request, urllib.error
 from pathlib import Path
 from datetime import date, timedelta
+
+config = json.loads(Path('/tmp/project-calendar/config.json').read_text())
+TOKEN = config['token']
+
+def gh_api(path, owner='Cal-Starfur'):
+    url = f'https://api.github.com/repos/{owner}/{path}'
+    req = urllib.request.Request(url, headers={
+        'Authorization': f'token {TOKEN}',
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'CalendarBuild/1.0'
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=10) as r:
+            return json.loads(r.read())
+    except:
+        return None
+
+def get_status():
+    # CI status — latest run on Wigglers_Room
+    runs = gh_api('Wigglers_Room/actions/runs?per_page=5')
+    ci_status = '?'
+    ci_color = '#6b6880'
+    ci_commit = ''
+    if runs:
+        for run in runs['workflow_runs']:
+            if run['name'] == 'CI':
+                ci_status = run['conclusion'] or run['status']
+                ci_color = '#4ade80' if ci_status == 'success' else '#f87171' if ci_status == 'failure' else '#fbbf24'
+                ci_commit = run['head_sha'][:7]
+                break
+
+    # Last Devvit version from devvit.yaml
+    devvit_ver = '?'
+    try:
+        data = gh_api('Wigglers_Room/contents/devvit.yaml')
+        if data:
+            content = base64.b64decode(data['content'].replace('\n','')).decode()
+            m = re.search(r'version:\s*([\d.]+)', content)
+            if m: devvit_ver = m.group(1)
+    except: pass
+
+    # Open P1s across all repos
+    p1_count = 0
+    try:
+        tasks = json.loads((Path('/tmp/project-calendar') / 'tasks.json').read_text())
+        p1_count = sum(1 for t in tasks if t['priority'] == 'P1' and not t['done'])
+    except: pass
+
+    return ci_status, ci_color, ci_commit, devvit_ver, p1_count
+
+ci_status, ci_color, ci_commit, devvit_ver, p1_open_count = get_status()
 
 OUT = Path('/tmp/project-calendar')
 tasks = json.loads((OUT / 'tasks.json').read_text())
@@ -678,9 +631,9 @@ lane_indices = {lane: 0 for lane in lanes}
 
 for i in range(28):
     d = TODAY + timedelta(days=i)
-    dow = d.weekday()
+    dow = d.weekday()  # 0=Mon 6=Sun
     is_rest  = (dow == 6)
-    is_light = (dow == 5)
+    is_light = (dow == 5)  # Saturday
     is_today = (i == 0)
 
     if is_rest:
@@ -694,20 +647,24 @@ for i in range(28):
         q = lane_queues[lane]
         idx = lane_indices[lane]
 
+        # Find next suitable task for this lane today
         found = False
         scan = idx
         while scan < len(q):
             t = q[scan]
+            # Saturday: skip L-effort game tasks
             if is_light and t['effort'] == 'L' and t['type'] == 'game':
                 scan += 1
                 continue
+            # Hard cap: no more than 2 L-effort tasks in one day
             if t['effort'] == 'L' and l_count >= 2:
                 scan += 1
                 continue
+            # Good to schedule
             day_tasks.append(t)
             if t['effort'] == 'L':
                 l_count += 1
-            lane_queues[lane].pop(scan)
+            lane_queues[lane].pop(scan)  # remove from queue
             found = True
             break
 
@@ -740,13 +697,6 @@ def task_html(t):
     pri_color = {'P1': '#f87171', 'P2': '#fbbf24', 'P3': '#6b6880'}.get(t['priority'], '#888')
     effort_color = {'S': '#4ade80', 'M': '#fbbf24', 'L': '#f87171'}.get(t['effort'], '#888')
     lane_label = t.get('lane', t['type'].upper())
-    # Split desc at 🎮 for styling
-    desc = t.get('desc', '')
-    if '🎮' in desc:
-        parts = desc.split('🎮', 1)
-        desc_html = f'<span class="task-tech">{parts[0].strip()}</span><span class="task-insight">🎮 {parts[1].strip()}</span>'
-    else:
-        desc_html = f'<span class="task-tech">{desc}</span>'
     return f'''<div class="task" id="t-{safe_id}" style="background:{lc["bg"]};border:1px solid {lc["border"]}">
       <div class="lane-tag" style="color:{lc["text"]}">{lane_label}</div>
       <div class="task-title">{t["title"]}</div>
@@ -754,7 +704,7 @@ def task_html(t):
         <span class="pill" style="color:{pri_color};border-color:{pri_color}22;background:{pri_color}11">{t["priority"]}</span>
         <span class="pill" style="color:{effort_color};border-color:{effort_color}22;background:{effort_color}11">{t["effort"]}</span>
       </div>
-      <div class="task-desc">{desc_html}</div>
+      <div class="task-desc">{t["desc"]}</div>
       <button class="check-btn" onclick="toggleDone('{safe_id}',event)">✓</button>
     </div>'''
 
@@ -788,46 +738,12 @@ done_count = len(done_tasks)
 p1_open = sum(1 for t in open_tasks if t['priority'] == 'P1')
 lane_count = len(lanes)
 
+# Lane summary for header
 lane_summary = ''
 for lane in lanes:
     open_c = sum(1 for t in tasks if t.get('lane') == lane and not t['done'])
     lc = LANE_COLORS.get(lane, {'text': '#888'})
     lane_summary += f'<div class="lane-pill" style="border-color:{lc["text"]}33;color:{lc["text"]}">{lane} · {open_c} open</div>'
-
-# ── Gameplay Insights Panel ────────────────────────────────────────────────
-# Strategic forward-looking summary for Wigglers Room
-insights_html = '''
-<div class="insights-panel">
-  <div class="insights-header">🎮 Gameplay Design Horizon — Wigglers Room</div>
-  <div class="insights-subtitle">What fixing each P1/P2 actually unlocks for players</div>
-  <div class="insights-grid">
-    <div class="insight-card">
-      <div class="insight-title">🔴 Fix PERF-1 + PERF-2 first</div>
-      <div class="insight-body">These are the frame-budget wall. Once trash chunks and pPath scans are pre-rendered/indexed, you have headroom for everything below. Players will feel the game get snappy — the bin comes alive.</div>
-    </div>
-    <div class="insight-card">
-      <div class="insight-title">🌊 Then fix ISS-13 (pooled)</div>
-      <div class="insight-body">The entire moisture economy is broken until this is verified. Once draining actually reduces pooled, the sweet-spot reward (0.3–0.5 = HP regen + gut efficiency) becomes a real loop players can discover and optimize.</div>
-    </div>
-    <div class="insight-card">
-      <div class="insight-title">🪱 FEAT-4 is the discoverability unlock</div>
-      <div class="insight-body">Long-press gesture scoping + drain/junction autopilot. Right now the junction and drain systems are nearly invisible to players. Autopilot makes them feel intentional and satisfying — a worm that goes and does the thing you pointed at.</div>
-    </div>
-    <div class="insight-card">
-      <div class="insight-title">🤝 FEAT-1 is the social moment</div>
-      <div class="insight-body">Cross-player tunnel clogging. Your poop blocking another worm's drain is the first time two players meaningfully interact. This is the Reddit-native mechanic — chaos, comedy, competition — all from the existing clog system.</div>
-    </div>
-    <div class="insight-card">
-      <div class="insight-title">📱 FEAT-2 removes returning-player friction</div>
-      <div class="insight-body">Device heartbeat + conflict UI. The #1 silent drop-off is players who left the game open on another tab coming back to a broken session. One heartbeat token + "Take over / Wait" UI fixes it entirely.</div>
-    </div>
-    <div class="insight-card">
-      <div class="insight-title">🌱 After PERF-1: richer bin is free</div>
-      <div class="insight-body">With trash render cost near zero you can safely double chunk count, add acid food speed boosts, rare golden scraps, and a "chunk discovery log" — 27 types × first-eat entries — without any frame penalty.</div>
-    </div>
-  </div>
-</div>
-'''
 
 html = f'''<!DOCTYPE html>
 <html lang="en">
@@ -841,24 +757,19 @@ body{{background:var(--bg);color:var(--text);font-family:var(--sans);padding:24p
 header{{margin-bottom:24px}}
 h1{{font-size:22px;font-weight:600;letter-spacing:-.5px}}
 .subtitle{{font-size:13px;color:var(--muted);margin-top:4px}}
-.sync-info{{font-size:11px;font-family:var(--font);color:var(--muted);margin:12px 0 20px}}
+.sync-info{{font-size:11px;font-family:var(--font);color:var(--muted);margin:8px 0 16px}}
+.status-bar{{display:flex;gap:16px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:12px;align-items:center}}
+.status-item{{display:flex;align-items:center;gap:6px}}
+.status-label{{font-size:10px;font-family:var(--font);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}}
+.status-value{{font-size:13px;font-family:var(--font);font-weight:600;color:var(--text)}}
+.status-meta{{font-size:10px;font-family:var(--font);color:var(--muted)}}
 .stats-row{{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}}
 .stat{{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 18px;text-align:center}}
 .stat-num{{font-size:22px;font-weight:700;font-family:var(--font);display:block}}
 .stat-label{{font-size:11px;color:var(--muted);display:block;margin-top:2px}}
 .lane-pills{{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}}
 .lane-pill{{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid;background:transparent}}
-/* Insights panel */
-.insights-panel{{background:#0e1a10;border:1px solid #1a4d2a;border-radius:14px;padding:18px 20px;margin-bottom:28px}}
-.insights-header{{font-size:14px;font-weight:700;color:#4ade80;margin-bottom:4px}}
-.insights-subtitle{{font-size:11px;color:var(--muted);margin-bottom:14px;font-family:var(--font)}}
-.insights-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}}
-.insight-card{{background:#0a1a0c;border:1px solid #1a3d20;border-radius:10px;padding:11px 13px}}
-.insight-title{{font-size:12px;font-weight:600;color:#86efac;margin-bottom:6px}}
-.insight-body{{font-size:11px;color:#9ab8a0;line-height:1.5}}
-/* Calendar */
 .weeks{{display:flex;flex-direction:column;gap:28px}}
-.week-section{{}}
 .week-label{{font-size:11px;font-family:var(--font);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}}
 .days-grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}}
 .day-card{{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}}
@@ -879,13 +790,11 @@ h1{{font-size:22px;font-weight:600;letter-spacing:-.5px}}
 .task-title{{font-size:12px;font-weight:500;line-height:1.35;padding-right:22px;margin-bottom:5px}}
 .task-meta{{display:flex;gap:4px;margin-bottom:4px}}
 .pill{{font-size:10px;font-family:var(--font);padding:1px 6px;border-radius:4px;border:1px solid;font-weight:600}}
-.task-desc{{font-size:11px;color:var(--muted);line-height:1.45;display:flex;flex-direction:column;gap:4px}}
-.task-tech{{color:#6b6880}}
-.task-insight{{color:#4ade8099;font-style:italic}}
+.task-desc{{font-size:11px;color:var(--muted);line-height:1.45}}
 .check-btn{{position:absolute;top:9px;right:9px;width:17px;height:17px;border-radius:50%;border:1.5px solid var(--border);background:transparent;cursor:pointer;font-size:9px;color:transparent;transition:all .15s}}
 .check-btn:hover{{border-color:var(--done);color:var(--done)}}
 .task.done .check-btn{{border-color:var(--done);background:var(--done);color:#fff}}
-@media(max-width:600px){{.days-grid{{grid-template-columns:1fr}}.insights-grid{{grid-template-columns:1fr}}}}
+@media(max-width:600px){{.days-grid{{grid-template-columns:1fr}}}}
 </style>
 </head>
 <body>
@@ -893,7 +802,26 @@ h1{{font-size:22px;font-weight:600;letter-spacing:-.5px}}
   <h1>🪱 Dev Calendar</h1>
   <div class="subtitle">1 task per repo per day · every front advances · no burnout</div>
 </header>
-<div class="sync-info">Last built: {TODAY.isoformat()} · {total} tasks across {lane_count} lanes · say "sync the calendar" to update</div>
+<div class="status-bar">
+  <div class="status-item">
+    <span class="status-label">CI</span>
+    <span class="status-value" style="color:{ci_color}">{ci_status}</span>
+    <span class="status-meta">{ci_commit}</span>
+  </div>
+  <div class="status-item">
+    <span class="status-label">Devvit</span>
+    <span class="status-value">{devvit_ver}</span>
+  </div>
+  <div class="status-item">
+    <span class="status-label">P1 Open</span>
+    <span class="status-value" style="color:#f87171">{p1_open_count}</span>
+  </div>
+  <div class="status-item">
+    <span class="status-label">Synced</span>
+    <span class="status-value">{TODAY.isoformat()}</span>
+  </div>
+</div>
+<div class="sync-info">say "sync the calendar" to update · {total} tasks across {lane_count} lanes</div>
 <div class="stats-row">
   <div class="stat"><span class="stat-num">{total}</span><span class="stat-label">total</span></div>
   <div class="stat"><span class="stat-num" style="color:var(--done)">{done_count}</span><span class="stat-label">done</span></div>
@@ -901,7 +829,6 @@ h1{{font-size:22px;font-weight:600;letter-spacing:-.5px}}
   <div class="stat"><span class="stat-num">{lane_count}</span><span class="stat-label">active lanes</span></div>
 </div>
 <div class="lane-pills">{lane_summary}</div>
-{insights_html}
 <div class="weeks">{weeks_html}</div>
 <script>
 const K='cal_done_v3';
@@ -924,7 +851,6 @@ function toggleDone(id,e){{
 print(f'✓ Calendar built — {len(schedule)} days')
 print(f'  Lanes: {", ".join(lanes)}')
 print(f'  Tasks scheduled: {sum(len(d["tasks"]) for d in schedule)}')
-
 ```
 
 ## EMBEDDED SCRIPT: push_calendar.py
