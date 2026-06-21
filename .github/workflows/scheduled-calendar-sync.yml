@@ -1,0 +1,33 @@
+name: Scheduled Calendar Sync
+
+on:
+  schedule:
+    - cron: '0 15 * * 1'  # Every Monday 7:00am Pacific (15:00 UTC)
+  workflow_dispatch:       # Allow manual trigger too
+
+jobs:
+  sync-calendar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.CALENDAR_SYNC_PAT }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Write token config
+        run: |
+          mkdir -p /tmp/project-calendar
+          echo '{"token":"${{ secrets.CALENDAR_SYNC_PAT }}"}' > /tmp/project-calendar/config.json
+
+      - name: Pull tasks
+        run: python3 tools/pull_tasks.py
+
+      - name: Build calendar
+        run: python3 tools/build_calendar.py
+
+      - name: Push calendar
+        run: python3 tools/push_calendar.py
