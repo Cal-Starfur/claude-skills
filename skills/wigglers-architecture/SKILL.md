@@ -453,5 +453,5 @@ Starved to death | ☯ 14 karma | Ate 11,240 bites
 
 ---
 
-*Updated: 2026-06-19 — deep audit, corrected from Session 8 snapshot to Session 20 reality*
+*Updated: 2026-06-19 — deep audit. Always pull fresh from GitHub for current session/version.*
 *Stable structural reference only — dynamic data (issues, function registry) lives in GAME_ARCHITECTURE.md*
