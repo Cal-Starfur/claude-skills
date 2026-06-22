@@ -4,6 +4,17 @@ Tracks all skill changes across sessions. Newest entries at the top.
 
 ---
 
+## 2026-06-22 — Skill library health audit + refactor plan
+
+- Full dependency map across all 12 skills
+- 5 structural problems documented: oversized skills, load order conflict, orphaned skill-audit, broken session-summary wires, circular doc coupling
+- Layer model defined: L0 always-on → L1 start → L2 during → L3 end → L4 meta
+- planning/skill-health-report.md added (193 lines)
+- planning/skill-refactor-plan.md added (254 lines, 4-phase work order)
+- Estimated fix: 10–12 hours across 4–5 sessions
+
+---
+
 ## 2026-06-22 — session-summary v2 (audit + improvements)
 
 - Audited session-summary using skill-creator framework
