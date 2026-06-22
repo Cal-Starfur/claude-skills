@@ -4,6 +4,16 @@ Tracks all skill changes across sessions. Newest entries at the top.
 
 ---
 
+## 2026-06-22 — session-summary v2 (audit + improvements)
+
+- Audited session-summary using skill-creator framework
+- Score: 76 → 90/100 (first audit, hits Phase 1 target)
+- Fixed: passive trigger, no doc-only handling, no scope guidance for long sessions
+- Added: proactive offer instruction, Wigglers risk list, mandatory after-summary offers, doc-only example
+- Pushed: skills/session-summary/SKILL.md + audits/2026-06-22-session-summary.md
+
+---
+
 ## 2026-06-22 — Calendar sync
 
 - 57 tasks across 3 lanes (Skills: 25 open, Audits: 12 open, Wigglers Room: 15 open)
