@@ -91,10 +91,12 @@ After every summary, always offer these two follow-ups:
 
 1. **Calendar sync** — "You cleared [N] tasks today — want me to sync the calendar so it repacks from today?"
    - Offer this if 1 or more tasks were completed
+   - Before running: check if `/tmp/project-calendar/pull_tasks.py` exists. If not, bootstrap the project-calendar skill first (run its bootstrap block), then proceed.
    - If user says yes → run project-calendar pull_tasks → build → push
 
 2. **Doc updates** — "Should I update the architecture docs or audit log to reflect what shipped?"
    - Offer this if any game files changed
+   - Before running: check if `/tmp/github-sync/scripts/propose_commit.py` exists. If not, bootstrap github-sync first (run its bootstrap block), then proceed.
    - If user says yes → run github-sync to update GAME_ARCHITECTURE.md or WIGGLERS_AUDIT.md as needed
 
 Both offers are **mandatory** — make them in the same message as the summary. The user should never have to remember to ask.
