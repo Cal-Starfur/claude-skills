@@ -403,5 +403,63 @@ Then verify with `bridge.ping()` before re-attempting deploy.
 
 ---
 
+## Error Handling & Edge Cases
+
+### pipeline.py status Hangs (Bridge Timeout)
+
+`pipeline.py status` checks GitHub Actions — it does NOT use the bridge. If it hangs:
+
+1. This is a GitHub API issue, not a bridge issue. Check for rate limiting (403) or a network error first.
+2. Kill the hanging process (Ctrl+C) and retry once after 30 seconds.
+3. If it hangs a second time, fetch build status directly:
+   ```bash
+   python3 << 'MANUAL_STATUS'
+   import urllib.request, json
+   from pathlib import Path
+
+   config = json.loads(Path('/tmp/devvit-pipeline/memory/pipeline_config.json').read_text())
+   TOKEN = config['github_token']
+   headers = {
+       "Authorization": f"token {TOKEN}",
+       "Accept": "application/vnd.github.v3+json",
+       "User-Agent": "GHSync/1.0"
+   }
+   url = "https://api.github.com/repos/Cal-Starfur/Wigglers_Room/actions/runs?per_page=3"
+   req = urllib.request.Request(url, headers=headers)
+   with urllib.request.urlopen(req) as r:
+       runs = json.loads(r.read())['workflow_runs']
+   for run in runs:
+       print(f"{run['conclusion'] or 'in_progress'} — {run['name']} — {run['head_commit']['message'][:60]}")
+   MANUAL_STATUS
+   ```
+4. **Never proceed to Gate 2 if build status is unknown.** If you can't confirm the build passed, tell the user:
+   > "I can't confirm the build status right now — pipeline.py is unresponsive. Can you check the Actions tab on GitHub directly before we deploy?"
+
 ---
+
+### Build Passes but devvit upload Fails
+
+If Gate 2 runs but `devvit upload` returns an error or produces no version output:
+
+1. **Check what the bridge returned** — look at `result.get('stdout')` and `result.get('error')`. Common causes:
+   - `git pull` failed (merge conflict or network issue in Codespace) — the upload never ran
+   - `devvit upload` timed out (bridge waited 36 polls / ~3 minutes with no completion)
+   - Devvit CLI threw an authentication error (Reddit session expired in the Codespace)
+
+2. **For git pull failures** — ask the user to resolve the conflict in their Codespace terminal, then re-trigger Gate 2 only (no need to re-push or re-build):
+   > "The git pull hit a conflict in the Codespace — can you resolve it in your terminal? Once it's clear, I'll re-run the upload."
+
+3. **For devvit upload timeout** — the upload may have partially completed. Check the Devvit developer portal to see if a new version appeared. If it did, capture the version manually and treat the deploy as successful. If not, retry the upload once:
+   ```python
+   result = bridge.run(
+       "/home/codespace/nvm/current/bin/devvit upload --just-do-it 2>&1",
+       cwd="/workspaces/Wigglers_Room",
+       timeout_polls=60  # extend to 5 minutes on retry
+   )
+   ```
+
+4. **For Devvit auth errors** — the user needs to run `devvit login` in their Codespace terminal to refresh the Reddit session. Tell them:
+   > "Devvit lost its Reddit auth in the Codespace — can you run `devvit login` in your terminal and let me know when it's done?"
+
+5. **The version is NOT confirmed** until you see `Automatically bumped app version to: X.X.X` in the upload output. Do not write to `relay/version.json` with a guessed version.
 
