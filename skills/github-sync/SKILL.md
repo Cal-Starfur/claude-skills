@@ -228,7 +228,103 @@ Examples:
 
 - **401** → Token expired or not set. Re-run Step 1.
 - **404** → Wrong path. Run `list` to see actual repo paths.
-- **422** → SHA mismatch. Run sync first, then stage again.
+- **422** → SHA mismatch. Run `sync_from_github.py read <file> --fresh` on the conflicting file, then stage again.
 
 ---
+
+## Error Handling & Edge Cases
+
+### Rollback — Reverting a Bad Commit
+
+If a push went through but the content was wrong, revert it via the GitHub API directly — no force-push needed.
+
+**Step 1 — Find the commit to revert to:**
+```bash
+python3 /tmp/github-sync/scripts/sync_from_github.py history
+# Note the SHA of the last known-good commit
+```
+
+**Step 2 — Fetch the good file content at that SHA:**
+```bash
+python3 << 'ROLLBACK'
+import urllib.request, json, base64
+from pathlib import Path
+
+config = json.loads(Path('/tmp/github-sync/memory/github_config.json').read_text())
+TOKEN = config['token']
+OWNER = config['owner']
+REPO  = config['repo']
+
+GOOD_SHA  = "abc1234"          # SHA of the commit you want to restore FROM
+FILE_PATH = "webroot/game.js"  # path inside the repo
+
+headers = {
+    "Authorization": f"token {TOKEN}",
+    "Accept": "application/vnd.github.v3+json",
+    "User-Agent": "GHSync/1.0"
+}
+
+# Get file content at the good commit
+url = f"https://api.github.com/repos/{OWNER}/{REPO}/contents/{FILE_PATH}?ref={GOOD_SHA}"
+req = urllib.request.Request(url, headers=headers)
+with urllib.request.urlopen(req) as r:
+    data = json.loads(r.read())
+    content = base64.b64decode(data["content"]).decode("utf-8")
+
+# Write to /tmp for staging
+out = Path(f"/tmp/rollback_{FILE_PATH.replace('/', '_')}")
+out.write_text(content)
+print(f"✓ Good version saved to {out}")
+print(f"  Now stage it: propose_commit.py stage {out} {FILE_PATH} --message 'Rollback: revert to {GOOD_SHA}'")
+ROLLBACK
+```
+
+**Step 3 — Stage and push through the normal approve-before-push workflow.**  
+Never bypass the approval gate even for rollbacks.
+
+---
+
+### 422 SHA Conflict — Detailed Resolution
+
+A 422 means the file's SHA on GitHub doesn't match what `propose_commit.py` has cached — someone (or another session) pushed to the file since your last sync.
+
+**Exact commands to resolve:**
+```bash
+# 1. Force-refresh the conflicting file from GitHub
+python3 /tmp/github-sync/scripts/sync_from_github.py read <file-path> --fresh
+
+# Example:
+python3 /tmp/github-sync/scripts/sync_from_github.py read webroot/game.js --fresh
+
+# 2. Clear the staged version (it has the wrong base SHA)
+python3 /tmp/github-sync/scripts/propose_commit.py clear
+
+# 3. Re-apply your changes on top of the fresh file content, then re-stage
+python3 /tmp/github-sync/scripts/propose_commit.py stage \
+  /tmp/your-updated-file.js webroot/game.js \
+  --message "V62: your change description"
+
+# 4. Show status and get approval as normal
+python3 /tmp/github-sync/scripts/propose_commit.py status
+```
+
+**If 422 persists after a fresh sync:** the file may have been updated again between your `--fresh` pull and your push attempt. Run `--fresh` again and re-stage. This is rare but can happen in fast-moving sessions.
+
+---
+
+### Repo Locked or Rate-Limited
+
+**Rate limit (403 with `X-RateLimit-Remaining: 0`):**
+- GitHub REST API allows 5,000 requests/hour per PAT
+- This session is unlikely to hit it under normal use (each read = 1 request, each push = 2 requests)
+- If hit: check reset time in the `X-RateLimit-Reset` header (Unix timestamp), wait, then retry
+- Do not generate a new PAT to bypass — wait for the reset
+
+**Repo temporarily locked (403, not rate-limit):**
+- Can happen during GitHub maintenance or if branch protection rules changed
+- Run `sync_from_github.py list` — if that also 403s, it's a repo-level lock, not a branch issue
+- Safe to: read cached `/tmp` files, draft changes locally, prepare staged commits
+- Not safe to: push anything until lock clears
+- Tell the user: `"GitHub is returning 403 — repo may be temporarily locked. I'll hold all pushes until it clears."`
+- Retry after 5 minutes; GitHub maintenance windows are usually brief
 
