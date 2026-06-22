@@ -41,19 +41,21 @@ def effort_from_desc(desc, title=''):
 def ns_id(namespace, raw_id):
     return f'{namespace}:{raw_id}'
 
-# ── Task hold dates — P1 tasks blocked until a specific date ──────────────────
-# Format: task_id → 'YYYY-MM-DD' (task stays at its parsed priority but won't
-# surface in the calendar until that date; shown as P3 placeholder until then)
-NOT_BEFORE = {
-    'wigglers:feat-2': '2026-07-01',  # can't test live until July 1
-    'wigglers:iss-19': '2026-07-01',  # depends on FEAT-2 / same session
+# ── Task hold dates — entire lanes or specific tasks blocked until a date ──────
+# LANE_HOLD: hold entire lane until date — no Wigglers tasks scheduled until then
+# TASK_HOLD: hold specific task IDs
+LANE_HOLD = {
+    'Wigglers Room': '2026-07-01',  # can't deploy/test live until July 1
 }
+TASK_HOLD = {}  # add specific task overrides here if needed
 
 def apply_not_before(tasks):
     from datetime import date
     today = date.today().isoformat()
     for t in tasks:
-        hold = NOT_BEFORE.get(t['id'])
+        lane_hold = LANE_HOLD.get(t.get('lane'))
+        task_hold = TASK_HOLD.get(t['id'])
+        hold = task_hold or lane_hold
         if hold and today < hold:
             t['priority'] = 'P3'
             if not t.get('desc','').startswith('[HELD'):
