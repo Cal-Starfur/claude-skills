@@ -1,3 +1,4 @@
+
 ---
 name: wigglers-architecture
 description: Load for any Wigglers Room worm bin game session, or whenever the user mentions their worm game, game.js, main.tsx, Devvit, pPath tunnels, sumpExit drains, tLvl sump, poop clog system, worm tea physics, castingEnrichment, tunnel decay, or variables like pHP/pGut/pSEG/pSR/karma/pooled/weekStartTs. Also load when the user asks about the audit, session fixes, draw subfunctions, updatePhysics, otherPlayers, the weekly drain cycle, PERF issues, or the preview screen.
@@ -453,5 +454,42 @@ Starved to death | ☯ 14 karma | Ate 11,240 bites
 
 ---
 
+
+---
+
+## ⛔ DO NOT TOUCH — Tube Physics & ISS-15 Area
+
+**This is a hard stop. Read before writing any code near this area.**
+
+The following systems are under an architectural freeze due to ISS-15 (worm tea drifting out of up-then-down tubes through compost to lowest world-Y) and its undocumented connection to FEAT-4:
+
+**Frozen code areas:**
+- All logic touching `pPath` point navigation and direction detection
+- `sumpExit` flag stamping and `junctionTarget` wiring
+- Tea drop routing through tunnel segments (any code that reads `pPath[i].y` to decide where a drop goes)
+- The up-drain / down-drain detection split (`nextAfterExit` logic)
+- Any world-Y vs pPath-index conversion or comparison
+
+**When a bug report or ticket touches any of the above:**
+
+Output this message exactly and stop:
+> "⛔ This touches the tube physics area (ISS-15 / FEAT-4 zone). I have a documented history of getting this wrong across multiple sessions — root cause is not understood and the area has an architectural freeze. I won't attempt a fix without a dedicated architectural analysis session first. I'll log this in the audit instead."
+
+**Then:**
+1. Log the bug in WIGGLERS_AUDIT.md under the ISS-15 entry — describe what was observed, not what you think caused it
+2. Do NOT guess at a root cause
+3. Do NOT make any code change in this area, even a "small tweak"
+4. Flag it for a dedicated architectural analysis session
+
+**Why this rule exists:**
+Claude has attempted fixes in the tube physics area across multiple sessions. Every attempt introduced new bugs or failed to fix the original issue. The world-Y / pPath-index interaction is subtle and the correct mental model has not been established. A fix attempted without that model will make things worse.
+
+**What IS safe near this area:**
+- Reading and reporting what the code currently does (describe only, no changes)
+- Updating WIGGLERS_AUDIT.md to log a new symptom
+- Adding a comment in the code marking the area as frozen (non-logic change only)
+
+
 *Updated: 2026-06-19 — deep audit. Always pull fresh from GitHub for current session/version.*
 *Stable structural reference only — dynamic data (issues, function registry) lives in GAME_ARCHITECTURE.md*
+
