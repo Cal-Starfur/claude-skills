@@ -5,104 +5,98 @@ description: How to create and save a Claude skill with the one-click Save Skill
 
 # How to Create & Save a Claude Skill (Zero Friction Method)
 
-Produces the Save skill button in Claude UI - one-click install, no zipping.
+Produces the **"Save skill"** button in Claude's UI — one-click install, no zipping or re-uploading.
+
+---
 
 ## The Magic Formula
 
-Three things must be true:
+Three things must be true to get the Save Skill button:
 
-1. Filename must be SKILL.md - all caps, exact spelling
-2. File must be in the outputs root - /mnt/user-data/outputs/SKILL.md
-3. File must start with YAML frontmatter - name and description fields
+1. **Filename must be `SKILL.md`** — all caps, exact spelling
+2. **File must be in the outputs root** — `/mnt/user-data/outputs/SKILL.md`
+3. **File must start with YAML frontmatter** — `name` and `description` fields
+
+If any of these are wrong you get a plain markdown download or a 404.
+
+---
 
 ## The Exact Steps
 
-### Step 1 - Write the skill content
+### Step 1 — Write the skill content
 Draft your skill as a markdown document with YAML frontmatter.
 
-### Step 2 - Create the file
-Use create_file tool or python:
-```python
-from pathlib import Path
-Path("/mnt/user-data/outputs/SKILL.md").write_text(skill_content)
+### Step 2 — Create the file at the correct path
+```bash
+cat > /mnt/user-data/outputs/SKILL.md << 'SKILLEOF'
+---
+name: Your Skill Name
+description: When to load this skill and what it does. Be specific.
+---
+
+# Skill Title
+
+Your skill content here.
+SKILLEOF
 ```
 
-### Step 3 - Present it
+### Step 3 — Call present_files
 ```python
-present_files(["/mnt/user-data/outputs/SKILL.md"])
+present_files(['/mnt/user-data/outputs/SKILL.md'])
 ```
 
-### Step 4 - User clicks Save skill
-One tap. Done. Live in Settings > Customize > Skills.
-
-## Frontmatter Rules
-
-- name - human-friendly label, max 64 characters
-- description - critical: Claude reads this to decide when to auto-load
-  - Be specific: name the project/domain, list what is inside, say when to trigger
-  - Vague descriptions = skill never triggers automatically
-
-Good description:
-  Load this skill for any Wigglers Room session. Covers architecture, drain system, naming.
-
-Bad description:
-  Architecture reference for a game.
-
-## What NOT to Do
-
-- Do not name it skill.md (lowercase) - no Save button
-- Do not put it in a subdirectory - causes 404
-- Do not skip the YAML frontmatter - skill will not auto-trigger
-- Do not copy the save-skill-workflow description into example templates
-  Use a placeholder like "When to load this and what it does."
-
-## Multi-File Skills (Bundled Assets)
-
-For skills that need scripts, embed them in SKILL.md using this pattern:
-
-## EMBEDDED SCRIPT: script-name.py
-Write this to /tmp/my-skill/script-name.py
-
-(python code block)
-
-Then add a bootstrap Step 0 that extracts embedded scripts to /tmp/ via regex.
-See session-health or github-sync skills for working examples.
-
-## Skill Content Best Practices
-
-- One skill per workflow - focused skills compose better
-- Lead with the most-referenced info
-- Include gotchas - things that caused bugs or confusion before
-- Step 0 = bootstrap if skill has embedded scripts
-- File editing protocol if for a codebase
-
-## Updating a Skill
-
-1. Edit the content
-2. Write to /mnt/user-data/outputs/SKILL.md
-3. Call present_files - user clicks Save skill to overwrite
-
-## Example Skill Template
-
----
-name: My Project Skill
-description: Load when working on [project]. Covers [what it does]. Triggers on [keywords].
----
-
-# My Project Skill
-
-## Quick Reference
-[Most-used constants or commands]
-
-## Architecture
-[How the system works]
-
-## Common Gotchas
-[Things that caused bugs]
-
-## Safe Editing Protocol
-[How to read/edit/output files]
+This surfaces the Save Skill button. The user clicks it once — done.
 
 ---
 
-Updated: June 2026 - added multi-file guidance, fixed copy-paste error in example template
+## Updating an Existing Skill
+
+Same process — overwrite the file at the same path and call `present_files` again.
+The Save Skill button will update the existing skill in place.
+
+```bash
+# Overwrite existing
+cat > /mnt/user-data/outputs/SKILL.md << 'SKILLEOF'
+---
+name: Same Skill Name As Before
+description: Updated description.
+---
+...updated content...
+SKILLEOF
+```
+
+Then `present_files(['/mnt/user-data/outputs/SKILL.md'])`.
+
+---
+
+## Multi-File Skills (scripts/ and references/)
+
+Some skills have companion files (Python scripts, reference docs) stored in `scripts/` or `references/` subfolders in `Cal-Starfur/claude-skills`. The SKILL.md is still the only thing that gets saved via the Save Skill button — the companion files live in the repo and are fetched at runtime by the bootstrap block inside SKILL.md.
+
+**Pattern for multi-file skills:**
+1. Push companion files to `skills/{name}/scripts/` in `claude-skills` via github-sync
+2. Write SKILL.md with a bootstrap block that fetches them from GitHub at session start
+3. Save SKILL.md via the Save Skill button as normal
+
+The user never needs to manually manage the companion files — the bootstrap handles it automatically.
+
+---
+
+## Hard Rules
+
+1. **Always present_files immediately** after writing SKILL.md — never wait to be asked
+2. **Never name it anything other than SKILL.md** — `my-skill.md`, `SKILL (1).md` etc. will not trigger the button
+3. **Frontmatter must be first** — even a blank line before `---` breaks it
+4. **One SKILL.md at a time** — if saving multiple skills in one session, present each one separately and wait for confirmation before presenting the next
+5. **If the user says "I didn't get the save skill button"** — re-run present_files immediately, no explanation needed
+
+---
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| Got a download, not Save Skill | File not named exactly `SKILL.md` |
+| 404 error on save | Frontmatter missing or malformed — must start with `---` on line 1 |
+| Save Skill button missing | `present_files` not called, or file not in `/mnt/user-data/outputs/` |
+| Skill saved but not loading | Description trigger words too vague — make description more specific |
