@@ -398,16 +398,41 @@ def check_kv_and_fields(arch, game_js):
 
 def check_priority_queue(arch):
     """
-    Returns (critical_issues, warnings)
-    critical = would cause Claude to work on wrong thing or break code
-    warnings = stale info but won't cause bad edits
+    Checks the priority queue section for staleness.
+    Critical: Claude opens with wrong P1 and starts work on a completed task.
+    Warning: Queue is cluttered with shipped items but P1 is still correct.
     """
     issues = []
-    # Critical: wrong P1 means Claude starts on completed/wrong work
-    if 'START HERE: ISS-14' in arch:
-        issues.append('CRITICAL: Priority queue shows ISS-14 as P1 (closed S20) — Claude will work on done task')
-    if 'PERF-1' not in arch:
-        issues.append('CRITICAL: PERF-1 not in priority queue — Claude won\'t know the real P1')
+
+    # Find the priority queue section
+    pq_match = re.search(r'## Priority Queue.*?(?=^## |\Z)', arch, re.DOTALL | re.MULTILINE)
+    if not pq_match:
+        issues.append('CRITICAL: Priority queue section missing from arch doc')
+        return issues
+    pq = pq_match.group(0)
+
+    # Find the first non-shipped START HERE or P1 entry — that's what Claude will read as current work
+    # Pattern: "### 🔴 P1" or "### ⚠ P1" or "### P1" (not prefixed with ✅)
+    p1_match = re.search(r'^### (?!✅)(🔴\s+)?P1\s*[—-]\s*(.+?)$', pq, re.MULTILINE)
+    if p1_match:
+        p1_title = p1_match.group(2).strip()
+        # Known stale P1s — if any of these are the current P1, it's a critical drift
+        stale_p1s = ['ISS-14', 'ISS-13', 'PERF-1 —', 'PERF-2 —', 'PERF-3 —', 'PERF-4 —']
+        for stale in stale_p1s:
+            if stale in p1_title:
+                issues.append(f'CRITICAL: Priority queue P1 is "{p1_title}" — this is a closed/shipped item')
+
+    # Count shipped items still in the queue section (✅ entries)
+    shipped_in_queue = len(re.findall(r'^### ✅', pq, re.MULTILINE))
+    if shipped_in_queue > 3:
+        issues.append(f'Priority queue has {shipped_in_queue} shipped (✅) entries — consider pruning to reduce noise at session start')
+
+    # Old specific checks
+    if 'START HERE: ISS-14' in pq:
+        issues.append('CRITICAL: Priority queue shows ISS-14 as P1 (closed S20) — stale')
+    if 'START HERE: ISS-13' in pq:
+        issues.append('CRITICAL: Priority queue shows ISS-13 as P1 (closed S20) — stale')
+
     return issues
 
 def check_preview(arch, main_tsx):
