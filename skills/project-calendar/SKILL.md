@@ -278,3 +278,56 @@ Pushed: CHANGELOG.md ✓
 
 ---
 
+## Error Handling & Edge Cases
+
+### Repo Unreachable at Sync Time
+
+If `pull_tasks.py` prints ⚠ UNREACHABLE for one or more repos:
+
+1. **Do not push.** Hard rule — a partial sync overwrites the calendar with incomplete data and drops the unreachable repo's tasks entirely until the next sync.
+
+2. Identify the cause:
+   - 401 → token expired; re-run Step 1 with a fresh PAT
+   - 404 → repo name wrong or repo was renamed; check the REGISTRY in `pull_tasks.py`
+   - Network error (connection reset, timeout) → transient GitHub outage; wait 2–3 minutes and retry
+   - 403 → rate-limited or repo access revoked; check rate limit headers
+
+3. **If only one repo is unreachable and the user needs the calendar now:**
+   Tell the user clearly:
+   > "[repo] is unreachable right now — I can't safely sync without it. Want to wait a few minutes and retry, or should I note the tasks manually?"
+   Never silently drop the lane.
+
+4. **If the repo is unreachable due to a known reason** (e.g. the user deleted it or renamed it) — update the REGISTRY in `pull_tasks.py` to reflect the new state before retrying. Don't leave stale repo names in the REGISTRY.
+
+5. Retry sequence:
+   ```bash
+   # Wait 2 minutes, then:
+   python3 /tmp/project-calendar/pull_tasks.py
+   # If still unreachable after 2 retries → stop and tell the user
+   ```
+
+---
+
+### Empty Lane — All Tasks in a Repo Are Done
+
+If a lane returns 0 open tasks (all tasks marked done or no tasks found):
+
+1. **This is a success state, not an error.** Do not treat it as a failure or try to invent tasks.
+
+2. Report it clearly in the sync output:
+   ```
+   ✓ skills — 0 open tasks (all done! 🎉)
+   ```
+
+3. **Remove the lane from today's schedule** — a lane with no tasks gets no daily slot. The calendar shrinks naturally as work is completed.
+
+4. **Do not remove the repo from the REGISTRY** — it may get new tasks next session. The lane stays registered; it just contributes 0 slots until new tasks are added.
+
+5. **Tell the user** if a previously active lane goes empty:
+   > "The skills lane is all done — nothing left to schedule there. It'll reappear when new tasks are added."
+
+6. **If ALL lanes are empty** (extremely rare — means every tracked task is done):
+   - Congratulate the user genuinely
+   - Do not push an empty calendar — push a placeholder noting all tasks complete
+   - Prompt to add new tasks or register new work: "Everything's done — want to plan the next phase?"
+
