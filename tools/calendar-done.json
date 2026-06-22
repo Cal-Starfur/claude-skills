@@ -3,5 +3,20 @@
   "wigglers:perf-2": true,
   "wigglers:iss-13-bug-a": true,
   "wigglers:perf-3": true,
-  "wigglers:perf-4": true
+  "wigglers:perf-4": true,
+  "wigglers:iss-18": true,
+  "wigglers:iss-19": true,
+  "wigglers:pages": true,
+  "skills:phase5-session-health": true,
+  "skills:phase5-github-sync": true,
+  "skills:phase5-session-summary": true,
+  "skills:phase5-lead-dev": true,
+  "skills:phase5-contractor": true,
+  "skills:phase5-devvit-pipeline": true,
+  "skills:phase5-project-calendar": true,
+  "skills:phase5-skill-audit": true,
+  "skills:phase5-wigglers-architecture": true,
+  "skills:phase5-canvas-art-optimizer": true,
+  "skills:phase5-png-canvas-art-optimizer": true,
+  "skills:phase5-save-skill-workflow": true
 }
