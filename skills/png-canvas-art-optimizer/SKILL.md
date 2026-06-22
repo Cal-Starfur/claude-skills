@@ -1,3 +1,5 @@
+[Fresh from GitHub: e1ad450]
+
 ---
 name: PNG Canvas Art Optimizer
 description: Use this skill ONLY when the user uploads a PNG, JPG, JPEG, or GIF file and wants HTML5 canvas drawing code. Triggers on .png, .jpg, .jpeg, .gif files and phrases like "convert this image to canvas", "make canvas code from this PNG", "recreate this sprite in canvas". Do NOT use for SVG files — those go to the Canvas Art Optimizer skill instead. Best for flat illustrated art, pixel art, and icons with clear shapes. Will not work well for photorealistic images (photos, AI-generated art with complex textures). Uses Claude vision API to reverse-engineer shapes, iterates until ≥95% similarity, outputs HTML preview artifact + JS file.
@@ -329,3 +331,57 @@ If `is_pixel_art == True` (detected in Phase 1), add this instruction to the vis
 - Output artifacts go to `/mnt/user-data/outputs/`
 - Base64 encode the image in bash, inject into the HTML template
 - The artifact is self-contained — all logic runs client-side in the browser
+
+---
+
+## Error Handling & Edge Cases
+
+### Corrupted or Unreadable Image
+
+If the uploaded image fails to open or the vision API returns an error:
+
+1. Check the error type:
+   - `PIL.UnidentifiedImageError` or `IOError: cannot identify image file` → file is corrupted, truncated, or not actually an image
+   - Vision API returns empty content or refuses → image may be flagged (nudity, violence) or format unsupported
+   - `OSError: image file is truncated` → upload was interrupted — ask user to re-upload
+
+2. For corrupted uploads — tell the user immediately:
+   > "The image file appears to be corrupted — I can't read it. Can you re-upload it?"
+   Do not attempt to process a file that PIL can't open.
+
+3. For format issues — check the actual file type regardless of extension:
+   ```bash
+   python3 -c "from PIL import Image; img = Image.open('/mnt/user-data/uploads/image.png'); print(img.format, img.size)"
+   ```
+   If it's actually a WEBP, BMP, or TIFF renamed as PNG — PIL can usually still open it. Convert first:
+   ```bash
+   python3 -c "from PIL import Image; Image.open('/mnt/user-data/uploads/image.png').save('/tmp/converted.png')"
+   ```
+
+4. Never silently skip a corrupted image and proceed with empty canvas code — always surface the error to the user.
+
+---
+
+### Large Images (>2MB)
+
+Images over 2MB slow the vision API call significantly and may hit token limits on the base64 encoding.
+
+1. Check the file size and dimensions first:
+   ```bash
+   python3 -c "from PIL import Image; img = Image.open('/mnt/user-data/uploads/image.png'); print(img.size, img.mode)"
+   wc -c /mnt/user-data/uploads/image.png
+   ```
+
+2. **Images >2MB or larger than 1024×1024px** — resize before encoding to reduce API payload:
+   ```python
+   from PIL import Image
+   img = Image.open('/mnt/user-data/uploads/image.png')
+   img.thumbnail((512, 512), Image.LANCZOS)
+   img.save('/tmp/resized.png')
+   ```
+   Use the resized version for the vision API call. Use the original for the pixel diff scoring.
+
+3. **Very large images (>4MB or >2048px)** — tell the user upfront:
+   > "This image is [size] — I'll resize it to 512px for the vision analysis to keep things fast. The canvas output will still target the original dimensions."
+
+4. **Pixel art specifically** — never resize pixel art with LANCZOS (it blurs pixel boundaries). Use `Image.NEAREST` or `Image.BOX` instead. The pixel grid analysis depends on crisp edges.
