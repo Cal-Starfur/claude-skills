@@ -151,22 +151,63 @@ Want me to sync the calendar? You cleared 1 task today (the audit log update).
 
 ---
 
-## Example — HOLD Summary
+## Example — HOLD Summary (Build Failure)
 
 **SESSION SUMMARY — 2026-06-20 | Devvit 0.0.183**
 
 **What changed:**
-game.js was updated to split the main draw function into smaller sub-functions. The change touched around 400 lines across the rendering path.
+game.js was updated to split the main draw function into smaller sub-functions. The change touched around 400 lines across the rendering path. The build failed on the first attempt (TypeScript type error in the draw loop refactor) and was not resolved before the session ended.
 
 **What this touches:**
 Rendering — the entire draw loop and how each layer is called.
 
 **What could break:**
-The draw loop split is a large structural change. Any call order mistake between sub-functions could cause layers to render in the wrong order — for example the HUD drawing over game elements, or the background not clearing correctly. This type of regression is hard to spot without testing every game state (dead screen, drain cinematic, flood mode, multiplayer).
+The draw loop split is a large structural change. Any call order mistake between sub-functions could cause layers to render in the wrong order. The TypeScript build is currently failing — the game cannot be deployed in this state.
 
 **Push recommendation:**
-HOLD — the build passed but the change is large and was not fully playtested. Recommend creating a new Reddit post and testing at minimum: normal play, death screen, drain cinematic, and flood event before pushing.
+HOLD — build is failing. Do not push until the TypeScript error in the draw loop refactor is resolved and a clean build is confirmed.
 
 ---
 
-Should I update the architecture docs to reflect the draw function restructure?
+Should I update the architecture docs to reflect the draw function restructure once the build is fixed?
+
+---
+
+## Edge Cases
+
+### Long Conversation — Can't Reliably Identify All Commits
+
+If the conversation is very long (200+ messages, or multiple hours of work) and commit history in the chat is fragmented or hard to follow:
+
+1. **Do not guess.** A summary with a missing commit is worse than a summary that flags uncertainty.
+2. Scan for all `propose_commit.py push` output blocks in the conversation — each one has a confirmed SHA and message. List only those.
+3. If you find gaps (e.g. session started mid-conversation, or early messages are cut off), say explicitly:
+   > "I can see [N] confirmed commits this session: [list]. There may be earlier commits I can't see — want to check GitHub history to confirm the full list?"
+4. Offer to run `sync_from_github.py history` to pull the actual commit log and cross-reference:
+   ```bash
+   python3 /tmp/github-sync/scripts/sync_from_github.py history
+   ```
+5. Never present a partial commit list as if it were complete. Always flag when you're uncertain.
+
+---
+
+### Multi-File Sessions (10+ Files Changed)
+
+When 10 or more files were modified in a session, a flat list becomes hard to read. Group by system instead:
+
+**What changed (grouped):**
+- **Game logic (3 files):** game.js, main.tsx, devvit.yaml — [what changed across these]
+- **Skills (6 files):** session-health, github-sync, session-summary, lead-dev, contractor, devvit-pipeline — [what changed]
+- **Documentation (2 files):** GAME_ARCHITECTURE.md, WIGGLERS_AUDIT.md — [what changed]
+
+Rules for grouping:
+- Game files (game.js, main.tsx, webroot/, src/) → "Game logic"
+- Skill files (skills/*/SKILL.md) → "Skills"
+- Docs (*.md, planning/) → "Documentation"
+- Scripts (scripts/, tools/) → "Scripts/tooling"
+- Config (devvit.yaml, package.json, .github/) → "Config"
+
+Still name every file within each group. Grouping is for readability — nothing gets omitted.
+
+The push recommendation still applies to the session as a whole. If any single file warrants a HOLD, the whole session is HOLD.
+
