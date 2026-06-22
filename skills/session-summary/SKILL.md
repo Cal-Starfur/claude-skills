@@ -101,6 +101,10 @@ After every summary, always offer these two follow-ups:
 
 Both offers are **mandatory** — make them in the same message as the summary. The user should never have to remember to ask.
 
+3. **Skill audit** — "A skill was loaded or modified this session — want me to re-score it while we're here?"
+   - Offer this only if: a skill was explicitly improved or created this session, OR any skill's score was noted as below 75
+   - If user says yes → load the skill-audit skill and run a deep audit on the modified skill
+
 Exception: if the user is clearly in a hurry and just said "thanks, bye" — skip the offers and let them go.
 
 ---
