@@ -1,3 +1,4 @@
+
 # Claude Skills — Audit Tracker & Reference
 
 This repo tracks the Claude AI skill ecosystem for the Wigglers Room project and beyond.
@@ -15,15 +16,18 @@ This repo tracks the Claude AI skill ecosystem for the Wigglers Room project and
 
 | Skill | Score | Role |
 |---|---|---|
-| session-health | 97 | Session drift detection + auto-fix |
+| session-health | 92 | Session drift detection + auto-fix |
 | github-sync | 88 | GitHub read/write + approve-before-push |
-| devvit-pipeline | 92 | Deploy → build check → Reddit feedback |
-| lead-dev | 85 | Passive senior dev — architecture guard |
-| contractor | 82 | Surgical single-ticket game edits |
-| wigglers-architecture | 72 | Wigglers Room living system map |
-| save-skill-workflow | 72 | Package skills with Save button |
-| canvas-art-optimizer | 68 | SVG → HTML5 Canvas conversion |
-| png-canvas-art-optimizer | 60 | PNG/JPG → HTML5 Canvas via vision |
+| devvit-pipeline | 90 | Deploy → build check → Reddit feedback |
+| lead-dev | 88 | Passive senior dev — architecture guard |
+| contractor | 87 | Surgical single-ticket game edits |
+| session-summary | 88 | Plain-English session summary + push rec |
+| skill-audit | 88 | Score, track, and improve skill ecosystem |
+| project-calendar | 88 | Rolling task calendar across all repos |
+| wigglers-architecture | 87 | Wigglers Room living system map |
+| save-skill-workflow | 87 | Package skills with Save button |
+| canvas-art-optimizer | 87 | SVG → HTML5 Canvas conversion |
+| png-canvas-art-optimizer | 87 | PNG/JPG → HTML5 Canvas via vision |
 
 ## Current Focus
 
