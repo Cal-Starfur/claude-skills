@@ -1,6 +1,6 @@
 ---
 name: skill-audit
-description: Load this skill whenever the user wants to run a skill audit, score a skill, track skill performance over time, update the claude-skills repo, or document skill improvements. Triggers on phrases like "audit the skills", "score this skill", "how are our skills doing", "push the audit to GitHub", "update the skill tracker", "run a deep audit on X", or "log this to the changelog". This is the memory and tracking system for the entire Claude skill ecosystem — it knows the repo location, scoring methodology, current baseline scores, and the workflow for running and saving audits.
+description: Load this skill whenever the user wants to run a skill audit, score a skill, track skill performance over time, update the claude-skills repo, or document skill improvements. Triggers on phrases like "audit the skills", "score this skill", "how are our skills doing", "push the audit to GitHub", "update the skill tracker", "run a deep audit on X", or "log this to the changelog". Also triggers automatically when session-summary is run and a skill was modified or created this session, or any skill's score was noted as below 75. This is the memory and tracking system for the entire Claude skill ecosystem — it knows the repo location, scoring methodology, current baseline scores, and the workflow for running and saving audits.
 ---
 
 # Skill Audit Skill
