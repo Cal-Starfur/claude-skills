@@ -73,8 +73,12 @@ update this section and test it. The goal is eventually zero manual steps.
 
 ## STEP 0 — Bootstrap Every Session
 
-Scripts live at `skills/devvit-pipeline/scripts/` in `Cal-Starfur/claude-skills`.
-Bootstrap fetches all scripts each session:
+All scripts live at `skills/devvit-pipeline/scripts/` in `Cal-Starfur/claude-skills`.
+Bootstrap fetches them and routes to the correct local paths:
+- `pipeline.py` → `/tmp/devvit-pipeline/scripts/pipeline.py`
+- all others (bridge_client, github_client, reddit_client, actions_client) → `/tmp/devvit-pipeline/tools/`
+
+`pipeline.py` adds `/tmp/devvit-pipeline` to `sys.path` so `from tools.X import Y` resolves correctly.
 
 ```bash
 python3 << 'BOOTSTRAP'
@@ -108,6 +112,7 @@ for script in scripts:
 print("Bootstrap complete.")
 BOOTSTRAP
 ```
+
 ---
 
 ## STEP 1 — Set Credentials (Every Session, Never Saved)
