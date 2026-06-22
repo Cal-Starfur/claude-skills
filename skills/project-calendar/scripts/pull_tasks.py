@@ -119,17 +119,18 @@ def parse_audits(owner, repo, ns):
     # Known skill scores from baseline + subsequent audits
     # Format: skill_name → (score, last_audited)
     SKILL_SCORES = {
-        'session-health':           (97, '2026-06-19'),
-        'devvit-pipeline':          (92, '2026-06-19'),
-        'github-sync':              (88, '2026-06-19'),
-        'lead-dev':                 (85, '2026-06-19'),
-        'contractor':               (82, '2026-06-19'),
-        'project-calendar':         (69, '2026-06-19'),
-        'wigglers-architecture':    (72, '2026-06-19'),
-        'save-skill-workflow':      (72, '2026-06-19'),
-        'canvas-art-optimizer':     (68, '2026-06-19'),
-        'png-canvas-art-optimizer': (60, '2026-06-19'),
-        'skill-audit':              (None, None),
+        'session-health':           (92, '2026-06-22'),
+        'devvit-pipeline':          (90, '2026-06-22'),
+        'github-sync':              (88, '2026-06-22'),
+        'lead-dev':                 (88, '2026-06-22'),
+        'contractor':               (87, '2026-06-22'),
+        'project-calendar':         (88, '2026-06-22'),
+        'wigglers-architecture':    (87, '2026-06-22'),
+        'save-skill-workflow':      (87, '2026-06-22'),
+        'canvas-art-optimizer':     (87, '2026-06-22'),
+        'png-canvas-art-optimizer': (87, '2026-06-22'),
+        'skill-audit':              (88, '2026-06-22'),
+        'session-summary':          (88, '2026-06-22'),
         'skill-creator':            (None, None),
     }
 
