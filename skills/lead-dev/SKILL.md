@@ -144,10 +144,6 @@ The skill analyzes what it keeps getting wrong and writes new audit rules.
 
 ---
 
-
-
----
-
 ## Reference Material
 
 The GAME_ARCHITECTURE.md template and Wigglers Room naming conventions live at:
@@ -202,4 +198,77 @@ for local_path, remote_path in fetch.items():
 print("Bootstrap complete.")
 BOOTSTRAP
 ```
+
+---
+
+## Error Handling & Edge Cases
+
+### audit.py Crashes (Malformed File or Encoding Issue)
+
+If `audit.py` exits with an error or produces no output:
+
+1. **Check the error type first:**
+   - `UnicodeDecodeError` → the file has non-UTF-8 bytes (common with copy-pasted game files from Windows editors)
+   - `SyntaxError` or `JSONDecodeError` → the file is structurally broken, not just dirty
+   - `FileNotFoundError` → wrong path passed; check the upload path with `ls /mnt/user-data/uploads/`
+
+2. **For encoding errors** — re-read the file forcing UTF-8 with error replacement:
+   ```bash
+   python3 -c "
+   content = open('/mnt/user-data/uploads/game.html', 'rb').read().decode('utf-8', errors='replace')
+   open('/tmp/game_clean.html', 'w').write(content)
+   print('✓ Cleaned copy at /tmp/game_clean.html')
+   "
+   python3 /tmp/lead-dev/scripts/audit.py /tmp/game_clean.html
+   ```
+
+3. **For structural errors** — do not attempt to fix the file blindly. Tell the user:
+   > "The file appears to be structurally broken — I can see [describe what's wrong]. Can you re-save and re-upload it?"
+
+4. **If audit.py itself is the problem** (script error, not file error) — re-bootstrap the scripts from GitHub and retry once. If it fails again, proceed without the audit and flag it:
+   > "audit.py is failing on my end — proceeding without automated audit. I'll review the code manually and flag any issues I find."
+
+5. **Never skip the architecture doc read** even if the audit fails. If GAME_ARCHITECTURE.md exists, read it — that's the safety net when the audit is down.
+
+---
+
+### New Project — GAME_ARCHITECTURE.md Doesn't Exist Yet
+
+When starting on a codebase that has no GAME_ARCHITECTURE.md:
+
+1. **Do not proceed with any code changes until the doc is generated.** This is a hard rule — the architecture doc is the safety net that prevents naming conflicts and duplicated logic.
+
+2. Generate it immediately:
+   ```bash
+   python3 /tmp/lead-dev/scripts/generate_architecture.py /mnt/user-data/uploads/game.html V1
+   # Output lands at /tmp/GAME_ARCHITECTURE.md
+   ```
+
+3. **Read the generated doc fully before touching any code.** Even for a simple one-file project, the function registry and naming conventions matter from session 1.
+
+4. **After the first code change of the session, push the doc to GitHub** via github-sync — it belongs in the repo from day one, not just in `/tmp`.
+
+5. Tell the user what was found:
+   > "This is a new project — I've generated the architecture doc. It found [N] functions across [N] systems. Here's what I'm working with: [brief summary]. Now I'm ready to help."
+
+6. **If `generate_architecture.py` can't parse the file** (wrong format, empty file, non-JS/HTML) — fall back to writing the doc manually from what you can read. A hand-written architecture doc is better than none. Name it clearly as manually generated in the header.
+
+---
+
+### generate_architecture.py Produces an Obviously Wrong Doc
+
+Signs the generated doc is wrong: function count is 0 or implausibly low, all functions listed as "unknown system", system names are gibberish, or the doc is shorter than 20 lines for a non-trivial file.
+
+1. **Do not use a wrong doc as your reference.** A bad architecture doc is worse than no doc — it will cause you to make incorrect assumptions.
+
+2. Check the most common causes:
+   - File was minified (no readable function names) → ask the user for the unminified source
+   - File uses an unusual module pattern the parser doesn't recognise (e.g. IIFE, ES modules with `export`) → note the pattern and parse manually
+   - Wrong file passed (e.g. a CSS or config file instead of the game JS) → check the path
+
+3. If the file is genuinely parseable but the script got it wrong — generate a manual stub doc covering at minimum: platform, top-level systems, naming conventions observed, and any constants. Commit this stub with a clear note:
+   > "Auto-generated doc was incomplete — this is a manually verified stub. Expand as systems are worked on."
+
+4. Never silently use a doc you know is wrong. If uncertain, say so:
+   > "The architecture doc generated but I'm not confident it's accurate — I'll double-check the key systems before making changes."
 
