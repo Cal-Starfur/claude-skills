@@ -1,3 +1,5 @@
+[Fresh from GitHub: c5d2a5d]
+
 ---
 name: Canvas Art Optimizer
 description: Use this skill ONLY when the user uploads an SVG file and wants HTML5 canvas drawing code. Triggers on .svg files and phrases like "convert this SVG to canvas", "port this SVG to canvas", "make canvas code from this SVG". Do NOT use for PNG, JPG, JPEG, or GIF files — those go to the PNG Canvas Art Optimizer skill instead. This skill parses SVG XML directly, translates every element to canvas calls with exact coordinates and colors, scores via pixel diff, and iterates until ≥95% similarity. Zero friction: user uploads SVG, you iterate silently in bash, user gets finished JS code + HTML preview.
@@ -240,3 +242,45 @@ Relative commands (lowercase) → add current point to all coords first
 - No headless browser — score via SVG reconstruction in bash
 - Files land at `/mnt/user-data/uploads/`
 - **PNG/JPG/GIF inputs → use PNG Canvas Art Optimizer instead**
+
+---
+
+## Error Handling & Edge Cases
+
+### Corrupted or Unreadable SVG
+
+If the uploaded SVG fails to parse or produces no output from the script:
+
+1. Check the error — most common causes:
+   - File is not valid XML (truncated upload, encoding issue, editor artefact)
+   - SVG uses unsupported features the parser can't handle (e.g. embedded `<foreignObject>`, CSS animations, `<use>` references to external files)
+   - File is actually a different format renamed as .svg (e.g. a PNG or PDF)
+
+2. For XML parse errors — try reading the raw file to see if it's salvageable:
+   ```bash
+   head -50 /mnt/user-data/uploads/image.svg
+   ```
+   If the XML is clearly broken, tell the user: "The SVG file appears to be corrupted or truncated — can you re-export it from your design tool?"
+
+3. For unsupported SVG features — fall back to visual inspection via the image tool (Claude can view SVGs as images) and hand-write the canvas translation. Note in the output: "Auto-parse skipped — drew manually from visual reference."
+
+4. Never attempt to fix a corrupted SVG programmatically — ask the user for a clean export.
+
+---
+
+### Large SVG Files (>2MB)
+
+SVGs over 2MB are usually one of: an SVG with embedded base64 images, an extremely complex path file (e.g. exported from Illustrator with thousands of nodes), or an accidentally included asset.
+
+1. Check what's making it large:
+   ```bash
+   wc -c /mnt/user-data/uploads/image.svg
+   grep -c "<path" /mnt/user-data/uploads/image.svg
+   grep -c "base64" /mnt/user-data/uploads/image.svg
+   ```
+
+2. **Embedded base64 images** — the SVG is wrapping a raster image. Extract the base64 content and decode it to a PNG, then switch to the `png-canvas-art-optimizer` skill instead.
+
+3. **Too many path nodes** (>5,000 `<path>` elements) — the pixel diff iteration will be slow and the canvas output will be impractical. Tell the user: "This SVG has [N] path elements — canvas translation at this complexity isn't practical. Consider simplifying the SVG in your design tool first (merge paths, reduce nodes)."
+
+4. **File simply too large for the API** — resize or simplify before processing. Don't attempt to process a >5MB SVG.
