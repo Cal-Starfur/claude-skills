@@ -98,16 +98,16 @@ for i in range(28):
         scan = idx
         while scan < len(q):
             t = q[scan]
+            # Skip any held task — check both desc prefix and explicit held flag
+            if t.get('desc', '').startswith('[HELD') or t.get('held'):
+                lane_queues[lane].pop(scan)  # remove so it doesn't block queue
+                continue
             # Saturday: skip L-effort game tasks
             if is_light and t['effort'] == 'L' and t['type'] == 'game':
                 scan += 1
                 continue
             # Hard cap: no more than 2 L-effort tasks in one day
             if t['effort'] == 'L' and l_count >= 2:
-                scan += 1
-                continue
-            # Skip held tasks
-            if t.get('desc', '').startswith('[HELD'):
                 scan += 1
                 continue
             # Good to schedule
