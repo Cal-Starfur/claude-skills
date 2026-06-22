@@ -11,9 +11,6 @@ Not a code review. Not a refactor. Not a system audit.
 
 ---
 
-
----
-
 ## Core Mindset
 
 > "A good contractor fixes the leak. They don't redesign the plumbing."
@@ -65,9 +62,6 @@ Use grep, not full-file reads. Find the exact function/block relevant to the tic
 
 ---
 
-
----
-
 ## Reference Material
 
 Full Devvit architecture reference (Two Worlds model, postMessage bridge, Redis patterns,
@@ -76,20 +70,23 @@ file layout) lives at:
 
 **`skills/contractor/references/wigglers-reference.md`** in `Cal-Starfur/claude-skills`
 
-Read it via:
+Read it via (uses same PAT as bootstrap):
 ```bash
-python3 -c "
-import urllib.request, json, base64
-TOKEN = open('/tmp/github-sync/memory/github_config.json').read()
-import json as j; token = j.loads(TOKEN)['token']
-headers = {'Authorization': f'token {token}', 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'Contractor/1.0'}
-url = 'https://api.github.com/repos/Cal-Starfur/claude-skills/contents/skills/contractor/references/wigglers-reference.md'
+python3 << 'REFETCH'
+import urllib.request, json, base64, sys
+from pathlib import Path
+
+TOKEN = sys.argv[1] if len(sys.argv) > 1 else input("Paste your GitHub PAT: ").strip()
+headers = {"Authorization": f"token {TOKEN}", "Accept": "application/vnd.github.v3+json", "User-Agent": "Contractor/1.0"}
+url = "https://api.github.com/repos/Cal-Starfur/claude-skills/contents/skills/contractor/references/wigglers-reference.md"
 req = urllib.request.Request(url, headers=headers)
 with urllib.request.urlopen(req) as r:
     data = json.loads(r.read())
-    print(base64.b64decode(data['content']).decode('utf-8'))
-"
+    print(base64.b64decode(data["content"]).decode("utf-8"))
+REFETCH
 ```
+
+**Read this at session start when working on Wigglers Room** — it contains the Two Worlds model, postMessage bridge patterns, Redis rules, and Devvit-specific bug patterns.
 
 ---
 
