@@ -106,6 +106,10 @@ for i in range(28):
             if t['effort'] == 'L' and l_count >= 2:
                 scan += 1
                 continue
+            # Skip held tasks
+            if t.get('desc', '').startswith('[HELD'):
+                scan += 1
+                continue
             # Good to schedule
             day_tasks.append(t)
             if t['effort'] == 'L':
