@@ -1,3 +1,39 @@
 {
-  "wigglers:perf-1": true
+  "wigglers:perf-1": true,
+  "wigglers:perf-2": {
+    "done": true,
+    "date": "2026-06-22"
+  },
+  "wigglers:perf-3": {
+    "done": true,
+    "date": "2026-06-22"
+  },
+  "wigglers:perf-4": {
+    "done": true,
+    "date": "2026-06-22"
+  },
+  "wigglers:iss-13-bug-a": {
+    "done": true,
+    "date": "2026-06-22"
+  },
+  "github:ci-pipeline-layer-1": {
+    "done": true,
+    "date": "2026-06-22"
+  },
+  "github:scheduled-calendar-sync-layer-5": {
+    "done": true,
+    "date": "2026-06-22"
+  },
+  "github:calendar-status-bar-layer-6": {
+    "done": true,
+    "date": "2026-06-22"
+  },
+  "github:bridge-auto-start": {
+    "done": true,
+    "date": "2026-06-22"
+  },
+  "github:iss-16-17-audit-flags": {
+    "done": true,
+    "date": "2026-06-22"
+  }
 }
