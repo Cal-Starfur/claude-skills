@@ -43,6 +43,7 @@ Each skill scored 0–100 across four dimensions:
 - 65–79  = 🟢 Good
 - 50–64  = 🟡 OK — needs improvement
 - <50    = 🔴 Weak — fix before next session
+- <50    = 🔴 Critical — do not use until fixed (see below)
 
 ---
 
@@ -158,4 +159,37 @@ The **core Devvit workflow trio** (github-sync, lead-dev, contractor) is solid �
 The **biggest risk** is freshness: skills that have version numbers or file sizes baked in
 will drift silently every session. `wigglers-architecture` is the most exposed.
 The **weakest skill** is `png-canvas-art-optimizer` — it promises behavior it doesn't document.
+
+---
+
+## Edge Cases
+
+### Skill Scores Below 50 — Critical Triage Protocol
+
+A score below 50 means the skill is actively harmful to load — it will give Claude wrong instructions, wrong paths, or wrong expectations. This is different from a low-scoring skill (65–79) which is merely incomplete.
+
+**Immediate actions when a skill scores below 50:**
+
+1. **Flag it as DO NOT LOAD** in the audit output:
+   > "⛔ [skill-name] scored [N]/100 — this skill should not be loaded until fixed. Loading it may cause worse outcomes than having no skill at all."
+
+2. **Identify which dimension is lowest** — this determines the fix type:
+   - Trigger < 50 → the skill will never load when needed, or load when it shouldn't. Fix the description first.
+   - Quality < 50 → the instructions are wrong, contradictory, or dangerous. Fix the content before anything else.
+   - Completeness < 50 → the skill has no error handling and will fail silently in real use. Add edge cases.
+   - Freshness < 50 → the skill has hardcoded values that are almost certainly wrong. Strip all hardcoded specifics.
+
+3. **Do not attempt partial fixes on a sub-50 skill in the same session as other work.** It needs a dedicated focused session. Log it as the top priority for next session:
+   > "Logging [skill-name] as P0 — needs dedicated fix session before it can be used."
+
+4. **Write the audit finding to GitHub** even if the fix isn't done yet:
+   ```
+   audits/YYYY-MM-DD-[skillname]-critical.md
+   ```
+   Document: what scored below 50, why, what the fix requires, estimated effort.
+
+5. **If the skill is currently wired into a session-start flow** (e.g. session-health, github-sync) and it scored below 50 — tell the user immediately:
+   > "This skill is part of your session startup — running sessions without fixing it first is risky. I'd recommend fixing it before the next Wigglers session."
+
+6. **Below 30 = rewrite, not patch.** A skill scoring below 30 has fundamental structural problems that can't be fixed incrementally. Flag it for a full rewrite and treat the current version as retired until the rewrite is complete.
 
