@@ -41,6 +41,25 @@ def effort_from_desc(desc, title=''):
 def ns_id(namespace, raw_id):
     return f'{namespace}:{raw_id}'
 
+# ── Task hold dates — P1 tasks blocked until a specific date ──────────────────
+# Format: task_id → 'YYYY-MM-DD' (task stays at its parsed priority but won't
+# surface in the calendar until that date; shown as P3 placeholder until then)
+NOT_BEFORE = {
+    'wigglers:feat-2': '2026-07-01',  # can't test live until July 1
+    'wigglers:iss-19': '2026-07-01',  # depends on FEAT-2 / same session
+}
+
+def apply_not_before(tasks):
+    from datetime import date
+    today = date.today().isoformat()
+    for t in tasks:
+        hold = NOT_BEFORE.get(t['id'])
+        if hold and today < hold:
+            t['priority'] = 'P3'
+            if not t.get('desc','').startswith('[HELD'):
+                t['desc'] = f"[HELD until {hold}] " + t.get('desc', '')
+    return tasks
+
 # ── Parser: skill build/fix tasks ─────────────────────────────────────────
 def parse_skills(owner, repo, ns):
     tasks = []
@@ -251,6 +270,11 @@ for entry in REGISTRY:
         print(f'  ⚠ {lane} ({entry["repo"]}) — ERROR ({e})')
 
 (OUT / 'failed_repos.json').write_text(json.dumps(failed_repos))
+
+# Apply hold dates — demote blocked P1s to P3 until their date
+all_tasks = apply_not_before(all_tasks)
+for lane in lane_tasks:
+    lane_tasks[lane] = apply_not_before(lane_tasks[lane])
 (OUT / 'lane_names.json').write_text(json.dumps(list(lane_tasks.keys())))
 
 if failed_repos:
