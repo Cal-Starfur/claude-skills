@@ -164,3 +164,77 @@ Order every Wigglers session:
 
 ---
 
+## Error Handling & Edge Cases
+
+### 401 — Token Expired Mid-Session
+
+If the GitHub API returns a 401 at any point during a session (health check, file fetch, or push):
+
+1. **Stop immediately** — do not attempt further API calls
+2. Tell the user: `"GitHub token expired — please paste a fresh PAT to continue"`
+3. Re-run Step 0 bootstrap with the new token (the scripts in `/tmp` are still valid — only the token config needs updating)
+4. Re-run `health_check.py` from the beginning — do not assume cached `/tmp/sh_arch.md` and `/tmp/sh_audit.md` are current
+5. Any staged-but-not-pushed changes in `propose_commit.py` are still staged — verify with `status` before continuing
+
+```bash
+# Re-set token only (scripts already bootstrapped):
+python3 -c "
+import json
+from pathlib import Path
+token = input('Paste fresh PAT: ').strip()
+Path('/tmp/github-sync/memory/github_config.json').write_text(json.dumps({
+    'token': token,
+    'owner': 'Cal-Starfur',
+    'repo': 'Wigglers_Room',
+    'branch': 'main'
+}, indent=2))
+print('✓ Token refreshed')
+"
+```
+
+**Do not tell the user their work is lost** — staged changes survive a token refresh.
+
+---
+
+### health_check.py Fetch Fails (claude-skills Unreachable)
+
+If the bootstrap can't fetch `health_check.py` from `Cal-Starfur/claude-skills`:
+
+1. Check if the error is a 401 (token issue — see above) or a network/404 error
+2. For 404: verify the script path hasn't moved — run `sync_from_github.py list` against claude-skills to confirm `skills/session-health/scripts/health_check.py` exists
+3. **If claude-skills is genuinely unreachable** (network error, repo temporarily down):
+   - Do NOT proceed with a session that involves architectural doc changes
+   - Safe to continue with: reading files already in `/tmp` cache from a recent pull, answering questions about known code, reviewing diffs
+   - Not safe without health check: pushing any code changes, editing GAME_ARCHITECTURE.md or WIGGLERS_AUDIT.md, any auto-fix operations
+   - Tell the user: `"health_check.py is unreachable — I can review code but won't push changes until the health check clears"`
+4. Retry after 2–3 minutes — transient GitHub outages are common and resolve quickly
+
+---
+
+### Bridge Offline + Current Version Unknown
+
+If `health_check.py` reports the bridge is offline AND `relay/version.json` is missing or stale (version unknown):
+
+**What is still safe to do:**
+- Read and discuss any file in the repo
+- Stage changes via `propose_commit.py stage`
+- Push doc-only changes (GAME_ARCHITECTURE.md, WIGGLERS_AUDIT.md, audit entries)
+- Review and plan code changes
+
+**What is NOT safe without the bridge:**
+- `devvit upload` — requires bridge to relay the command to the Codespace
+- Any change that assumes a specific current Devvit version (version-gated features, devvit.yaml bumps)
+- Confirming whether a previous upload shipped
+
+**When version is unknown specifically:**
+- Do not bump the version number in devvit.yaml manually — you may create a conflict with a version that already uploaded silently
+- Note in the session summary: `"Version unconfirmed — bridge was offline at session start"`
+- After bridge comes back online, run `health_check.py` again without `--fix` to capture the real current version before any upload
+
+**Bridge start command (show this to the user and wait):**
+```bash
+# In the Codespace terminal:
+nohup node /workspaces/Wigglers_Room/bridge3.js > /tmp/bridge.log 2>&1 &
+```
+Health check polls every 15s for up to 5 minutes automatically. Claude never asks the user to re-run.
+
