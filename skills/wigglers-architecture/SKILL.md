@@ -10,20 +10,26 @@ description: Load for any Wigglers Room worm bin game session, or whenever the u
 > Current version, open issues, and function registry live in the repo.
 
 **Repo:** https://github.com/Cal-Starfur/Wigglers_Room | Branch: main
-**Current:** Session 20 | game.js ~8,635 lines | main.tsx ~959 lines
+**Current state:** Always pull fresh from GitHub — never trust values baked into this skill.
 
 ---
 
 ## Step 0 — Pull Fresh Context (Mandatory Every Session)
 
+**This step is not optional. Do not read any game state from this skill until it is done.**
+
 ```bash
-python3 /tmp/github-sync/scripts/sync_from_github.py read GAME_ARCHITECTURE.md
-python3 /tmp/github-sync/scripts/sync_from_github.py read WIGGLERS_AUDIT.md
+python3 /tmp/github-sync/scripts/sync_from_github.py read GAME_ARCHITECTURE.md --fresh
+python3 /tmp/github-sync/scripts/sync_from_github.py read WIGGLERS_AUDIT.md --fresh
 ```
+
+If `/tmp/github-sync/scripts/sync_from_github.py` does not exist → bootstrap github-sync first.
 
 Read **both files fully** before writing a single line of code.
 `GAME_ARCHITECTURE.md` = living source of truth (version, line counts, open issues, function registry).
 `WIGGLERS_AUDIT.md` = full bug log, PERF analysis, FEAT designs, lessons learned.
+
+**Why --fresh matters:** The cache at `/tmp/github-sync/memory/` goes stale after multiple commits. Always force a fresh pull at session start.
 
 ---
 
@@ -31,9 +37,9 @@ Read **both files fully** before writing a single line of code.
 
 ```
 Wigglers_Room/
-├── src/main.tsx              — Devvit host (KV, Realtime, auth, routing) ~959 lines
+├── src/main.tsx              — Devvit host (KV, Realtime, auth, routing) [see GAME_ARCHITECTURE.md for current line count]
 ├── webroot/
-│   ├── game.js               — All game logic — vanilla JS + Canvas — ~8,635 lines
+│   ├── game.js               — All game logic — vanilla JS + Canvas — [see GAME_ARCHITECTURE.md for current line count]
 │   ├── index.html            — Webview shell (minimal)
 │   └── style.css             — Reset + canvas positioning
 ├── assets/
