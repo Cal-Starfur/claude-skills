@@ -118,3 +118,72 @@ print(f"✓ devvit_inspector.py ({len(code.splitlines())} lines)")
 print("Bootstrap complete.")
 BOOTSTRAP
 ```
+
+---
+
+## Error Handling & Edge Cases
+
+### When to Escalate to Lead-Dev
+
+The contractor handles one ticket at a time on one system. Escalate to lead-dev when:
+
+| Situation | Action |
+|---|---|
+| The fix requires touching 3 or more distinct systems | Escalate — this is architecture work |
+| The ticket requires renaming a function or constant used across multiple files | Escalate — rename audit is lead-dev territory |
+| The bug root cause is unknown after 15 minutes of investigation | Escalate — diagnosis at this depth is lead-dev work |
+| The user asks for a refactor, restructure, or "clean up the code" | Escalate — out of contractor scope |
+| The fix would require changing GAME_ARCHITECTURE.md | Escalate — architecture changes need lead-dev sign-off |
+| ISS-15 or tube physics area is involved | Stop immediately — see tube physics rule below |
+
+**How to escalate:** Tell the user clearly:
+> "This ticket has grown beyond a surgical fix — it touches [N systems / requires renaming / needs architectural analysis]. I'm handing off to lead-dev to handle this properly."
+Then load the lead-dev skill and continue from there.
+
+**Do not silently expand scope.** If the ticket grows, say so before touching extra systems.
+
+---
+
+### Ticket Touches More Than One System
+
+If the user's request clearly involves two systems (e.g. "fix the sound AND update the score display"):
+
+1. **Split it into two tickets explicitly:**
+   > "This covers two separate systems — I'll treat these as two tickets: (1) sound fix, (2) score display. Doing them in order."
+
+2. Complete ticket 1 fully (locate → patch → output) before starting ticket 2.
+
+3. Output a separate patch block for each ticket — never merge changes from different systems into one block.
+
+4. If the two changes interact (e.g. a sound event triggered by the score system), flag it:
+   > "These two systems interact at [point] — I'll handle the interaction in ticket 2 after ticket 1 is confirmed."
+
+5. **Three or more systems = escalate to lead-dev.** Two is the contractor maximum.
+
+---
+
+### devvit_inspector.py Fails on Unknown File Type
+
+If `devvit_inspector.py` exits with an error or returns no useful output:
+
+1. Check the error — most common causes:
+   - File is not a recognised Devvit file (not `main.tsx`, `game.js`, `index.html`, or `devvit.yaml`) → the inspector only handles known Devvit file types
+   - File is minified or bundled → inspector can't parse compressed output
+   - File path is wrong → verify with `ls /mnt/user-data/uploads/`
+
+2. **For unrecognised file types** — skip the inspector and proceed manually:
+   - Use `grep -n` to locate the relevant code area
+   - Read only the surrounding 30–50 lines of context
+   - Apply the ticket change without inspector guidance
+   - Note in the patch output: "Inspector skipped — file type not supported; manual locate used"
+
+3. **For minified files** — tell the user:
+   > "This file appears to be minified/bundled — I can't inspect it reliably. Can you share the unminified source file?"
+   Do not attempt to edit minified code.
+
+4. **Re-bootstrap if the script itself errored** (not the file):
+   ```bash
+   # Re-fetch devvit_inspector.py from GitHub and retry once
+   ```
+   If it fails again after re-bootstrap, proceed with manual grep and flag it in side notes.
+
