@@ -1,99 +1,135 @@
 ---
 name: wigglers-monetization
-description: Wigglers Room monetization strategy and implementation guide. Load when discussing revenue, Reddit Developer Funds payouts, in-app Gold purchases, or adding purchasable items to the game. Covers Dev Fund tier tracking, useProducts hook integration, and product design for Wigglers Room specifically.
+description: >
+  Wigglers Room monetization strategy and implementation guide. Covers
+  Reddit Developer Funds 2026 payout tiers, Devvit in-app payments via
+  Reddit Gold (useProducts API), and Revenue OS audit commands. Load this
+  skill when discussing Wigglers Room revenue, pricing, adding purchasable
+  items, tracking Daily Qualified Engagers, or running a monetization audit.
+  Triggers on: "how do we make money", "add payments", "Reddit Gold",
+  "developer funds", "payout tiers", "monetize", "in-app purchase",
+  "useProducts", "/ros", "revenue audit".
 ---
 
-# Wigglers Room Monetization Skill
+# Wigglers Room — Monetization Skill
 
-## Two Revenue Channels
+## Three Revenue Channels
 
 ### Channel 1 — Reddit Developer Funds 2026
-Program runs April 1, 2025 → July 31, 2026. Wigglers Room launches July 1.
+**Program runs April 1, 2025 → July 31, 2026. Wigglers Room launches July 1.**
 
-**Payout tiers (one-time per tier):**
+**Payout tiers (one-time per tier, per app):**
+
 | Threshold | Payout |
 |---|---|
 | 500 Daily Qualified Engagers (7-day rolling avg) | $500 |
-| 1,000 DQEs | Higher tier (check current terms) |
-| 250 Qualified Installs (communities 1,000+ members) | $1,000 |
+| 1,000 DQE | $1,000 |
+| 5,000 DQE | $2,500 |
+| 10,000 DQE | $5,000 |
+| 250 Qualified Installs (in 1,000+ member subs) | $1,000 |
+| 1,000 Qualified Installs | $5,000 |
 
 **DQE Rules:**
-- User must be logged in
-- In a community with 200+ members
-- Community must be SFW / eligible under Earn Policy
-- No bots or manipulation
-- Up to 3 apps per developer qualify
+- Must be logged-in Reddit users
+- Community must have 200+ members
+- Community must be SFW / eligible for monetization
+- No bots or spam — Reddit audits this
 
-**What this means for Wigglers Room:**
-- Post to large SFW subs (r/incremental_games ~500k, r/GrowAGarden ~200k, r/compost ~150k)
-- Each engaged player in those subs = 1 DQE
-- 500 DQEs over a 7-day rolling window = first $500
+**What counts as an engagement for Wigglers Room:**
+Any interaction with the game post (opening the bin, placing worms, collecting tea, checking karma). Idle games naturally accumulate engagements — daily check-ins are built into the loop.
 
-### Channel 2 — In-App Reddit Gold Purchases (useProducts)
-Reddit's payments SDK lets players spend Gold inside the game.
+**Action items:**
+- Register for Developer Funds at r/devvit if not already done
+- Ensure the subreddit Wigglers Room is installed in has 200+ members
+- Track DQE via Devvit analytics dashboard after launch
 
-**Integration pattern (from reddit/devvit-payments-example):**
+---
 
-In `devvit.json` define products:
-```json
-{
-  "products": [
-    {
-      "sku": "tunnel_glow_pack",
-      "displayName": "Tunnel Glow Pack",
-      "description": "Unlock amber, violet, and cyan tunnel glow colors",
-      "price": 25,
-      "images": { "icon": "assets/glow-icon.png" },
-      "metadata": { "type": "cosmetic" }
-    }
-  ]
-}
+### Channel 2 — In-App Payments (Reddit Gold)
+**Implementation: `useProducts` hook from `@devvit/public-api`**
+
+Reddit Gold is Reddit's virtual currency. Users buy Gold with real money and spend it in Devvit apps.
+
+**How it works in Wigglers Room:**
+```
+Player buys Reddit Gold on Reddit → Player sees Gold purchase button in game
+→ `useProducts` triggers Reddit's native payment flow → Reddit handles transaction
+→ Your server-side `onPurchase` handler fires → Grant the item in KV store
 ```
 
-In client, use `usePurchase` hook:
+**Suggested purchasable items for Wigglers Room:**
+
+| Item | Gold Price | Description |
+|---|---|---|
+| Tunnel Glow Pack | 50 Gold | Unlocks amber/purple/rainbow tunnel glow colors |
+| Worm Speed Boost | 25 Gold | 2x worm movement speed for 24 hours |
+| Compost Accelerator | 30 Gold | 2x casting rate for 24 hours |
+| Premium Worm Skin | 75 Gold | Rare worm appearance (glowing, spotted, golden) |
+| Mega Bin | 100 Gold | Unlock a second, larger worm bin |
+| Worm Tea Flask | 40 Gold | +50% worm tea output for 24 hours |
+
+**Key API pattern (from reddit/devvit-payments-example):**
 ```typescript
-import { usePurchase } from './hooks/usePurchase';
-const { purchase, isPurchasing } = usePurchase();
+// In devvit.json — define your products
+"products": [
+  {
+    "sku": "tunnel_glow_pack",
+    "displayName": "Tunnel Glow Pack",
+    "description": "Unlock special tunnel glow colors",
+    "price": 50,
+    "images": { "icon": "assets/glow-icon.png" }
+  }
+]
+
+// In client — trigger purchase
+const { purchase } = useProducts();
 await purchase('tunnel_glow_pack');
-```
 
-In server `index.ts`, handle fulfillment:
-```typescript
+// In server — handle fulfillment
 Devvit.addPaymentHandler({
-  fulfillOrder: async ({ productSku, userId }) => {
+  fulfillOrder: async ({ productSku, userId }, { redis }) => {
     if (productSku === 'tunnel_glow_pack') {
-      await redis.hset(`user:${userId}:unlocks`, { tunnelGlowPack: 'true' });
+      await redis.hset(`user:${userId}:unlocks`, { tunnelGlow: 'true' });
     }
     return { success: true };
   }
 });
 ```
 
-## Wigglers Room Product Ideas (Cosmetic / Non-P2W)
+**Files to reference:**
+- `payments-sdk/src/server/index.ts` — full server-side payment handler
+- `payments-sdk/src/client/hooks/usePurchase.ts` — client hook pattern
+- `payments-sdk/devvit.json` — product definition format
 
-| Product | SKU | Gold Price | Notes |
-|---|---|---|---|
-| Tunnel Glow Pack | `tunnel_glow_pack` | 25 | Amber/violet/cyan glow colors |
-| Golden Worm Skin | `golden_worm` | 50 | Cosmetic only, same physics |
-| Cozy Bin Theme | `cozy_bin_theme` | 30 | Dark wood + fairy lights UI skin |
-| Worm Name Tag | `worm_nametag` | 10 | Name your lead worm |
-| Casting Rain | `casting_rain` | 75 | Visual effect: castings rain from top |
+---
 
-**Philosophy: cosmetic only, never gameplay advantage.**
-Wigglers Room is an idle compost game — pay-to-win would kill the community.
-Gold purchases = prestige + personalization, not faster worms.
+### Channel 3 — Revenue OS Audit
+**Run `/ros audit` to score Wigglers Room's monetization readiness.**
 
-## Dev Fund Strategy for July Launch
+Available Revenue OS commands:
+- `/ros` — overview and readiness score
+- `/ros icp` — who is the ideal Wigglers Room player that would spend Gold?
+- `/ros value-prop` — sharpen the "why play Wigglers Room" message
+- `/ros pricing` — validate Gold pricing against psychology frameworks
+- `/ros competitors` — how do other idle Reddit games monetize?
+- `/ros first-dollar` — fastest path to first real revenue
+- `/ros audit` — full monetization audit with action plan
 
-1. Launch July 1 in r/Wigglers subreddit (create it if needed)
-2. Immediately cross-post to r/incremental_games, r/GrowAGarden, r/compost
-3. Target 200+ active players = first DQE threshold
-4. 500 daily average over 7 days = $500 payout
-5. 250 qualified installs (large subs) = $1,000 payout
+---
 
-## Running /ros on Wigglers Room
-Load revenue-os skill and run:
-- `/ros icp` → Who is the Wigglers Room player? (idle gamer + composter crossover)
-- `/ros value-prop` → Why does Wigglers Room exist vs other idle games?
-- `/ros pricing` → What should Gold products cost?
-- `/ros first-dollar` → Fastest path to first revenue before July 31
+## Priority Order for July 1 Launch
+
+1. **Register for Developer Funds** — takes 5 minutes, unlocks $500+ in milestone payments
+2. **Add 1 purchasable item** — Tunnel Glow Pack is the highest-fit first item (visual, non-pay-to-win, tied to the #1 marketing asset)
+3. **Ensure install subreddit has 200+ members** — required for DQE to count
+4. **Run `/ros first-dollar`** — find fastest path to first Gold transaction
+5. **Run `/ros audit`** — full monetization readiness score
+
+---
+
+## Notes
+- Reddit handles all payment processing — no Stripe, no PayPal, no tax complexity
+- Gold purchases are non-refundable by Reddit policy
+- Items must be cosmetic or time-limited — pay-to-win is banned by Devvit guidelines
+- Revenue splits: Reddit takes a cut of Gold (typically ~30%), developer gets remainder
+- Wigglers Room Jr. (kids edition) should have ZERO paid items — keep that edition clean
