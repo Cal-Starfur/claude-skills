@@ -1,0 +1,51 @@
+{
+  "analysis_dimensions": [
+    {
+      "name": "Positioning",
+      "questions": [
+        "What's their headline/tagline?",
+        "Who do they target?",
+        "What's their unique claim?"
+      ]
+    },
+    {
+      "name": "Pricing",
+      "questions": [
+        "What pricing model? (subscription, usage, one-time)",
+        "What are their tiers?",
+        "What's included at each level?"
+      ]
+    },
+    {
+      "name": "Features",
+      "questions": [
+        "Core features?",
+        "Premium features?",
+        "What's missing?"
+      ]
+    },
+    {
+      "name": "Weaknesses",
+      "questions": [
+        "What do reviews complain about?",
+        "What features are missing?",
+        "Where is support lacking?"
+      ]
+    }
+  ],
+  "attack_angles": {
+    "price": "Position as more affordable alternative",
+    "simplicity": "Position as easier to use",
+    "feature": "Position as having key missing feature",
+    "support": "Position as having better support",
+    "modern": "Position as more modern/updated",
+    "niche": "Position as better for specific use case"
+  },
+  "migration_campaign_template": {
+    "subject": "Switching from [Competitor]?",
+    "hook": "I noticed you're using [Competitor]...",
+    "pain": "Many [Competitor] users tell us they struggle with...",
+    "solution": "That's exactly why we built [Product]...",
+    "offer": "We're offering [Competitor] users..."
+  }
+}
