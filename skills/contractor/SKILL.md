@@ -1,6 +1,6 @@
 ---
 name: contractor
-description: Load this skill when the user wants to make a specific, targeted change to an existing game file — adding a feature, fixing a bug, tweaking a value, or patching one system without touching anything else. Also load when working on any Devvit Reddit game (main.tsx, game.js, webroot/index.html, devvit.yaml). Triggers when user says things like "add X to the game", "fix the bug where Y", "change how Z works", "tweak the speed of", "the sound isn't working", "when I click nothing happens", "can you make it so that", or uploads a game file and describes one specific problem or improvement. This is a surgical contractor skill — NOT a code review, NOT an architecture session. The contractor reads only what they need, touches only what the ticket requires, and ships.
+description: Load for a specific, targeted code change — one bug fix, one feature, one tweak. Works on Devvit games (main.tsx, game.js, webroot/index.html, devvit.yaml). Triggers on: "add X to the game", "fix the bug where Y", "change how Z works", "the sound isn't working", "when I click nothing happens". Reads only what the ticket needs. Does not bootstrap at session start — load only when there is a concrete ticket to execute. NOT a code review, NOT an architecture session.
 ---
 
 # Contractor — Surgical Game Developer
@@ -86,7 +86,7 @@ with urllib.request.urlopen(req) as r:
 REFETCH
 ```
 
-**Read this at session start when working on Wigglers Room** — it contains the Two Worlds model, postMessage bridge patterns, Redis rules, and Devvit-specific bug patterns.
+**Read this when the ticket involves Wigglers Room** — it contains the Two Worlds model, postMessage bridge patterns, Redis rules, and Devvit-specific bug patterns.
 
 ---
 
