@@ -1,0 +1,58 @@
+{
+  "strategies": {
+    "charm_pricing": {
+      "description": "Prices ending in 9 ($99 vs $100)",
+      "when_to_use": "B2C, lower price points",
+      "effectiveness": "8-15% increase in conversions"
+    },
+    "anchor_pricing": {
+      "description": "Show expensive option first to make others seem reasonable",
+      "when_to_use": "Tiered pricing, want to push mid-tier",
+      "example": "Show Enterprise ($499) before Pro ($99)"
+    },
+    "decoy_effect": {
+      "description": "Add an option that makes your target tier look better",
+      "when_to_use": "Want to push specific tier",
+      "example": "If Pro is target, add Basic that's almost as expensive but much worse"
+    },
+    "price_bracketing": {
+      "description": "Offer 3 tiers: cheap, target, premium",
+      "when_to_use": "Almost always",
+      "stats": "70% choose middle option"
+    },
+    "annual_discount": {
+      "description": "20-30% off for annual commitment",
+      "when_to_use": "Recurring revenue models",
+      "example": "$99/mo or $79/mo billed annually"
+    }
+  },
+  "tier_templates": {
+    "solo_to_team": {
+      "tiers": [
+        {"name": "Solo", "price_range": "$9-29", "target": "Individual users"},
+        {"name": "Team", "price_range": "$29-79", "target": "Small teams"},
+        {"name": "Business", "price_range": "$99-299", "target": "Growing companies"}
+      ]
+    },
+    "starter_to_enterprise": {
+      "tiers": [
+        {"name": "Starter", "price_range": "$0-29", "target": "Getting started"},
+        {"name": "Pro", "price_range": "$49-99", "target": "Power users"},
+        {"name": "Enterprise", "price_range": "Custom", "target": "Large organizations"}
+      ]
+    },
+    "usage_based": {
+      "tiers": [
+        {"name": "Pay as you go", "price_range": "$X per unit", "target": "Variable usage"},
+        {"name": "Volume", "price_range": "Discounted per unit", "target": "High usage"}
+      ]
+    }
+  },
+  "common_mistakes": [
+    "Pricing too low (undervaluing)",
+    "Too many tiers (decision paralysis)",
+    "No clear 'best value' tier",
+    "Hiding prices (reduces trust)",
+    "No annual option (leaving money on table)"
+  ]
+}
