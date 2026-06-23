@@ -1,0 +1,85 @@
+{
+  "frameworks": {
+    "jtbd": {
+      "name": "Jobs-to-be-Done",
+      "template": "When [situation], I want to [motivation], so I can [outcome].",
+      "example": "When I'm preparing for a sales call, I want to quickly research the prospect, so I can personalize my pitch and close the deal.",
+      "best_for": "Understanding customer motivation"
+    },
+    "pas": {
+      "name": "Problem-Agitate-Solution",
+      "template": {
+        "problem": "State the problem clearly",
+        "agitate": "Make it feel urgent and painful",
+        "solution": "Present your product as the answer"
+      },
+      "example": {
+        "problem": "You're building a great product but can't find customers.",
+        "agitate": "Every day without revenue is a day closer to running out of runway. Your competitors are getting ahead while you're stuck guessing.",
+        "solution": "Revenue OS analyzes your product and tells you exactly who will buy, what to say, and how to reach them."
+      },
+      "best_for": "Landing pages and sales copy"
+    },
+    "before_after": {
+      "name": "Before/After Transformation",
+      "template": {
+        "before": "Life without your product (pain)",
+        "after": "Life with your product (gain)"
+      },
+      "example": {
+        "before": "Spending weeks guessing who your customers are, writing generic pitches that get ignored",
+        "after": "Knowing exactly who to target, with personalized messaging that converts"
+      },
+      "best_for": "Showing transformation and ROI"
+    },
+    "unique_mechanism": {
+      "name": "Unique Mechanism",
+      "template": "The only [category] that [unique differentiator] because of [mechanism].",
+      "example": "The only monetization tool that analyzes your actual codebase to generate personalized go-to-market strategy.",
+      "best_for": "Differentiation from competitors"
+    },
+    "value_stack": {
+      "name": "Feature-Advantage-Benefit-Value",
+      "template": {
+        "feature": "What it does",
+        "advantage": "Why that's better",
+        "benefit": "What you get from it",
+        "value": "What that means for your life/business"
+      },
+      "example": {
+        "feature": "Codebase analysis for ICP discovery",
+        "advantage": "Understands your specific product, not generic advice",
+        "benefit": "Know exactly who to sell to",
+        "value": "Stop wasting time on the wrong customers, close deals faster"
+      },
+      "best_for": "Feature-heavy products"
+    }
+  },
+  "headline_formulas": [
+    "[Achieve outcome] without [pain point]",
+    "The [category] for [specific audience]",
+    "Stop [painful activity]. Start [desired outcome].",
+    "[Number] [audience] use [product] to [outcome]",
+    "Finally, a [category] that [key differentiator]",
+    "From [bad state] to [good state] in [timeframe]",
+    "[Outcome] in [timeframe] or [guarantee]"
+  ],
+  "proof_types": [
+    {
+      "type": "social",
+      "examples": ["X customers", "Used by [logos]", "Rated X stars"]
+    },
+    {
+      "type": "results",
+      "examples": ["X% improvement", "Saved X hours", "$X revenue generated"]
+    },
+    {
+      "type": "trust",
+      "examples": ["Founded by [credibility]", "Backed by [investors]", "Featured in [press]"]
+    },
+    {
+      "type": "guarantee",
+      "examples": ["Money-back guarantee", "Free trial", "Cancel anytime"]
+    }
+  ]
+}
