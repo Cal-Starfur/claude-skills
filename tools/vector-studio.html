@@ -43,7 +43,7 @@ body{display:flex;flex-direction:column;height:100vh;background:var(--bg);color:
 /* LEFT TOOLBAR */
 #toolbar{width:50px;background:var(--surface);border-right:1px solid var(--border);
   display:flex;flex-direction:column;align-items:center;padding:6px 0;gap:1px;flex-shrink:0;overflow-y:auto;}
-.tool-btn{width:40px;height:38px;display:flex;align-items:center;justify-content:center;
+.tool-btn{width:40px;height:38px;display:flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
   border-radius:7px;cursor:pointer;background:transparent;border:1px solid transparent;
   transition:background .15s,border-color .15s;flex-direction:column;gap:1px;position:relative;}
 .tool-btn svg{width:18px;height:18px;}
@@ -58,7 +58,7 @@ body{display:flex;flex-direction:column;height:100vh;background:var(--bg);color:
 .tool-btn.active .tool-key{color:#fff;}
 
 /* CANVAS */
-#canvas-wrap{flex:1;overflow:hidden;position:relative;background:var(--canvas-bg-dark);
+#canvas-wrap{flex:1;overflow:hidden;position:relative;background:var(--canvas-bg-dark);touch-action:none;-webkit-tap-highlight-color:transparent;
   background-image:radial-gradient(circle,var(--canvas-dot) 1px,transparent 1px);
   background-size:20px 20px;cursor:crosshair;}
 #canvas-transform{filter:drop-shadow(0 0 0 transparent);}
@@ -945,16 +945,95 @@ function setTool(t){
 }
 
 // ════════════════════════════════════════════════════════
-//  MOUSE EVENTS
+//  POINTER / TOUCH EVENTS
+//  Touch events are bridged into the same mouse handlers
+//  via normalizeEvent() so all drawing tools work on mobile.
 // ════════════════════════════════════════════════════════
-wrap.addEventListener('mousedown',onDown);
-wrap.addEventListener('mousemove',onMove);
-wrap.addEventListener('mouseup',onUp);
-wrap.addEventListener('click',onClick);
-wrap.addEventListener('dblclick',onDbl);
+
+// Normalise mouse or touch event → {clientX, clientY, button}
+function normalizeEvent(e) {
+  if (e.touches && e.touches.length > 0) {
+    return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY, button: 0, shiftKey: e.shiftKey, _touch: true };
+  }
+  if (e.changedTouches && e.changedTouches.length > 0) {
+    return { clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY, button: 0, shiftKey: e.shiftKey, _touch: true };
+  }
+  return e;
+}
+
+// Track last touch position for move events (changedTouches on touchmove)
+let _lastTouchX = 0, _lastTouchY = 0;
+
+// Touch start → mousedown
+wrap.addEventListener('touchstart', e => {
+  // Don't intercept two-finger gestures (pinch zoom)
+  if (e.touches.length > 1) return;
+  e.preventDefault();
+  const n = normalizeEvent(e);
+  _lastTouchX = n.clientX; _lastTouchY = n.clientY;
+  onDown(n);
+}, { passive: false });
+
+// Touch move → mousemove
+wrap.addEventListener('touchmove', e => {
+  if (e.touches.length > 1) {
+    // Two-finger pinch zoom
+    handlePinchZoom(e);
+    return;
+  }
+  e.preventDefault();
+  const n = normalizeEvent(e);
+  _lastTouchX = n.clientX; _lastTouchY = n.clientY;
+  onMove(n);
+}, { passive: false });
+
+// Touch end → mouseup + click (for text tool)
+wrap.addEventListener('touchend', e => {
+  e.preventDefault();
+  const n = normalizeEvent(e);
+  onUp(n);
+  // Simulate click for text tool tap
+  if (tool === 'text') onClick({ clientX: _lastTouchX, clientY: _lastTouchY });
+}, { passive: false });
+
+// Touch cancel → mouseup
+wrap.addEventListener('touchcancel', e => {
+  onUp(normalizeEvent(e));
+}, { passive: false });
+
+// Pinch zoom state
+let _pinchDist = null;
+function handlePinchZoom(e) {
+  const t = e.touches;
+  if (t.length < 2) return;
+  const dx = t[0].clientX - t[1].clientX;
+  const dy = t[0].clientY - t[1].clientY;
+  const dist = Math.hypot(dx, dy);
+  if (_pinchDist !== null) {
+    const factor = dist / _pinchDist;
+    const cx = (t[0].clientX + t[1].clientX) / 2;
+    const cy = (t[0].clientY + t[1].clientY) / 2;
+    const rect = wrap.getBoundingClientRect();
+    const px = cx - rect.left, py = cy - rect.top;
+    panX = px - (px - panX) * factor;
+    panY = py - (py - panY) * factor;
+    zoom *= factor;
+    applyTx();
+  }
+  _pinchDist = dist;
+}
+wrap.addEventListener('touchstart', e => { if (e.touches.length === 2) { e.preventDefault(); _pinchDist = null; } }, { passive: false });
+wrap.addEventListener('touchend',   e => { if (e.touches.length < 2) _pinchDist = null; }, { passive: false });
+
+// Mouse events (desktop)
+wrap.addEventListener('mousedown', onDown);
+wrap.addEventListener('mousemove', onMove);
+wrap.addEventListener('mouseup',   onUp);
+wrap.addEventListener('click',     onClick);
+wrap.addEventListener('dblclick',  onDbl);
 
 function onDown(e){
-  if(e.button!==0) return;
+  if(!e._touch && e.button!==0) return;
   let pt=clientToSVG(e.clientX,e.clientY);
 
   if(tool==='pan'){
@@ -1224,22 +1303,37 @@ function makeCPLine(x1,y1,x2,y2){
 
 function makeDraggableNode(dot,ptObj,idx,nodes,el,isCP,cpKey){
   let start;
-  dot.addEventListener('mousedown',e=>{
+  // Both mouse and touch for node dragging
+  function startNodeDrag(e, clientX, clientY) {
     e.stopPropagation();
-    start=clientToSVG(e.clientX,e.clientY);
-    const ox=ptObj.x, oy=ptObj.y;
-    const mm=ev=>{
-      const cur=clientToSVG(ev.clientX,ev.clientY);
-      ptObj.x=ox+cur.x-start.x; ptObj.y=oy+cur.y-start.y;
-      if(!isCP) rebuildPathFromNodes(nodes,el);
-      else rebuildPathFromNodes(nodes,el);
-      const cp2=svgToClient(ptObj.x,ptObj.y);
-      dot.style.left=cp2.x+'px'; dot.style.top=cp2.y+'px';
+    start = clientToSVG(clientX, clientY);
+    const ox = ptObj.x, oy = ptObj.y;
+    const mm = ev => {
+      const cx = ev.touches ? ev.touches[0].clientX : ev.clientX;
+      const cy = ev.touches ? ev.touches[0].clientY : ev.clientY;
+      const cur = clientToSVG(cx, cy);
+      ptObj.x = ox + cur.x - start.x; ptObj.y = oy + cur.y - start.y;
+      rebuildPathFromNodes(nodes, el);
+      const cp2 = svgToClient(ptObj.x, ptObj.y);
+      dot.style.left = cp2.x + 'px'; dot.style.top = cp2.y + 'px';
     };
-    const mu=()=>{ document.removeEventListener('mousemove',mm); document.removeEventListener('mouseup',mu); saveUndo(); };
-    document.addEventListener('mousemove',mm);
-    document.addEventListener('mouseup',mu);
-  });
+    const mu = () => {
+      document.removeEventListener('mousemove', mm);
+      document.removeEventListener('mouseup', mu);
+      document.removeEventListener('touchmove', mm);
+      document.removeEventListener('touchend', mu);
+      saveUndo();
+    };
+    document.addEventListener('mousemove', mm);
+    document.addEventListener('mouseup', mu);
+    document.addEventListener('touchmove', mm, { passive: true });
+    document.addEventListener('touchend', mu, { passive: true });
+  }
+  dot.addEventListener('mousedown', e => startNodeDrag(e, e.clientX, e.clientY));
+  dot.addEventListener('touchstart', e => {
+    e.preventDefault();
+    startNodeDrag(e, e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
 }
 
 function rebuildPathFromNodes(nodes,el){
@@ -2071,9 +2165,12 @@ function closePanel() {
 }
 
 // Close panel on canvas tap (mobile)
-document.getElementById('canvas-wrap').addEventListener('touchstart', () => {
-  if (document.getElementById('right-panel').classList.contains('open')) {
-    closePanel();
+// Panel closes on canvas tap only when not drawing
+document.getElementById('canvas-wrap').addEventListener('touchend', (e) => {
+  if (e.touches.length === 0 && !isDrawing && !isPanning) {
+    if (document.getElementById('right-panel').classList.contains('open')) {
+      closePanel();
+    }
   }
 }, { passive: true });
 
