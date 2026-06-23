@@ -1,0 +1,140 @@
+{
+  "saas_metrics": {
+    "conversion_rates": {
+      "website_to_trial": {
+        "low": "1%",
+        "average": "2-3%",
+        "good": "5-7%",
+        "excellent": "10%+"
+      },
+      "trial_to_paid": {
+        "low": "10%",
+        "average": "15-25%",
+        "good": "30-40%",
+        "excellent": "50%+"
+      },
+      "freemium_to_paid": {
+        "low": "1%",
+        "average": "2-4%",
+        "good": "5-7%",
+        "excellent": "10%+"
+      }
+    },
+    "churn_rates": {
+      "monthly": {
+        "low": "1-2%",
+        "average": "3-5%",
+        "concerning": "7-10%",
+        "critical": "10%+"
+      },
+      "annual": {
+        "low": "5-10%",
+        "average": "10-20%",
+        "concerning": "20-30%",
+        "critical": "30%+"
+      }
+    },
+    "arpu_by_segment": {
+      "smb": {
+        "range": "$20-100/mo",
+        "median": "$50/mo"
+      },
+      "mid_market": {
+        "range": "$100-500/mo",
+        "median": "$200/mo"
+      },
+      "enterprise": {
+        "range": "$500-5000/mo",
+        "median": "$1500/mo"
+      }
+    },
+    "ltv_to_cac_ratio": {
+      "poor": "<1:1",
+      "break_even": "1:1",
+      "healthy": "3:1",
+      "excellent": "5:1+"
+    }
+  },
+  "outreach_benchmarks": {
+    "cold_email": {
+      "open_rate": {
+        "low": "10-15%",
+        "average": "20-30%",
+        "good": "35-50%",
+        "excellent": "50%+"
+      },
+      "reply_rate": {
+        "low": "1-2%",
+        "average": "3-5%",
+        "good": "8-12%",
+        "excellent": "15%+"
+      },
+      "meeting_rate": {
+        "low": "0.5%",
+        "average": "1-2%",
+        "good": "3-5%",
+        "excellent": "5%+"
+      }
+    },
+    "linkedin": {
+      "connection_accept_rate": {
+        "low": "10-20%",
+        "average": "25-35%",
+        "good": "40-50%",
+        "excellent": "50%+"
+      },
+      "message_reply_rate": {
+        "low": "5-10%",
+        "average": "15-25%",
+        "good": "30-40%",
+        "excellent": "40%+"
+      }
+    }
+  },
+  "pricing_benchmarks": {
+    "developer_tools": {
+      "entry_tier": "$0-29/mo",
+      "pro_tier": "$29-99/mo",
+      "team_tier": "$99-299/mo",
+      "enterprise_tier": "$299+/mo"
+    },
+    "b2b_saas": {
+      "smb_tier": "$29-99/mo",
+      "growth_tier": "$99-299/mo",
+      "scale_tier": "$299-999/mo",
+      "enterprise_tier": "Custom"
+    },
+    "productivity_tools": {
+      "free_tier": "$0",
+      "personal_tier": "$5-15/mo",
+      "pro_tier": "$15-30/mo",
+      "team_tier": "$8-15/user/mo"
+    }
+  },
+  "time_to_revenue_benchmarks": {
+    "with_existing_audience": {
+      "first_sale": "1-2 weeks",
+      "first_1k_mrr": "1-2 months",
+      "first_10k_mrr": "3-6 months"
+    },
+    "starting_from_zero": {
+      "first_sale": "1-3 months",
+      "first_1k_mrr": "3-6 months",
+      "first_10k_mrr": "6-12 months"
+    }
+  },
+  "valuation_multiples": {
+    "early_stage": {
+      "arr_multiple": "5-10x",
+      "mrr_multiple": "60-120x"
+    },
+    "growth_stage": {
+      "arr_multiple": "10-20x",
+      "mrr_multiple": "120-240x"
+    },
+    "mature": {
+      "arr_multiple": "3-8x",
+      "mrr_multiple": "36-96x"
+    }
+  }
+}
