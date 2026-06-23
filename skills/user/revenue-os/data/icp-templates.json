@@ -1,0 +1,118 @@
+{
+  "templates": {
+    "developer-tools": {
+      "primary": {
+        "name": "Solo Developer / Small Team Lead",
+        "company_size": "1-10",
+        "industries": ["SaaS", "Startups", "Agencies"],
+        "pain_points": [
+          "Manual repetitive tasks",
+          "Slow development cycles",
+          "Lack of automation"
+        ],
+        "where_to_find": [
+          "r/webdev",
+          "r/programming",
+          "Hacker News",
+          "Dev.to",
+          "Twitter #buildinpublic"
+        ],
+        "budget_range": "$20-100/mo",
+        "decision_process": "Solo or quick team decision"
+      },
+      "secondary": {
+        "name": "Engineering Manager at Growth Startup",
+        "company_size": "20-100",
+        "industries": ["Tech", "FinTech", "HealthTech"],
+        "pain_points": [
+          "Team productivity",
+          "Code quality",
+          "Onboarding new devs"
+        ],
+        "where_to_find": [
+          "LinkedIn",
+          "Engineering blogs",
+          "Tech conferences"
+        ],
+        "budget_range": "$100-500/mo",
+        "decision_process": "Needs manager approval"
+      }
+    },
+    "saas-product": {
+      "primary": {
+        "name": "Early-stage Founder",
+        "company_size": "1-5",
+        "industries": ["SaaS", "B2B"],
+        "pain_points": [
+          "Finding customers",
+          "Product-market fit",
+          "Limited resources"
+        ],
+        "where_to_find": [
+          "IndieHackers",
+          "r/SaaS",
+          "Twitter",
+          "Product Hunt"
+        ],
+        "budget_range": "$50-200/mo",
+        "decision_process": "Founder decides"
+      }
+    },
+    "productivity-tool": {
+      "primary": {
+        "name": "Knowledge Worker",
+        "company_size": "Any",
+        "industries": ["Any"],
+        "pain_points": [
+          "Information overload",
+          "Time management",
+          "Collaboration friction"
+        ],
+        "where_to_find": [
+          "r/productivity",
+          "Twitter",
+          "LinkedIn",
+          "Product Hunt"
+        ],
+        "budget_range": "$10-50/mo",
+        "decision_process": "Personal purchase or expense"
+      }
+    },
+    "ecommerce-tool": {
+      "primary": {
+        "name": "E-commerce Store Owner",
+        "company_size": "1-20",
+        "industries": ["Retail", "DTC", "Dropshipping"],
+        "pain_points": [
+          "Conversion rates",
+          "Customer acquisition cost",
+          "Inventory management"
+        ],
+        "where_to_find": [
+          "r/ecommerce",
+          "r/shopify",
+          "Facebook groups",
+          "Shopify app store"
+        ],
+        "budget_range": "$50-300/mo",
+        "decision_process": "Owner decides"
+      }
+    }
+  },
+  "validation_questions": [
+    "Can you find 100+ people matching this profile?",
+    "Have they expressed this pain point publicly?",
+    "Are they currently paying for alternatives?",
+    "Can you reach them through available channels?",
+    "Is their budget realistic for your price point?"
+  ],
+  "buying_triggers": [
+    "Just raised funding",
+    "Hired new team members",
+    "Competitor launched similar feature",
+    "Hit a scaling wall",
+    "Received customer complaints",
+    "New regulation/compliance requirement",
+    "Annual planning season"
+  ]
+}
