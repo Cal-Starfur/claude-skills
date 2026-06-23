@@ -12,9 +12,11 @@ OUT = Path('/tmp/project-calendar')
 # ── Single source of truth for repo registry ───────────────────────────────
 # Each entry: owner, repo, parser, ns (namespace), lane (display label)
 REGISTRY = [
-    {'owner': 'Cal-Starfur', 'repo': 'claude-skills',   'parser': 'parse_skills',   'ns': 'skills',   'lane': 'Skills'},
-    {'owner': 'Cal-Starfur', 'repo': 'claude-skills',   'parser': 'parse_audits',   'ns': 'audits',   'lane': 'Audits'},
-    {'owner': 'Cal-Starfur', 'repo': 'Wigglers_Room',   'parser': 'parse_wigglers', 'ns': 'wigglers', 'lane': 'Wigglers Room'},
+    {'owner': 'Cal-Starfur', 'repo': 'claude-skills',   'parser': 'parse_skills',        'ns': 'skills',   'lane': 'Skills'},
+    {'owner': 'Cal-Starfur', 'repo': 'claude-skills',   'parser': 'parse_audits',        'ns': 'audits',   'lane': 'Audits'},
+    {'owner': 'Cal-Starfur', 'repo': 'Wigglers_Room',   'parser': 'parse_wigglers',      'ns': 'wigglers', 'lane': 'Wigglers Room'},
+    {'owner': 'Cal-Starfur', 'repo': 'Wigglers_Room',   'parser': 'parse_monetization',  'ns': 'monetize', 'lane': 'Monetization'},
+    {'owner': 'Cal-Starfur', 'repo': 'Wigglers_Room',   'parser': 'parse_video',         'ns': 'video',    'lane': 'Video & Marketing'},
 ]
 
 def gh_get(path):
@@ -241,11 +243,191 @@ def parse_wigglers(owner, repo, ns):
     print(f'    → {len(tasks)} tasks')
     return tasks
 
+# ── Parser: Monetization lane ─────────────────────────────────────────────
+# Hardcoded task list — monetization tasks managed here, not in WIGGLERS_AUDIT
+# Add new tasks by appending to MONETIZATION_TASKS below.
+# ── Video / Marketing production tasks ────────────────────────────────────
+VIDEO_TASKS = [
+    {
+        'id': 'VID-1',
+        'title': 'VID-1: Build tunnel glow reveal animation (Remotion → MP4)',
+        'desc': 'Load skills/user/video/remotion-official/SKILL.md. '
+                'Describe: 10-second tunnel glow reveal — amber warmth builds from centre outward, '
+                'worm silhouette emerges, Wigglers Room title fades in. '
+                'Render to MP4. Use as hero asset for all Reddit launch posts. '
+                'This is the #1 marketing asset for the game.',
+        'priority': 'P1',
+        'effort': 'M',
+    },
+    {
+        'id': 'VID-2',
+        'title': 'VID-2: Build 30-second gameplay trailer (Remotion → MP4)',
+        'desc': 'Load skills/user/video/remotion-official/SKILL.md. '
+                'Describe: worm eats scraps → digs tunnel → poops (casting enriches soil) → '
+                'tea level fills → weekly drain → offspring. '
+                'Voiceover optional (ElevenLabs skill). '
+                'Target: Reddit video post for r/incremental_games launch day.',
+        'priority': 'P1',
+        'effort': 'L',
+    },
+    {
+        'id': 'VID-3',
+        'title': 'VID-3: Build worm life cycle loop GIF (canvas → GIF)',
+        'desc': 'Animate the full worm life cycle as a seamless loop. '
+                'Export as GIF for Reddit inline posts (MP4 autoplay not always supported). '
+                'Use existing canvas art + Remotion GIF export rule: '
+                'skills/user/video/remotion-official/rules/gifs.md',
+        'priority': 'P2',
+        'effort': 'M',
+    },
+    {
+        'id': 'VID-4',
+        'title': 'VID-4: Build tea drain countdown animation (Remotion)',
+        'desc': 'Visualise the weekly tea drain mechanic — sump fills across 7 days, '
+                'drains with a satisfying glug animation. '
+                'Use as explainer asset for community posts about the shared economy mechanic.',
+        'priority': 'P2',
+        'effort': 'M',
+    },
+    {
+        'id': 'VID-5',
+        'title': 'VID-5: Record gameplay demo via Playwright (screen capture)',
+        'desc': 'Load skills/user/video/playwright-recording/SKILL.md. '
+                'Record a live gameplay session — open the Wigglers Room post, '
+                'show worm movement, tunnelling, other players. '
+                'Use as authentic gameplay footage for post-launch posts.',
+        'priority': 'P3',
+        'effort': 'M',
+    },
+    {
+        'id': 'VID-6',
+        'title': 'VID-6: Generate AI voiceover for gameplay trailer (ElevenLabs)',
+        'desc': 'Load skills/user/video/elevenlabs/SKILL.md. '
+                'Write and generate a 30-second voiceover script for VID-2 trailer. '
+                'Tone: warm, curious, slightly nerdy. '
+                'Use /generate-voiceover command from skills/user/video/commands/generate-voiceover.md',
+        'priority': 'P3',
+        'effort': 'S',
+    },
+]
+
+MONETIZATION_TASKS = [
+    {
+        'id': 'MON-1',
+        'title': 'MON-1: Add Tunnel Glow Pack — Gold purchasable item',
+        'desc': 'Implement useProducts hook + fulfillOrder handler for Tunnel Glow Pack. '
+                'Define product in devvit.json (sku: tunnel_glow_pack, price: 50 Gold). '
+                'On purchase, store unlock in KV: user:{id}:unlocks tunnelGlow=true. '
+                'Apply glow color in drawTunnel() based on unlock flag. '
+                'Reference: skills/user/devvit-payments/src/server/index.ts',
+        'priority': 'P1',
+        'effort': 'L',
+    },
+    {
+        'id': 'MON-2',
+        'title': 'MON-2: Register for Reddit Developer Funds 2026',
+        'desc': 'Message r/devvit modmail to register Wigglers Room for the Developer '
+                'Funds program. Program ends July 31 2026. 500 DQE = $500 payout. '
+                'Confirm subreddit has 200+ members (required for DQE to count).',
+        'priority': 'P1',
+        'effort': 'S',
+    },
+    {
+        'id': 'MON-3',
+        'title': 'MON-3: Run /ros first-dollar — fastest path to first Gold sale',
+        'desc': 'Load revenue-os skill, run /ros first-dollar to identify the single '
+                'highest-leverage action for Wigglers Room first revenue. '
+                'Reference: skills/user/revenue-os/commands/ros-first-dollar.md',
+        'priority': 'P1',
+        'effort': 'S',
+    },
+    {
+        'id': 'MON-4',
+        'title': 'MON-4: Run /ros icp — identify ideal paying player profile',
+        'desc': 'Who in r/incremental_games or r/compost would spend Gold on Wigglers Room? '
+                'Run /ros icp to define the ideal customer before launch day.',
+        'priority': 'P2',
+        'effort': 'S',
+    },
+    {
+        'id': 'MON-5',
+        'title': 'MON-5: Add Worm Speed Boost — second Gold purchasable item',
+        'desc': '2x worm movement speed for 24 hours. Price: 25 Gold. '
+                'Time-limited boost stored in KV with expiry timestamp. '
+                'Add after MON-1 Tunnel Glow Pack ships.',
+        'priority': 'P2',
+        'effort': 'M',
+    },
+    {
+        'id': 'MON-6',
+        'title': 'MON-6: Run /ros pricing — validate Gold prices against psychology',
+        'desc': 'Check Tunnel Glow Pack (50 Gold) and Worm Speed Boost (25 Gold) against '
+                'pricing psychology frameworks. Adjust before launch if needed.',
+        'priority': 'P2',
+        'effort': 'S',
+    },
+    {
+        'id': 'MON-7',
+        'title': 'MON-7: Add Premium Worm Skin — cosmetic Gold item',
+        'desc': 'Rare worm appearance (glowing, golden, spotted). Price: 75 Gold. '
+                'Pure cosmetic — no gameplay effect. Best for post-launch when '
+                'players are attached to their worms.',
+        'priority': 'P3',
+        'effort': 'M',
+    },
+    {
+        'id': 'MON-8',
+        'title': 'MON-8: Run /ros audit — full monetization readiness score',
+        'desc': 'Score Wigglers Room monetization readiness across all dimensions. '
+                'Run after MON-1 and MON-2 are complete, before launch day.',
+        'priority': 'P3',
+        'effort': 'S',
+    },
+]
+
+def parse_monetization(owner, repo, ns):
+    tasks = []
+    print(f'  [{ns}] Loading monetization tasks...')
+    for t in MONETIZATION_TASKS:
+        tasks.append({
+            'id': ns_id(ns, t['id'].lower()),
+            'title': t['title'],
+            'type': 'monetize',
+            'priority': t['priority'],
+            'effort': t['effort'],
+            'repo': repo,
+            'lane': 'Monetization',
+            'desc': t['desc'],
+            'done': False,
+        })
+    print(f'    → {len(tasks)} monetization tasks')
+    return tasks
+
+def parse_video(owner, repo, ns):
+    tasks = []
+    print(f'  [{ns}] Loading video/marketing production tasks...')
+    for t in VIDEO_TASKS:
+        tasks.append({
+            'id': ns_id(ns, t['id'].lower()),
+            'title': t['title'],
+            'type': 'video',
+            'priority': t['priority'],
+            'effort': t['effort'],
+            'repo': repo,
+            'lane': 'Video & Marketing',
+            'desc': t['desc'],
+            'done': False,
+        })
+    print(f'    → {len(tasks)} video tasks')
+    return tasks
+
 # ── Main ───────────────────────────────────────────────────────────────────
 PARSERS = {
-    'parse_skills':   parse_skills,
-    'parse_audits':   parse_audits,
-    'parse_wigglers': parse_wigglers,
+    'parse_skills':        parse_skills,
+    'parse_audits':        parse_audits,
+    'parse_wigglers':      parse_wigglers,
+    'parse_monetization':  parse_monetization,
+    'parse_video':         parse_video,
 }
 
 # Group tasks by lane so scheduler can pull 1 per lane per day
