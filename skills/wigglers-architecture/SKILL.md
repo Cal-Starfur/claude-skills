@@ -1,23 +1,23 @@
 
 ---
 name: wigglers-architecture
-description: Load for any Wigglers Room worm bin game session, or whenever the user mentions their worm game, game.js, main.tsx, Devvit, pPath tunnels, sumpExit drains, tLvl sump, poop clog system, worm tea physics, castingEnrichment, tunnel decay, or variables like pHP/pGut/pSEG/pSR/karma/pooled/weekStartTs. Also load when the user asks about the audit, session fixes, draw subfunctions, updatePhysics, otherPlayers, the weekly drain cycle, PERF issues, or the preview screen.
+description: Load when the task involves game.js, main.tsx, Devvit, or game architecture — NOT at session start for all sessions. Read SESSION_MANIFEST.md first; load this skill only if the manifest context indicates code work. Covers pPath tunnels, sumpExit drains, tLvl sump, poop clog, worm tea physics, castingEnrichment, tunnel decay, pHP/pGut/pSEG/pSR/karma/pooled/weekStartTs, draw subfunctions, updatePhysics, otherPlayers, weekly drain cycle, PERF issues.
 ---
 
 # Wigglers Room — Architecture Reference
 
-> ⚠️ **FIRST THING EVERY SESSION — before touching any code:**
+> ⚠️ **FIRST THING before touching any code (code sessions only):**
 > Pull fresh files from GitHub. The skill body is stable structural knowledge only.
 > Current version, open issues, and function registry live in the repo.
 
 **Repo:** https://github.com/Cal-Starfur/Wigglers_Room | Branch: main
-**Current state:** Always pull fresh from GitHub — never trust values baked into this skill.
+**Current state:** Pull fresh from GitHub when starting code work — never trust values baked into this skill.
 
 ---
 
-## Step 0 — Pull Fresh Context (Mandatory Every Session)
+## Step 0 — Pull Fresh Context (Required before code changes)
 
-**This step is not optional. Do not read any game state from this skill until it is done.**
+**Do not read game state from this skill until you have pulled fresh files.**
 
 ```bash
 python3 /tmp/github-sync/scripts/sync_from_github.py read GAME_ARCHITECTURE.md --fresh
@@ -30,7 +30,7 @@ Read **both files fully** before writing a single line of code.
 `GAME_ARCHITECTURE.md` = living source of truth (version, line counts, open issues, function registry).
 `WIGGLERS_AUDIT.md` = full bug log, PERF analysis, FEAT designs, lessons learned.
 
-**Why --fresh matters:** The cache at `/tmp/github-sync/memory/` goes stale after multiple commits. Always force a fresh pull at session start.
+**Why --fresh matters:** The cache at `/tmp/github-sync/memory/` goes stale after multiple commits. Force a fresh pull before any code work.
 
 ---
 
