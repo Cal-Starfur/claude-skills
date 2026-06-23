@@ -1,0 +1,89 @@
+{
+  "cold_email": {
+    "sequence_length": 4,
+    "timing": [1, 3, 7, 14],
+    "templates": {
+      "pattern_interrupt": {
+        "name": "Email 1: Pattern Interrupt",
+        "day": 1,
+        "subject_formulas": [
+          "Quick question about {{company}}",
+          "{{first_name}}, thought of you",
+          "Idea for {{company}}"
+        ],
+        "structure": [
+          "Opening: Show you understand their world (1-2 sentences)",
+          "Problem: Reference the pain you solve",
+          "Soft CTA: Question, not ask"
+        ]
+      },
+      "value_bomb": {
+        "name": "Email 2: Value Bomb",
+        "day": 3,
+        "subject_formulas": [
+          "Re: {{previous_subject}}",
+          "Found this for you",
+          "Thought you'd find this useful"
+        ],
+        "structure": [
+          "Provide genuine value (insight, resource, tip)",
+          "Connect value to your product naturally",
+          "No CTA - pure value"
+        ]
+      },
+      "social_proof": {
+        "name": "Email 3: Social Proof",
+        "day": 7,
+        "subject_formulas": [
+          "How {{similar_company}} {{achieved_outcome}}",
+          "Quick case study",
+          "Worked for {{similar_company}}"
+        ],
+        "structure": [
+          "Brief case study or result",
+          "Connect to their situation",
+          "Soft CTA: Worth a quick chat?"
+        ]
+      },
+      "breakup": {
+        "name": "Email 4: Breakup",
+        "day": 14,
+        "subject_formulas": [
+          "Closing the loop",
+          "Should I close your file?",
+          "One last thing"
+        ],
+        "structure": [
+          "Acknowledge they're busy",
+          "One final clear CTA",
+          "Leave door open"
+        ]
+      }
+    }
+  },
+  "linkedin": {
+    "sequence_length": 3,
+    "templates": {
+      "connection": {
+        "max_length": 300,
+        "structure": "Personalized reason for connecting"
+      },
+      "first_message": {
+        "timing": "After accept",
+        "structure": "Thank + question about their work"
+      },
+      "pitch": {
+        "timing": "3-7 days after first message",
+        "structure": "Share insight + soft pitch"
+      }
+    }
+  },
+  "personalization_variables": [
+    "{{first_name}}",
+    "{{company}}",
+    "{{role}}",
+    "{{similar_company}}",
+    "{{specific_pain}}",
+    "{{recent_news}}"
+  ]
+}
