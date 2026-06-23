@@ -1,0 +1,106 @@
+{
+  "objections": {
+    "too_expensive": {
+      "objection": "It's too expensive",
+      "psychology": "They don't see the value yet",
+      "responses": [
+        {
+          "tactic": "Value Reframe",
+          "response": "I understand. Let me ask - what would it be worth to you to [achieve outcome]? Most of our customers find that [Product] pays for itself within [timeframe] because [ROI explanation]."
+        },
+        {
+          "tactic": "ROI Calculation",
+          "response": "What if I could show you how [Product] saves [X hours/dollars] per month? At [price], you'd break even in [timeframe] and everything after is pure savings."
+        },
+        {
+          "tactic": "Comparison",
+          "response": "Compared to [alternative - hiring, building, competitor], [Product] is actually [X%] of the cost. And you get [unique benefits]."
+        }
+      ]
+    },
+    "no_budget": {
+      "objection": "We don't have budget right now",
+      "psychology": "Could be real or a polite no",
+      "responses": [
+        {
+          "tactic": "Timing Question",
+          "response": "I totally understand. When does your next budget cycle begin? I'd love to schedule a follow-up then."
+        },
+        {
+          "tactic": "Pilot Offer",
+          "response": "What if we started with a smaller pilot? We could do [reduced scope] at [reduced price] so you can prove the value before committing more budget."
+        }
+      ]
+    },
+    "using_competitor": {
+      "objection": "We're already using [Competitor]",
+      "psychology": "Switching cost concern",
+      "responses": [
+        {
+          "tactic": "Curiosity",
+          "response": "That's great that you're already solving this. I'm curious - what made you choose [Competitor]? Is there anything you wish it did better?"
+        },
+        {
+          "tactic": "Differentiation",
+          "response": "We actually hear from a lot of [Competitor] users. The main difference is [key differentiator]. Would it be valuable to see a comparison?"
+        }
+      ]
+    },
+    "build_ourselves": {
+      "objection": "We'll just build it ourselves",
+      "psychology": "Underestimating effort",
+      "responses": [
+        {
+          "tactic": "Build vs Buy",
+          "response": "That's definitely an option. In our experience, building something like this takes [X engineer-months]. At average salary, that's [$Y] plus ongoing maintenance. [Product] is [$Z/year] and we handle all the updates."
+        },
+        {
+          "tactic": "Focus Question",
+          "response": "Totally understand wanting control. Quick question - is building [this type of tool] core to your business? Or would your engineers' time be better spent on [your core product]?"
+        }
+      ]
+    },
+    "need_approval": {
+      "objection": "I need to talk to my team/boss",
+      "psychology": "Not the decision maker, or avoiding commitment",
+      "responses": [
+        {
+          "tactic": "Champion Enablement",
+          "response": "Of course! What information would help you make the case internally? I can put together [one-pager/ROI doc/comparison] for you to share."
+        },
+        {
+          "tactic": "Direct Access",
+          "response": "I'd be happy to join a call with your team to answer any questions. Would it help if I walked them through a demo?"
+        }
+      ]
+    },
+    "prove_roi": {
+      "objection": "Can you prove the ROI?",
+      "psychology": "Need justification for decision",
+      "responses": [
+        {
+          "tactic": "Case Studies",
+          "response": "Absolutely. [Customer A] saw [X% improvement] in [metric] within [timeframe]. [Customer B] saved [Y hours/dollars] per month. Would you like me to connect you with a reference?"
+        },
+        {
+          "tactic": "Pilot with Metrics",
+          "response": "Let's run a measured pilot. We'll define success metrics upfront, and you can see the ROI firsthand before committing."
+        }
+      ]
+    },
+    "tried_before": {
+      "objection": "We've tried similar tools before",
+      "psychology": "Burned by previous experience",
+      "responses": [
+        {
+          "tactic": "Understand History",
+          "response": "I appreciate you sharing that. What didn't work about the previous tool? I want to make sure we're actually different before taking more of your time."
+        },
+        {
+          "tactic": "Differentiation",
+          "response": "That's fair. Many of our customers came from [similar tools]. The key difference is [unique mechanism]. Would you be open to seeing how we're different?"
+        }
+      ]
+    }
+  }
+}
