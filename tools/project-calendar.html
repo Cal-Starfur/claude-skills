@@ -10,7 +10,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);padding:24px
 header{margin-bottom:24px}
 h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
 .subtitle{font-size:13px;color:var(--muted);margin-top:4px}
-.sync-info{font-size:11px;font-family:var(--font);color:var(--muted);margin:12px 0 20px}
+.sync-info{font-size:11px;font-family:var(--font);color:var(--muted);margin:8px 0 16px}
+.status-bar{display:flex;gap:16px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:12px;align-items:center}
+.status-item{display:flex;align-items:center;gap:6px}
+.status-label{font-size:10px;font-family:var(--font);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.status-value{font-size:13px;font-family:var(--font);font-weight:600;color:var(--text)}
+.status-meta{font-size:10px;font-family:var(--font);color:var(--muted)}
 .stats-row{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
 .stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 18px;text-align:center}
 .stat-num{font-size:22px;font-weight:700;font-family:var(--font);display:block}
@@ -50,18 +55,37 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
   <h1>🪱 Dev Calendar</h1>
   <div class="subtitle">1 task per repo per day · every front advances · no burnout</div>
 </header>
-<div class="sync-info">Last built: 2026-06-23 · 57 tasks across 3 lanes · say "sync the calendar" to update</div>
-<div class="stats-row">
-  <div class="stat"><span class="stat-num">57</span><span class="stat-label">total</span></div>
-  <div class="stat"><span class="stat-num" style="color:var(--done)">6</span><span class="stat-label">done</span></div>
-  <div class="stat"><span class="stat-num" style="color:var(--p1)">9</span><span class="stat-label">P1 open</span></div>
-  <div class="stat"><span class="stat-num">3</span><span class="stat-label">active lanes</span></div>
+<div class="status-bar">
+  <div class="status-item">
+    <span class="status-label">CI</span>
+    <span class="status-value" style="color:#4ade80">success</span>
+    <span class="status-meta">b4a29eb</span>
+  </div>
+  <div class="status-item">
+    <span class="status-label">Devvit</span>
+    <span class="status-value">?</span>
+  </div>
+  <div class="status-item">
+    <span class="status-label">P1 Open</span>
+    <span class="status-value" style="color:#f87171">13</span>
+  </div>
+  <div class="status-item">
+    <span class="status-label">Synced</span>
+    <span class="status-value">2026-06-23</span>
+  </div>
 </div>
-<div class="lane-pills"><div class="lane-pill" style="border-color:#818cf833;color:#818cf8">Skills · 25 open</div><div class="lane-pill" style="border-color:#86efac33;color:#86efac">Audits · 12 open</div><div class="lane-pill" style="border-color:#4ade8033;color:#4ade80">Wigglers Room · 14 open</div></div>
+<div class="sync-info">say "sync the calendar" to update · 72 tasks across 5 lanes</div>
+<div class="stats-row">
+  <div class="stat"><span class="stat-num">72</span><span class="stat-label">total</span></div>
+  <div class="stat"><span class="stat-num" style="color:var(--done)">6</span><span class="stat-label">done</span></div>
+  <div class="stat"><span class="stat-num" style="color:var(--p1)">13</span><span class="stat-label">P1 open</span></div>
+  <div class="stat"><span class="stat-num">5</span><span class="stat-label">active lanes</span></div>
+</div>
+<div class="lane-pills"><div class="lane-pill" style="border-color:#818cf833;color:#818cf8">Skills · 25 open</div><div class="lane-pill" style="border-color:#86efac33;color:#86efac">Audits · 13 open</div><div class="lane-pill" style="border-color:#4ade8033;color:#4ade80">Wigglers Room · 14 open</div><div class="lane-pill" style="border-color:#88833;color:#888">Monetization · 8 open</div><div class="lane-pill" style="border-color:#88833;color:#888">Video & Marketing · 6 open</div></div>
 <div class="weeks"><div class="week-section"><div class="week-label">This week · Jun 23 – Jun 29</div><div class="days-grid"><div class="day-card today">
         <div class="day-header">
           <span class="day-name">Tuesday<span class="today-badge">today</span></span>
-          <span class="day-right"><span class="day-date">Jun 23</span><span class="count-badge">3</span></span>
+          <span class="day-right"><span class="day-date">Jun 23</span><span class="count-badge">4</span></span>
         </div><div class="tasks"><div class="task" id="t-skills-skill-session-summary" style="background:#0d0d2a;border:1px solid #1e1e4a">
       <div class="lane-tag" style="color:#818cf8">Skills</div>
       <div class="task-title">Build: session-summary skill</div>
@@ -80,19 +104,28 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">Never audited — run baseline audit to get a score.</div>
       <button class="check-btn" onclick="toggleDone('audits-audit-skill-creator',event)">✓</button>
-    </div><div class="task" id="t-wigglers-feat-2" style="background:#052010;border:1px solid #1a4d2a">
-      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
-      <div class="task-title">FEAT-2: Device conflict overlay not showing on mobile. Debug bu</div>
+    </div><div class="task" id="t-monetize-mon-1" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">Monetization</div>
+      <div class="task-title">MON-1: Add Tunnel Glow Pack — Gold purchasable item</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">L</span>
+      </div>
+      <div class="task-desc">Implement useProducts hook + fulfillOrder handler for Tunnel Glow Pack. Define product in devvit.json (sku: tunnel_glow_pack, price: 50 Gold). On purchase, store unlock in KV: user:{id}:unlocks tunnelGlow=true. Apply glow color in drawTunnel() based on unlock flag. Reference: skills/user/devvit-payments/src/server/index.ts</div>
+      <button class="check-btn" onclick="toggleDone('monetize-mon-1',event)">✓</button>
+    </div><div class="task" id="t-video-vid-1" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">Video & Marketing</div>
+      <div class="task-title">VID-1: Build tunnel glow reveal animation (Remotion → MP4)</div>
       <div class="task-meta">
         <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
         <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">Device conflict overlay not showing on mobile. Debug build live (0.0.201). S26: enable DEBUG_MODE on desktop, read conflict= field, fix and redeploy.</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-feat-2',event)">✓</button>
+      <div class="task-desc">Load skills/user/video/remotion-official/SKILL.md. Describe: 10-second tunnel glow reveal — amber warmth builds from centre outward, worm silhouette emerges, Wigglers Room title fades in. Render to MP4. Use as hero asset for all Reddit launch posts. This is the #1 marketing asset for the game.</div>
+      <button class="check-btn" onclick="toggleDone('video-vid-1',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Wednesday</span>
-          <span class="day-right"><span class="day-date">Jun 24</span><span class="count-badge">3</span></span>
+          <span class="day-right"><span class="day-date">Jun 24</span><span class="count-badge">4</span></span>
         </div><div class="tasks"><div class="task" id="t-skills-skill-preflight-checklist" style="background:#0d0d2a;border:1px solid #1e1e4a">
       <div class="lane-tag" style="color:#818cf8">Skills</div>
       <div class="task-title">Build: preflight-checklist skill</div>
@@ -111,19 +144,28 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">Score 92/100 — healthy, re-audit after major changes.</div>
       <button class="check-btn" onclick="toggleDone('audits-audit-session-health',event)">✓</button>
-    </div><div class="task" id="t-wigglers-iss-15" style="background:#052010;border:1px solid #1a4d2a">
-      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
-      <div class="task-title">ISS-15: Tea drifts out of tube through compost to lowest world-</div>
+    </div><div class="task" id="t-monetize-mon-2" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">Monetization</div>
+      <div class="task-title">MON-2: Register for Reddit Developer Funds 2026</div>
       <div class="task-meta">
-        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
-        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
       </div>
-      <div class="task-desc">Tea drifts out of tube through compost to lowest world-Y point</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-15',event)">✓</button>
+      <div class="task-desc">Message r/devvit modmail to register Wigglers Room for the Developer Funds program. Program ends July 31 2026. 500 DQE = $500 payout. Confirm subreddit has 200+ members (required for DQE to count).</div>
+      <button class="check-btn" onclick="toggleDone('monetize-mon-2',event)">✓</button>
+    </div><div class="task" id="t-video-vid-2" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">Video & Marketing</div>
+      <div class="task-title">VID-2: Build 30-second gameplay trailer (Remotion → MP4)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">L</span>
+      </div>
+      <div class="task-desc">Load skills/user/video/remotion-official/SKILL.md. Describe: worm eats scraps → digs tunnel → poops (casting enriches soil) → tea level fills → weekly drain → offspring. Voiceover optional (ElevenLabs skill). Target: Reddit video post for r/incremental_games launch day.</div>
+      <button class="check-btn" onclick="toggleDone('video-vid-2',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Thursday</span>
-          <span class="day-right"><span class="day-date">Jun 25</span><span class="count-badge">3</span></span>
+          <span class="day-right"><span class="day-date">Jun 25</span><span class="count-badge">4</span></span>
         </div><div class="tasks"><div class="task" id="t-skills-skill-rollback" style="background:#0d0d2a;border:1px solid #1e1e4a">
       <div class="lane-tag" style="color:#818cf8">Skills</div>
       <div class="task-title">Build: rollback skill</div>
@@ -142,19 +184,28 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">Score 90/100 — healthy, re-audit after major changes.</div>
       <button class="check-btn" onclick="toggleDone('audits-audit-devvit-pipeline',event)">✓</button>
-    </div><div class="task" id="t-wigglers-iss-3" style="background:#052010;border:1px solid #1a4d2a">
-      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
-      <div class="task-title">ISS-3: 17 `_underscore` function names (S4 rename reverted)</div>
+    </div><div class="task" id="t-monetize-mon-3" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">Monetization</div>
+      <div class="task-title">MON-3: Run /ros first-dollar — fastest path to first Gold sale</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">P1</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
+      </div>
+      <div class="task-desc">Load revenue-os skill, run /ros first-dollar to identify the single highest-leverage action for Wigglers Room first revenue. Reference: skills/user/revenue-os/commands/ros-first-dollar.md</div>
+      <button class="check-btn" onclick="toggleDone('monetize-mon-3',event)">✓</button>
+    </div><div class="task" id="t-video-vid-3" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">Video & Marketing</div>
+      <div class="task-title">VID-3: Build worm life cycle loop GIF (canvas → GIF)</div>
       <div class="task-meta">
         <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
         <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">17 `_underscore` function names (S4 rename reverted)</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-3',event)">✓</button>
+      <div class="task-desc">Animate the full worm life cycle as a seamless loop. Export as GIF for Reddit inline posts (MP4 autoplay not always supported). Use existing canvas art + Remotion GIF export rule: skills/user/video/remotion-official/rules/gifs.md</div>
+      <button class="check-btn" onclick="toggleDone('video-vid-3',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Friday</span>
-          <span class="day-right"><span class="day-date">Jun 26</span><span class="count-badge">3</span></span>
+          <span class="day-right"><span class="day-date">Jun 26</span><span class="count-badge">4</span></span>
         </div><div class="tasks"><div class="task" id="t-skills-fix-png-canvas-art-optimizer" style="background:#0d0d2a;border:1px solid #1e1e4a">
       <div class="lane-tag" style="color:#818cf8">Skills</div>
       <div class="task-title">Fix: png-canvas-art-optimizer</div>
@@ -173,19 +224,28 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">Score 88/100 — healthy, re-audit after major changes.</div>
       <button class="check-btn" onclick="toggleDone('audits-audit-github-sync',event)">✓</button>
-    </div><div class="task" id="t-wigglers-iss-4" style="background:#052010;border:1px solid #1a4d2a">
-      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
-      <div class="task-title">ISS-4: `draw()` 2,022-line monolith (S5 split reverted)</div>
+    </div><div class="task" id="t-monetize-mon-4" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">Monetization</div>
+      <div class="task-title">MON-4: Run /ros icp — identify ideal paying player profile</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
+      </div>
+      <div class="task-desc">Who in r/incremental_games or r/compost would spend Gold on Wigglers Room? Run /ros icp to define the ideal customer before launch day.</div>
+      <button class="check-btn" onclick="toggleDone('monetize-mon-4',event)">✓</button>
+    </div><div class="task" id="t-video-vid-4" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">Video & Marketing</div>
+      <div class="task-title">VID-4: Build tea drain countdown animation (Remotion)</div>
       <div class="task-meta">
         <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
         <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">`draw()` 2,022-line monolith (S5 split reverted)</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-4',event)">✓</button>
+      <div class="task-desc">Visualise the weekly tea drain mechanic — sump fills across 7 days, drains with a satisfying glug animation. Use as explainer asset for community posts about the shared economy mechanic.</div>
+      <button class="check-btn" onclick="toggleDone('video-vid-4',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Saturday</span>
-          <span class="day-right"><span class="day-date">Jun 27</span><span class="count-badge">3</span></span>
+          <span class="day-right"><span class="day-date">Jun 27</span><span class="count-badge">4</span></span>
         </div><div class="tasks"><div class="task" id="t-skills-fix-wigglers-architecture" style="background:#0d0d2a;border:1px solid #1e1e4a">
       <div class="lane-tag" style="color:#818cf8">Skills</div>
       <div class="task-title">Fix: wigglers-architecture</div>
@@ -204,15 +264,24 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">Score 88/100 — healthy, re-audit after major changes.</div>
       <button class="check-btn" onclick="toggleDone('audits-audit-lead-dev',event)">✓</button>
-    </div><div class="task" id="t-wigglers-iss-5" style="background:#052010;border:1px solid #1a4d2a">
-      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
-      <div class="task-title">ISS-5: 5 duplicate Snoo SVG helper pairs</div>
+    </div><div class="task" id="t-monetize-mon-5" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">Monetization</div>
+      <div class="task-title">MON-5: Add Worm Speed Boost — second Gold purchasable item</div>
       <div class="task-meta">
         <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
         <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">5 duplicate Snoo SVG helper pairs</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-5',event)">✓</button>
+      <div class="task-desc">2x worm movement speed for 24 hours. Price: 25 Gold. Time-limited boost stored in KV with expiry timestamp. Add after MON-1 Tunnel Glow Pack ships.</div>
+      <button class="check-btn" onclick="toggleDone('monetize-mon-5',event)">✓</button>
+    </div><div class="task" id="t-video-vid-5" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">Video & Marketing</div>
+      <div class="task-title">VID-5: Record gameplay demo via Playwright (screen capture)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
+      </div>
+      <div class="task-desc">Load skills/user/video/playwright-recording/SKILL.md. Record a live gameplay session — open the Wigglers Room post, show worm movement, tunnelling, other players. Use as authentic gameplay footage for post-launch posts.</div>
+      <button class="check-btn" onclick="toggleDone('video-vid-5',event)">✓</button>
     </div></div></div><div class="day-card rest">
         <div class="day-header">
           <span class="day-name">Sunday</span>
@@ -220,7 +289,7 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
         </div><div class="rest-label">Rest day 🌱</div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Monday</span>
-          <span class="day-right"><span class="day-date">Jun 29</span><span class="count-badge">3</span></span>
+          <span class="day-right"><span class="day-date">Jun 29</span><span class="count-badge">4</span></span>
         </div><div class="tasks"><div class="task" id="t-skills-fix-remove-"auto-triggers"-claim-f" style="background:#0d0d2a;border:1px solid #1e1e4a">
       <div class="lane-tag" style="color:#818cf8">Skills</div>
       <div class="task-title">Fix: Remove "auto-triggers" claim from description OR enforce it in other skills</div>
@@ -239,15 +308,24 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">Score 87/100 — healthy, re-audit after major changes.</div>
       <button class="check-btn" onclick="toggleDone('audits-audit-contractor',event)">✓</button>
-    </div><div class="task" id="t-wigglers-iss-6" style="background:#052010;border:1px solid #1a4d2a">
-      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
-      <div class="task-title">ISS-6: 18 raw message strings in game.js (S2 reverted)</div>
+    </div><div class="task" id="t-monetize-mon-6" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">Monetization</div>
+      <div class="task-title">MON-6: Run /ros pricing — validate Gold prices against psychology</div>
       <div class="task-meta">
         <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
-        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
       </div>
-      <div class="task-desc">18 raw message strings in game.js (S2 reverted)</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-6',event)">✓</button>
+      <div class="task-desc">Check Tunnel Glow Pack (50 Gold) and Worm Speed Boost (25 Gold) against pricing psychology frameworks. Adjust before launch if needed.</div>
+      <button class="check-btn" onclick="toggleDone('monetize-mon-6',event)">✓</button>
+    </div><div class="task" id="t-video-vid-6" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">Video & Marketing</div>
+      <div class="task-title">VID-6: Generate AI voiceover for gameplay trailer (ElevenLabs)</div>
+      <div class="task-meta">
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
+      </div>
+      <div class="task-desc">Load skills/user/video/elevenlabs/SKILL.md. Write and generate a 30-second voiceover script for VID-2 trailer. Tone: warm, curious, slightly nerdy. Use /generate-voiceover command from skills/user/video/commands/generate-voiceover.md</div>
+      <button class="check-btn" onclick="toggleDone('video-vid-6',event)">✓</button>
     </div></div></div></div></div><div class="week-section"><div class="week-label">Next week · Jun 30 – Jul 6</div><div class="days-grid"><div class="day-card">
         <div class="day-header">
           <span class="day-name">Tuesday</span>
@@ -270,15 +348,15 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">Score 88/100 — healthy, re-audit after major changes.</div>
       <button class="check-btn" onclick="toggleDone('audits-audit-project-calendar',event)">✓</button>
-    </div><div class="task" id="t-wigglers-iss-7" style="background:#052010;border:1px solid #1a4d2a">
-      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
-      <div class="task-title">ISS-7: 4 dead functions in codebase</div>
+    </div><div class="task" id="t-monetize-mon-7" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">Monetization</div>
+      <div class="task-title">MON-7: Add Premium Worm Skin — cosmetic Gold item</div>
       <div class="task-meta">
-        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
         <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
       </div>
-      <div class="task-desc">4 dead functions in codebase</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-7',event)">✓</button>
+      <div class="task-desc">Rare worm appearance (glowing, golden, spotted). Price: 75 Gold. Pure cosmetic — no gameplay effect. Best for post-launch when players are attached to their worms.</div>
+      <button class="check-btn" onclick="toggleDone('monetize-mon-7',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Wednesday</span>
@@ -301,19 +379,19 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">Score 87/100 — healthy, re-audit after major changes.</div>
       <button class="check-btn" onclick="toggleDone('audits-audit-wigglers-architecture',event)">✓</button>
-    </div><div class="task" id="t-wigglers-feat-4" style="background:#052010;border:1px solid #1a4d2a">
-      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
-      <div class="task-title">FEAT-4: Long-press drain/tunnel placement + sleep scoping + dra</div>
+    </div><div class="task" id="t-monetize-mon-8" style="background:#1a1a1f;border:1px solid #2e2e38">
+      <div class="lane-tag" style="color:#888">Monetization</div>
+      <div class="task-title">MON-8: Run /ros audit — full monetization readiness score</div>
       <div class="task-meta">
-        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">P2</span>
-        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">L</span>
+        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
       </div>
-      <div class="task-desc">Long-press drain/tunnel placement + sleep scoping + drain visual unification (design doc below)</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-feat-4',event)">✓</button>
+      <div class="task-desc">Score Wigglers Room monetization readiness across all dimensions. Run after MON-1 and MON-2 are complete, before launch day.</div>
+      <button class="check-btn" onclick="toggleDone('monetize-mon-8',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Thursday</span>
-          <span class="day-right"><span class="day-date">Jul 2</span><span class="count-badge">3</span></span>
+          <span class="day-right"><span class="day-date">Jul 2</span><span class="count-badge">2</span></span>
         </div><div class="tasks"><div class="task" id="t-skills-skill-feature-spec" style="background:#0d0d2a;border:1px solid #1e1e4a">
       <div class="lane-tag" style="color:#818cf8">Skills</div>
       <div class="task-title">Build: feature-spec skill</div>
@@ -332,19 +410,10 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">Score 87/100 — healthy, re-audit after major changes.</div>
       <button class="check-btn" onclick="toggleDone('audits-audit-save-skill-workflow',event)">✓</button>
-    </div><div class="task" id="t-wigglers-iss-8" style="background:#052010;border:1px solid #1a4d2a">
-      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
-      <div class="task-title">ISS-8: `DEBUG_PASSWORD` plaintext `'wigglers2025'`</div>
-      <div class="task-meta">
-        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
-        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
-      </div>
-      <div class="task-desc">`DEBUG_PASSWORD` plaintext `'wigglers2025'`</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-8',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Friday</span>
-          <span class="day-right"><span class="day-date">Jul 3</span><span class="count-badge">3</span></span>
+          <span class="day-right"><span class="day-date">Jul 3</span><span class="count-badge">2</span></span>
         </div><div class="tasks"><div class="task" id="t-skills-skill-test-scenario" style="background:#0d0d2a;border:1px solid #1e1e4a">
       <div class="lane-tag" style="color:#818cf8">Skills</div>
       <div class="task-title">Build: test-scenario skill</div>
@@ -363,19 +432,10 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">Score 87/100 — healthy, re-audit after major changes.</div>
       <button class="check-btn" onclick="toggleDone('audits-audit-canvas-art-optimizer',event)">✓</button>
-    </div><div class="task" id="t-wigglers-iss-9" style="background:#052010;border:1px solid #1a4d2a">
-      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
-      <div class="task-title">ISS-9: `bornTs` not stamped on cocoon hatch respawn</div>
-      <div class="task-meta">
-        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
-        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
-      </div>
-      <div class="task-desc">`bornTs` not stamped on cocoon hatch respawn</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-9',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Saturday</span>
-          <span class="day-right"><span class="day-date">Jul 4</span><span class="count-badge">3</span></span>
+          <span class="day-right"><span class="day-date">Jul 4</span><span class="count-badge">2</span></span>
         </div><div class="tasks"><div class="task" id="t-skills-skill-tech-debt-tracker" style="background:#0d0d2a;border:1px solid #1e1e4a">
       <div class="lane-tag" style="color:#818cf8">Skills</div>
       <div class="task-title">Build: tech-debt-tracker skill</div>
@@ -394,15 +454,6 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">Score 87/100 — healthy, re-audit after major changes.</div>
       <button class="check-btn" onclick="toggleDone('audits-audit-png-canvas-art-optimizer',event)">✓</button>
-    </div><div class="task" id="t-wigglers-iss-10" style="background:#052010;border:1px solid #1a4d2a">
-      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
-      <div class="task-title">ISS-10: `weeklyContrib` client-authoritative</div>
-      <div class="task-meta">
-        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
-        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
-      </div>
-      <div class="task-desc">`weeklyContrib` client-authoritative</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-10',event)">✓</button>
     </div></div></div><div class="day-card rest">
         <div class="day-header">
           <span class="day-name">Sunday</span>
@@ -410,7 +461,7 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
         </div><div class="rest-label">Rest day 🌱</div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Monday</span>
-          <span class="day-right"><span class="day-date">Jul 6</span><span class="count-badge">3</span></span>
+          <span class="day-right"><span class="day-date">Jul 6</span><span class="count-badge">2</span></span>
         </div><div class="tasks"><div class="task" id="t-skills-fix-save-skill-workflow" style="background:#0d0d2a;border:1px solid #1e1e4a">
       <div class="lane-tag" style="color:#818cf8">Skills</div>
       <div class="task-title">Fix: save-skill-workflow</div>
@@ -429,15 +480,6 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">Score 88/100 — healthy, re-audit after major changes.</div>
       <button class="check-btn" onclick="toggleDone('audits-audit-skill-audit',event)">✓</button>
-    </div><div class="task" id="t-wigglers-iss-11" style="background:#052010;border:1px solid #1a4d2a">
-      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
-      <div class="task-title">ISS-11: Weekly drain only fires while a player is open</div>
-      <div class="task-meta">
-        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
-        <span class="pill" style="color:#fbbf24;border-color:#fbbf2422;background:#fbbf2411">M</span>
-      </div>
-      <div class="task-desc">Weekly drain only fires while a player is open</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-iss-11',event)">✓</button>
     </div></div></div></div></div><div class="week-section"><div class="week-label">Week 3 · Jul 7 – Jul 13</div><div class="days-grid"><div class="day-card">
         <div class="day-header">
           <span class="day-name">Tuesday</span>
@@ -451,19 +493,19 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">Make session log examples dynamic</div>
       <button class="check-btn" onclick="toggleDone('skills-fix-lead-dev',event)">✓</button>
-    </div><div class="task" id="t-wigglers-feat-1" style="background:#052010;border:1px solid #1a4d2a">
-      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
-      <div class="task-title">FEAT-1: Cross-player tunnel clogging (design doc below)</div>
+    </div><div class="task" id="t-audits-audit-session-summary" style="background:#0a1a0a;border:1px solid #1a3a1a">
+      <div class="lane-tag" style="color:#86efac">Audits</div>
+      <div class="task-title">Audit: session-summary (score: 88)</div>
       <div class="task-meta">
         <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
-        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">L</span>
+        <span class="pill" style="color:#4ade80;border-color:#4ade8022;background:#4ade8011">S</span>
       </div>
-      <div class="task-desc">Cross-player tunnel clogging (design doc below)</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-feat-1',event)">✓</button>
+      <div class="task-desc">Score 88/100 — healthy, re-audit after major changes.</div>
+      <button class="check-btn" onclick="toggleDone('audits-audit-session-summary',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Wednesday</span>
-          <span class="day-right"><span class="day-date">Jul 8</span><span class="count-badge">2</span></span>
+          <span class="day-right"><span class="day-date">Jul 8</span><span class="count-badge">1</span></span>
         </div><div class="tasks"><div class="task" id="t-skills-fix-contractor" style="background:#0d0d2a;border:1px solid #1e1e4a">
       <div class="lane-tag" style="color:#818cf8">Skills</div>
       <div class="task-title">Fix: contractor</div>
@@ -473,15 +515,6 @@ h1{font-size:22px;font-weight:600;letter-spacing:-.5px}
       </div>
       <div class="task-desc">Clarify handoff boundary with lead-dev</div>
       <button class="check-btn" onclick="toggleDone('skills-fix-contractor',event)">✓</button>
-    </div><div class="task" id="t-wigglers-feat-3" style="background:#052010;border:1px solid #1a4d2a">
-      <div class="lane-tag" style="color:#4ade80">Wigglers Room</div>
-      <div class="task-title">FEAT-3: Passive bridge version capture (design doc below)</div>
-      <div class="task-meta">
-        <span class="pill" style="color:#6b6880;border-color:#6b688022;background:#6b688011">P3</span>
-        <span class="pill" style="color:#f87171;border-color:#f8717122;background:#f8717111">L</span>
-      </div>
-      <div class="task-desc">Passive bridge version capture (design doc below)</div>
-      <button class="check-btn" onclick="toggleDone('wigglers-feat-3',event)">✓</button>
     </div></div></div><div class="day-card">
         <div class="day-header">
           <span class="day-name">Thursday</span>
