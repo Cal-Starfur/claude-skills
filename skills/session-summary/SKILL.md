@@ -1,6 +1,6 @@
 ---
 name: session-summary
-description: Generates a plain-English session summary after any coding session. Tells the owner what changed, what system it touched, what could break, and gives an explicit push Y/N recommendation. No code in the output — owner-readable only. Load this skill and offer a summary proactively at session end — do not wait to be asked. Triggers on: "what changed", "give me the summary", "should I push", "wrap up", "end of session", "I'm done", "that's it for today", "ok thanks", "good session", or any signal the user is finishing up. Also triggers automatically after any session with 3 or more commits.
+description: Generate a plain-English session summary when the user asks or signals session end. Tells the owner what changed, what it touched, what could break, and gives a PUSH or HOLD recommendation. Triggers on: "what changed", "give me the summary", "should I push", "wrap up", "end of session", "I'm done", "that's it for today", "ok thanks", "good session". Offer it after the last push of a code session — but do not force it for design or doc-only sessions unless asked.
 ---
 
 # Session Summary Skill
@@ -8,8 +8,7 @@ description: Generates a plain-English session summary after any coding session.
 **One job: tell the owner what happened in plain English.**
 No code. No jargon. Every file named. Every risk flagged. End with a clear push recommendation.
 
-**Offer this proactively** — do not wait for the user to ask. After the last commit of a session, say:
-> "Want me to give you the session summary before we wrap up?"
+**Offer after code sessions** — after the last commit, ask if the user wants a summary. Skip the offer for design or doc-only sessions unless they ask.
 
 ---
 
@@ -22,7 +21,7 @@ No code. No jargon. Every file named. Every risk flagged. End with a clear push 
 | "should I push" | Full summary + push recommendation |
 | "wrap up" / "end of session" | Full summary + calendar sync offer |
 | "I'm done" / "that's it" / "ok thanks" / "good session" | Offer the summary, then generate if user agrees |
-| After any session with 3+ commits | Offer automatically after last push |
+| After any code session with 3+ commits | Offer after last push (code sessions only) |
 | Zero commits this session | Summary still runs — say what was discussed/planned, recommend PUSH (nothing to break) |
 
 ---
