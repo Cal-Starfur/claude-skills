@@ -34,6 +34,13 @@ Tracks all skill changes across sessions. Newest entries at the top.
 
 ## 2026-06-23 — Calendar sync
 
+- 57 tasks across 3 lanes (Skills: 25 open, Audits: 12 open, Wigglers Room: 14 open)
+- P1 open: 9 | Done: 6 | Open: 51
+
+---
+
+## 2026-06-23 — Calendar sync
+
 - 72 tasks across 5 lanes (Skills: 25 open, Audits: 13 open, Wigglers Room: 14 open, Monetization: 8 open, Video & Marketing: 6 open)
 - P1 open: 13 | Done: 6 | Open: 66
 
