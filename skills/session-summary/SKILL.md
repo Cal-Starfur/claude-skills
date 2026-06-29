@@ -104,6 +104,32 @@ Both offers are **mandatory** — make them in the same message as the summary. 
 
 Exception: if the user is clearly in a hurry and just said "thanks, bye" — skip the offers and let them go.
 
+## Wigglers Room Demo Sessions — DEMO_DELTA.md
+
+When working on the demo (`wigglers-demo-*.html`), any change that diverges from
+`docs/game.js` must be logged in `DEMO_DELTA.md` at the Wigglers_Room repo root.
+
+**The order is always:**
+1. Update `DEMO_DELTA.md` with any new divergences
+2. Update `SESSION_MANIFEST.md` with session state
+3. Then offer the session summary
+
+**What goes in DEMO_DELTA.md:**
+- New globals added to the demo → entry with name, purpose, port risk
+- game.js functions modified in the demo → note function, what changed, port notes
+- Demo-only stubs → listed under Stubs section, flagged do-not-port
+- Open design questions → added to Open Questions section
+
+**What does NOT go in DEMO_DELTA.md:**
+- Changes that already exist in game.js verbatim
+- Tutorial-only features that will never be in game.js
+- Stub replacements for Devvit functions
+
+If DEMO_DELTA.md doesn't exist yet, create it. If it exists, append new entries —
+never overwrite existing ones without reading them first.
+
+
+
 ---
 
 ## Example — Good Summary (Code Changes)
